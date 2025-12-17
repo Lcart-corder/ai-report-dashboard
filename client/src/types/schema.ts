@@ -183,3 +183,26 @@ export interface AnalyticsEvent {
   meta_json: JSONValue;
   occurred_at: DateTime;
 }
+
+// Feature: Traffic Analysis
+export interface TrafficSource {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  code: string; // パラメータ識別子
+  url: string;
+  actions_json: {
+    add_tags?: string[];
+    start_scenario_id?: string;
+    send_template_id?: string;
+    change_rich_menu_id?: string;
+  };
+  stats: {
+    visits: number;
+    friends_added: number;
+    blocks: number;
+    conversions: number;
+  };
+  is_active: boolean;
+  created_at: DateTime;
+}

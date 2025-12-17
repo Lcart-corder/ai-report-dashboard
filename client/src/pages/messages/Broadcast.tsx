@@ -12,6 +12,8 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
 import { Broadcast } from "@/types/schema";
 import { Plus, Send, Clock, Edit2, Trash2, PlayCircle } from "lucide-react";
@@ -125,50 +127,89 @@ export default function BroadcastPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate}>
-            <div className="grid gap-6 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">配信管理名 <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="name" 
-                  placeholder="例: 3月セール告知" 
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label>メッセージ内容</Label>
-                <div className="border rounded-md p-4 bg-gray-50">
-                  <Textarea 
-                    placeholder="ここにメッセージを入力..." 
-                    className="min-h-[150px] bg-white"
-                    value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">基本設定</TabsTrigger>
+                <TabsTrigger value="advanced">詳細設定</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">配信管理名 <span className="text-red-500">*</span></Label>
+                  <Input 
+                    id="name" 
+                    placeholder="例: 3月セール告知" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
-                  <div className="flex justify-between mt-2">
-                    <div className="text-xs text-gray-500">文字数: {formData.message.length}</div>
-                    <Button type="button" variant="outline" size="sm" onClick={handleTestSend} className="gap-2">
-                      <PlayCircle className="w-3 h-3" />
-                      テスト送信
-                    </Button>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>メッセージ内容</Label>
+                  <div className="border rounded-md p-4 bg-gray-50">
+                    <Textarea 
+                      placeholder="ここにメッセージを入力..." 
+                      className="min-h-[150px] bg-white"
+                      value={formData.message}
+                      onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    />
+                    <div className="flex justify-between mt-2">
+                      <div className="text-xs text-gray-500">文字数: {formData.message.length}</div>
+                      <Button type="button" variant="outline" size="sm" onClick={handleTestSend} className="gap-2">
+                        <PlayCircle className="w-3 h-3" />
+                        テスト送信
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="schedule">配信日時（空欄で即時配信）</Label>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <Input 
-                    id="schedule" 
-                    type="datetime-local" 
-                    className="w-auto"
-                    value={formData.schedule}
-                    onChange={(e) => setFormData({...formData, schedule: e.target.value})}
-                  />
+                <div className="grid gap-2">
+                  <Label htmlFor="schedule">配信日時（空欄で即時配信）</Label>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <Input 
+                      id="schedule" 
+                      type="datetime-local" 
+                      className="w-auto"
+                      value={formData.schedule}
+                      onChange={(e) => setFormData({...formData, schedule: e.target.value})}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
+              </TabsContent>
+
+              <TabsContent value="advanced" className="space-y-4 py-4">
+                <div className="space-y-4">
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">除外条件設定</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="exclude_blocked" defaultChecked />
+                        <Label htmlFor="exclude_blocked" className="text-sm font-normal">ブロック中のユーザーを除外</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="exclude_recent" />
+                        <Label htmlFor="exclude_recent" className="text-sm font-normal">24時間以内にメッセージを送信したユーザーを除外</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">配信後アクション</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="action_tag" />
+                        <Label htmlFor="action_tag" className="text-sm font-normal">配信完了時にタグを付与する</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="action_notify" />
+                        <Label htmlFor="action_notify" className="text-sm font-normal">管理者に完了通知を送る</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
               <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white gap-2">

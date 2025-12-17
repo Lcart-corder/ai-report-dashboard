@@ -12,6 +12,8 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select,
   SelectContent,
@@ -149,42 +151,80 @@ export default function AutoReplyPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="keyword">キーワード</Label>
-                <Input 
-                  id="keyword" 
-                  placeholder="例: 営業時間" 
-                  value={formData.keyword}
-                  onChange={(e) => setFormData({...formData, keyword: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="matchType">一致条件</Label>
-                <Select 
-                  value={formData.matchType} 
-                  onValueChange={(v) => setFormData({...formData, matchType: v})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="partial">部分一致（キーワードを含む）</SelectItem>
-                    <SelectItem value="exact">完全一致（キーワードのみ）</SelectItem>
-                    <SelectItem value="regex">正規表現</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="response">返信内容</Label>
-                <Textarea 
-                  id="response" 
-                  placeholder="返信するメッセージを入力..." 
-                  value={formData.response}
-                  onChange={(e) => setFormData({...formData, response: e.target.value})}
-                />
-              </div>
-            </div>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">基本設定</TabsTrigger>
+                <TabsTrigger value="advanced">詳細設定</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="keyword">キーワード</Label>
+                  <Input 
+                    id="keyword" 
+                    placeholder="例: 営業時間" 
+                    value={formData.keyword}
+                    onChange={(e) => setFormData({...formData, keyword: e.target.value})}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="matchType">一致条件</Label>
+                  <Select 
+                    value={formData.matchType} 
+                    onValueChange={(v) => setFormData({...formData, matchType: v})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="partial">部分一致（キーワードを含む）</SelectItem>
+                      <SelectItem value="exact">完全一致（キーワードのみ）</SelectItem>
+                      <SelectItem value="regex">正規表現</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="response">返信内容</Label>
+                  <Textarea 
+                    id="response" 
+                    placeholder="返信するメッセージを入力..." 
+                    value={formData.response}
+                    onChange={(e) => setFormData({...formData, response: e.target.value})}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="advanced" className="space-y-4 py-4">
+                <div className="space-y-4">
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">稼働時間設定</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="always_active" defaultChecked />
+                        <Label htmlFor="always_active" className="text-sm font-normal">24時間365日稼働</Label>
+                      </div>
+                      <div className="pl-6 text-xs text-gray-500">
+                        チェックを外すと、曜日・時間帯を指定して稼働させることができます。
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">反応条件の詳細</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="exclude_tagged" />
+                        <Label htmlFor="exclude_tagged" className="text-sm font-normal">特定のタグが付いているユーザーには反応しない</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="priority_high" />
+                        <Label htmlFor="priority_high" className="text-sm font-normal">他の自動応答より優先して実行する</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
               <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white">

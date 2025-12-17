@@ -3,6 +3,7 @@ import { PageTemplate } from "@/components/page-template";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Dialog, 
   DialogContent, 
@@ -11,6 +12,8 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
 import { Form } from "@/types/schema";
 import { Plus, Edit2, Trash2, FileText, ExternalLink } from "lucide-react";
@@ -148,26 +151,69 @@ export default function FormsPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">フォームタイトル</Label>
-                <Input 
-                  id="title" 
-                  placeholder="例: 来店アンケート" 
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">説明文（任意）</Label>
-                <Input 
-                  id="description" 
-                  placeholder="フォームの説明を入力..." 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-            </div>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">基本設定</TabsTrigger>
+                <TabsTrigger value="advanced">詳細設定</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="title">フォームタイトル</Label>
+                  <Input 
+                    id="title" 
+                    placeholder="例: 来店アンケート" 
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">説明文（任意）</Label>
+                  <Textarea 
+                    id="description" 
+                    placeholder="フォームの説明を入力..." 
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="advanced" className="space-y-4 py-4">
+                <div className="space-y-4">
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">受付設定</h4>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="limit">回答回数制限</Label>
+                        <Input id="limit" type="number" placeholder="1人1回までなら「1」" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="deadline">回答期限</Label>
+                        <Input id="deadline" type="datetime-local" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-md p-4">
+                    <h4 className="font-medium mb-2 text-sm">回答後アクション</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="action_tag" />
+                        <Label htmlFor="action_tag" className="text-sm font-normal">回答完了時にタグを付与する</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="action_notify" defaultChecked />
+                        <Label htmlFor="action_notify" className="text-sm font-normal">管理者に回答通知を送る</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="action_message" />
+                        <Label htmlFor="action_message" className="text-sm font-normal">回答者にサンクスメッセージを送る</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
               <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white">

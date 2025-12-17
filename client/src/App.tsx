@@ -17,12 +17,14 @@ import BroadcastPage from "./pages/messages/Broadcast";
 import StepPage from "./pages/messages/Step";
 import AutoReplyPage from "./pages/messages/AutoReply";
 import TemplatesPage from "./pages/messages/Templates";
+import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
 import EventsDashboard from "./pages/events/index";
 import ReservationListPage from "./pages/events/ReservationList";
 import FormsPage from "./pages/forms/index";
 import AnalysisDashboard from "./pages/analysis/index";
 import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
 import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
+import TrafficSourcesPage from "./pages/analysis/TrafficSources";
 import AIDashboard from "./pages/ai/index";
 import IntegrationsPage from "./pages/integrations/index";
 import AdminDashboard from "./pages/admin/index";
@@ -50,6 +52,7 @@ function Router() {
       <Route path="/messages/step" component={StepPage} />
       <Route path="/messages/auto-reply" component={AutoReplyPage} />
       <Route path="/messages/templates" component={TemplatesPage} />
+      <Route path="/messages/templates/:id/analysis" component={TemplateAnalysisPage} />
 
       {/* Events */}
       <Route path="/events" component={EventsDashboard} />
@@ -66,6 +69,7 @@ function Router() {
       <Route path="/analysis" component={AnalysisDashboard} />
       <Route path="/analysis/friends" component={FriendsAnalysisPage} />
       <Route path="/analysis/messages" component={MessagesAnalysisPage} />
+      <Route path="/analysis/traffic" component={TrafficSourcesPage} />
 
       {/* AI */}
       <Route path="/ai" component={AIDashboard} />
