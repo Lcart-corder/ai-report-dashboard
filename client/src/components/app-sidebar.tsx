@@ -132,6 +132,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "メッセージ分析", href: "/analysis/messages", icon: MessageSquare },
         { label: "流入経路分析", href: "/analysis/traffic", icon: TrendingUp },
         { label: "コンバージョン設定", href: "/analysis/conversions", icon: MousePointerClick },
+        { label: "アクションログ", href: "/analysis/logs", icon: History },
         { label: "サイト計測設定", href: "/analysis/site", icon: Globe }
       ]
     },

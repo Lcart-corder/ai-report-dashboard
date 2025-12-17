@@ -6,13 +6,32 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Image as ImageIcon, LayoutGrid, Plus, Save, Smartphone } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, LayoutGrid, Plus, Save, Smartphone, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { PageTemplate } from "@/components/page-template";
+import { ActionBuilder } from "@/components/actions/ActionBuilder";
+import { ActionSetStep } from "@/types/schema";
 
 export default function RichMenuCreatePage() {
   const [selectedTemplate, setSelectedTemplate] = useState("large_6");
+  const [isActionBuilderOpen, setIsActionBuilderOpen] = useState(false);
+  const [currentAreaIndex, setCurrentAreaIndex] = useState<number | null>(null);
+  const [areaActions, setAreaActions] = useState<Record<number, ActionSetStep[]>>({});
+
+  const handleOpenActionBuilder = (index: number) => {
+    setCurrentAreaIndex(index);
+    setIsActionBuilderOpen(true);
+  };
+
+  const handleSaveActions = (steps: ActionSetStep[]) => {
+    if (currentAreaIndex !== null) {
+      setAreaActions({
+        ...areaActions,
+        [currentAreaIndex]: steps
+      });
+    }
+  };
 
   return (
     <PageTemplate title="リッチメニュー作成" breadcrumbs={[{ label: "メッセージ", href: "/messages" }, { label: "リッチメニュー", href: "/messages/rich-menus" }, { label: "作成" }]}>
@@ -96,36 +115,32 @@ export default function RichMenuCreatePage() {
 
               <div className="space-y-4">
                 <Label>アクション設定</Label>
-                <div className="space-y-4 border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">エリア A</span>
-                    <span className="text-xs bg-muted px-2 py-1 rounded">左上</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs">タイプ</Label>
-                      <Select defaultValue="link">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="link">リンク</SelectItem>
-                          <SelectItem value="text">テキスト</SelectItem>
-                          <SelectItem value="postback">ポストバック</SelectItem>
-                          <SelectItem value="coupon">クーポン</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-4 border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">エリア A</span>
+                      <span className="text-xs bg-muted px-2 py-1 rounded">左上</span>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">URL</Label>
-                      <Input placeholder="https://" />
+                    
+                    <div className="bg-slate-50 p-3 rounded text-sm mb-2">
+                      {areaActions[0] && areaActions[0].length > 0 ? (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <Settings className="w-4 h-4" />
+                          <span>{areaActions[0].length}個のアクションが設定されています</span>
+                        </div>
+                      ) : (
+                        <div className="text-slate-500">アクション未設定</div>
+                      )}
                     </div>
+
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleOpenActionBuilder(0)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" /> 
+                      詳細アクション設定（エルメアクション）
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">アクションラベル</Label>
-                    <Input placeholder="読み上げ用テキスト" />
-                  </div>
-                </div>
                 
                 {/* More areas would be generated based on template */}
                 <Button variant="outline" className="w-full">
@@ -179,6 +194,14 @@ export default function RichMenuCreatePage() {
           <Save className="mr-2 h-4 w-4" /> 保存する
         </Button>
       </div>
+
+      <ActionBuilder
+        isOpen={isActionBuilderOpen}
+        onClose={() => setIsActionBuilderOpen(false)}
+        onSave={handleSaveActions}
+        initialSteps={currentAreaIndex !== null ? areaActions[currentAreaIndex] : []}
+        triggerName={`エリア ${currentAreaIndex !== null ? String.fromCharCode(65 + currentAreaIndex) : ''} タップ`}
+      />
     </PageTemplate>
   );
 }

@@ -37,6 +37,7 @@ import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
 import TrafficSourcesPage from "./pages/analysis/TrafficSources";
 import TrafficSourceCreatePage from "./pages/analysis/TrafficSourceCreate";
 import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
+import ActionLogsPage from "./pages/analysis/ActionLogs";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -84,6 +85,7 @@ function App() {
             <Route path="/analysis/traffic" component={TrafficSourcesPage} />
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
+            <Route path="/analysis/logs" component={ActionLogsPage} />
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}

@@ -238,3 +238,63 @@ export interface TrafficSource {
   is_active: boolean;
   created_at: DateTime;
 }
+
+// Feature: LME Actions
+export type ActionType = 
+  | 'step_scenario' 
+  | 'template_message' 
+  | 'text_message' 
+  | 'reminder' 
+  | 'tag' 
+  | 'rich_menu' 
+  | 'bookmark' 
+  | 'friend_info' 
+  | 'status' 
+  | 'block';
+
+export interface ActionSet {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_by: ID;
+  updated_by: ID;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+export interface ActionSetStep {
+  id: ID;
+  tenant_id: ID;
+  action_set_id: ID;
+  order: number;
+  action_type: ActionType;
+  action_payload_json: JSONValue;
+  created_at: DateTime;
+}
+
+export interface TriggerBinding {
+  id: ID;
+  tenant_id: ID;
+  trigger_type: string; // e.g., 'friend_added', 'rich_menu_tap', 'tag_added'
+  trigger_source_id?: ID; // e.g., rich_menu_id, tag_id
+  action_set_id: ID;
+  condition_json?: JSONValue;
+  is_active: boolean;
+  created_at: DateTime;
+}
+
+export interface ActionExecution {
+  id: ID;
+  tenant_id: ID;
+  action_set_id: ID;
+  trigger_binding_id: ID;
+  contact_id: ID;
+  status: 'queued' | 'running' | 'succeeded' | 'failed';
+  started_at?: DateTime;
+  finished_at?: DateTime;
+  error?: string;
+  request_id: string;
+  meta_json?: JSONValue;
+}
