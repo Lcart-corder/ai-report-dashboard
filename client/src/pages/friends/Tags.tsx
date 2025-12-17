@@ -280,6 +280,7 @@ export default function TagsPage() {
                 <div className="border rounded-lg p-4">
                   <h3 className="font-medium mb-4">タグ追加時のアクション</h3>
                   <ActionBuilder 
+                    mode="inline"
                     actions={actions} 
                     onChange={setActions} 
                   />

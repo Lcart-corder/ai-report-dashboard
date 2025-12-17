@@ -271,6 +271,7 @@ export interface ActionSetStep {
   order: number;
   action_type: ActionType;
   action_payload_json: JSONValue;
+  conditions_json?: JSONValue; // Added for action filtering
   created_at: DateTime;
 }
 
