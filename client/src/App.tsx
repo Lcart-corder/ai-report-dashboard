@@ -38,6 +38,10 @@ import TrafficSourcesPage from "./pages/analysis/TrafficSources";
 import TrafficSourceCreatePage from "./pages/analysis/TrafficSourceCreate";
 import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
 import ActionLogsPage from "./pages/analysis/ActionLogs";
+import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
+import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
+import ChatPage from "./pages/chats/ChatPage";
+import ChatSettingsPage from "./pages/chats/ChatSettings";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -86,6 +90,14 @@ function App() {
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/logs" component={ActionLogsPage} />
+          
+          {/* Rakuten */}
+          <Route path="/rakuten/settings" component={RakutenSettingsPage} />
+          <Route path="/rakuten/orders" component={RakutenOrderListPage} />
+
+          {/* Chats */}
+          <Route path="/chats" component={ChatPage} />
+          <Route path="/chats/settings" component={ChatSettingsPage} />
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}

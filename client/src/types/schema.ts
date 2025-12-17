@@ -298,3 +298,73 @@ export interface ActionExecution {
   request_id: string;
   meta_json?: JSONValue;
 }
+
+// Rakuten Integration
+export interface RakutenConnection {
+  id: string;
+  tenant_id: string;
+  shop_url: string;
+  shop_name: string;
+  status: 'active' | 'inactive' | 'error';
+  last_synced_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RakutenOrder {
+  id: string;
+  tenant_id: string;
+  contact_id?: string; // Linked LINE user
+  order_number: string;
+  order_date: string;
+  total_price: number;
+  status: string;
+  items: RakutenOrderItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RakutenOrderItem {
+  id: string;
+  order_id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  price: number;
+  category?: string;
+}
+
+// 1:1 Chat
+export interface ChatThread {
+  id: string;
+  tenant_id: string;
+  contact_id: string;
+  last_message_at: string;
+  last_message_preview: string;
+  unread_count: number;
+  status: 'active' | 'archived';
+  assigned_user_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  tenant_id: string;
+  thread_id: string;
+  sender_type: 'user' | 'contact' | 'system';
+  sender_id?: string; // user_id or contact_id
+  content_type: 'text' | 'image' | 'sticker' | 'template';
+  content: string; // JSON string for non-text
+  read_at?: string;
+  created_at: string;
+}
+
+export interface ChatSettings {
+  id: string;
+  tenant_id: string;
+  enable_url_shortener: boolean;
+  send_shortcut: 'enter' | 'ctrl_enter';
+  created_at: string;
+  updated_at: string;
+}

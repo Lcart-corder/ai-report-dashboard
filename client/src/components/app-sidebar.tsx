@@ -37,7 +37,8 @@ import {
   Smartphone,
   User,
   CreditCard,
-  Menu
+  Menu,
+  Keyboard
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -54,9 +55,11 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
   // State for collapsible submenus
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     "/friends": true,
+    "/chats": true,
     "/messages": true,
     "/events": true,
     "/forms": true,
+    "/rakuten": true,
     "/analysis": true,
     "/ai": true,
     "/integrations": true,
@@ -88,8 +91,17 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "ブロックリスト", href: "/friends/blocked", icon: Ban }
       ]
     },
+    {
+      icon: MessageSquare,
+      label: "1:1チャット",
+      href: "/chats",
+      subItems: [
+        { label: "チャット一覧", href: "/chats", icon: MessageSquare },
+        { label: "チャット設定", href: "/chats/settings", icon: Settings },
+      ],
+    },
     { 
-      icon: MessageSquare, 
+      icon: Send, 
       label: "メッセージ", 
       href: "/messages",
       subItems: [
@@ -121,6 +133,15 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "回答フォーム一覧", href: "/forms", icon: List },
         { label: "回答一覧", href: "/forms/responses", icon: FileInput }
       ]
+    },
+    {
+      icon: ShoppingBag,
+      label: "楽天連携",
+      href: "/rakuten",
+      subItems: [
+        { label: "連携設定", href: "/rakuten/settings", icon: Settings },
+        { label: "注文履歴", href: "/rakuten/orders", icon: List },
+      ],
     },
     { 
       icon: BarChart2, 

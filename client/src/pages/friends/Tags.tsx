@@ -11,10 +11,12 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, AuditLogViewer } from "@/components/common/ui-kit";
 import { FolderManager } from "@/components/common/folder-manager";
-import { Tag, AuditLog, Folder } from "@/types/schema";
-import { Plus, Edit2, Trash2, Tag as TagIcon } from "lucide-react";
+import { ActionBuilder } from "@/components/actions/ActionBuilder";
+import { Tag, AuditLog, Folder, ActionSetStep } from "@/types/schema";
+import { Plus, Edit2, Trash2, Tag as TagIcon, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
@@ -43,6 +45,7 @@ export default function TagsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [formData, setFormData] = useState({ name: "", color: "#06C755" });
+  const [actions, setActions] = useState<ActionSetStep[]>([]);
 
   // Folder Handlers
   const handleCreateFolder = (name: string) => {
@@ -74,9 +77,12 @@ export default function TagsPage() {
     if (tag) {
       setEditingTag(tag);
       setFormData({ name: tag.name, color: tag.color });
+      // Load actions for this tag (mock)
+      setActions([]);
     } else {
       setEditingTag(null);
       setFormData({ name: "", color: "#06C755" });
+      setActions([]);
     }
     setIsDialogOpen(true);
   };
@@ -214,50 +220,80 @@ export default function TagsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>{editingTag ? "タグを編集" : "新規タグ作成"}</DialogTitle>
             <DialogDescription>
-              タグの名前とカラーを設定してください。
+              タグの基本情報と、タグ付与時のアクションを設定します。
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">タグ名</Label>
-                <Input 
-                  id="name" 
-                  value={formData.name} 
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="例: VIP会員" 
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="color">カラー</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="color" 
-                    type="color" 
-                    value={formData.color} 
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-12 h-10 p-1 cursor-pointer" 
-                  />
-                  <Input 
-                    value={formData.color} 
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    placeholder="#000000" 
-                    className="flex-1"
+          
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="basic">基本設定</TabsTrigger>
+                <TabsTrigger value="actions">アクション設定</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">タグ名</Label>
+                    <Input 
+                      id="name" 
+                      value={formData.name} 
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="例: VIP会員" 
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="color">カラー</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        id="color" 
+                        type="color" 
+                        value={formData.color} 
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        className="w-12 h-10 p-1 cursor-pointer" 
+                      />
+                      <Input 
+                        value={formData.color} 
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        placeholder="#000000" 
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="actions" className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex gap-3 text-sm text-amber-800 mb-4">
+                  <AlertTriangle className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="font-bold mb-1">アクション実行の注意点</p>
+                    <p>ここで設定したアクションは、<span className="font-bold">「タグが付与されたタイミング」</span>でのみ実行されます。</p>
+                    <p className="mt-1 text-xs text-amber-700">※タグが外れた時に逆の操作（例：リッチメニューを戻す等）は自動で行われません。</p>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-4">タグ追加時のアクション</h3>
+                  <ActionBuilder 
+                    actions={actions} 
+                    onChange={setActions} 
                   />
                 </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
-              <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white">
-                {editingTag ? "更新する" : "作成する"}
-              </Button>
-            </DialogFooter>
-          </form>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t mt-auto">
+            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
+            <Button type="button" onClick={handleSubmit} className="bg-[#06C755] hover:bg-[#05b34c] text-white">
+              {editingTag ? "更新する" : "作成する"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </PageTemplate>
