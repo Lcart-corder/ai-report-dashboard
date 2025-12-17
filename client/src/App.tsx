@@ -12,11 +12,14 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import FriendsListPage from "./pages/FriendsList";
 import TagsPage from "./pages/friends/Tags";
 import BlockedPage from "./pages/friends/Blocked";
+import FriendInfoEditPage from "./pages/friends/FriendInfoEdit";
 import MessagesDashboard from "./pages/messages/index";
 import BroadcastPage from "./pages/messages/Broadcast";
 import StepPage from "./pages/messages/Step";
 import AutoReplyPage from "./pages/messages/AutoReply";
+import ActionScheduleCreatePage from "./pages/messages/ActionScheduleCreate";
 import TemplatesPage from "./pages/messages/Templates";
+import TemplateCreatePage from "./pages/messages/TemplateCreate";
 import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
 import EventsDashboard from "./pages/events/index";
 import ReservationListPage from "./pages/events/ReservationList";
@@ -25,6 +28,7 @@ import AnalysisDashboard from "./pages/analysis/index";
 import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
 import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
 import TrafficSourcesPage from "./pages/analysis/TrafficSources";
+import TrafficSourceCreatePage from "./pages/analysis/TrafficSourceCreate";
 import AIDashboard from "./pages/ai/index";
 import IntegrationsPage from "./pages/integrations/index";
 import AdminDashboard from "./pages/admin/index";
@@ -45,13 +49,16 @@ function Router() {
       <Route path="/friends/list" component={FriendsListPage} />
       <Route path="/friends/tags" component={TagsPage} />
       <Route path="/friends/blocked" component={BlockedPage} />
+      <Route path="/friends/info/create" component={FriendInfoEditPage} />
 
       {/* Messages */}
       <Route path="/messages" component={MessagesDashboard} />
       <Route path="/messages/broadcast" component={BroadcastPage} />
       <Route path="/messages/step" component={StepPage} />
       <Route path="/messages/auto-reply" component={AutoReplyPage} />
+      <Route path="/messages/schedule/create" component={ActionScheduleCreatePage} />
       <Route path="/messages/templates" component={TemplatesPage} />
+      <Route path="/messages/templates/create" component={TemplateCreatePage} />
       <Route path="/messages/templates/:id/analysis" component={TemplateAnalysisPage} />
 
       {/* Events */}
@@ -70,6 +77,7 @@ function Router() {
       <Route path="/analysis/friends" component={FriendsAnalysisPage} />
       <Route path="/analysis/messages" component={MessagesAnalysisPage} />
       <Route path="/analysis/traffic" component={TrafficSourcesPage} />
+      <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
 
       {/* AI */}
       <Route path="/ai" component={AIDashboard} />
