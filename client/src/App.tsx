@@ -6,16 +6,13 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LayoutProvider } from "./contexts/layout-context";
 import AIReportDetailPage from "./pages/AIReportDetail";
-
-// Redirect root to the report detail page for this demo
-function HomeRedirect() {
-  return <AIReportDetailPage />;
-}
+import DashboardPage from "./pages/Dashboard";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomeRedirect} />
+      <Route path="/" component={DashboardPage} />
+      <Route path="/analysis/dashboard" component={DashboardPage} />
       <Route path="/ai/reports" component={AIReportDetailPage} />
       <Route path="/ai/reports/:id" component={AIReportDetailPage} />
       <Route path="/404" component={NotFound} />
