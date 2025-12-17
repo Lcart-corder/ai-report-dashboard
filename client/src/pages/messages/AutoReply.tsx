@@ -22,21 +22,55 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { AutoReply } from "@/types/schema";
+import { FolderManager } from "@/components/common/folder-manager";
+import { AutoReply, Folder } from "@/types/schema";
 import { Plus, Edit2, Trash2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "店舗案内", scope: "auto_replies", sort_order: 1, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "キャンペーン", scope: "auto_replies", sort_order: 2, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_AUTO_REPLIES: AutoReply[] = [
-  { id: "1", tenant_id: "t1", keyword: "営業時間", match_type: "partial", response_type: "text", response_content: "営業時間は平日10:00〜18:00です。", is_active: true, created_at: "2024-01-01T10:00:00Z" },
-  { id: "2", tenant_id: "t1", keyword: "アクセス", match_type: "partial", response_type: "text", response_content: "東京都渋谷区...", is_active: true, created_at: "2024-01-15T14:30:00Z" },
-  { id: "3", tenant_id: "t1", keyword: "キャンペーン", match_type: "exact", response_type: "template", response_content: {}, is_active: false, created_at: "2024-02-01T11:00:00Z" },
+  { id: "1", tenant_id: "t1", keyword: "営業時間", folder_id: "f1", match_type: "partial", response_type: "text", response_content: "営業時間は平日10:00〜18:00です。", is_active: true, created_at: "2024-01-01T10:00:00Z" },
+  { id: "2", tenant_id: "t1", keyword: "アクセス", folder_id: "f1", match_type: "partial", response_type: "text", response_content: "東京都渋谷区...", is_active: true, created_at: "2024-01-15T14:30:00Z" },
+  { id: "3", tenant_id: "t1", keyword: "キャンペーン", folder_id: "f2", match_type: "exact", response_type: "template", response_content: {}, is_active: false, created_at: "2024-02-01T11:00:00Z" },
 ];
 
 export default function AutoReplyPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [replies, setReplies] = useState<AutoReply[]>(MOCK_AUTO_REPLIES);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ keyword: "", matchType: "partial", response: "" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      scope: "auto_replies",
+      sort_order: folders.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setReplies(replies.map(r => r.folder_id === id ? { ...r, folder_id: undefined } : r));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +83,7 @@ export default function AutoReplyPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       keyword: formData.keyword,
+      folder_id: selectedFolderId || undefined,
       match_type: formData.matchType as any,
       response_type: "text",
       response_content: formData.response,
@@ -73,11 +108,22 @@ export default function AutoReplyPage() {
     }));
   };
 
+  const filteredReplies = selectedFolderId
+    ? replies.filter(r => r.folder_id === selectedFolderId)
+    : replies;
+
   const columns = [
     {
       header: "キーワード",
       cell: (item: AutoReply) => (
-        <div className="font-medium">{item.keyword}</div>
+        <div>
+          <div className="font-medium">{item.keyword}</div>
+          {item.folder_id && (
+            <span className="text-xs text-gray-400 block mt-1">
+              {folders.find(f => f.id === item.folder_id)?.name}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -135,12 +181,32 @@ export default function AutoReplyPage() {
         </Button>
       }
     >
-      <DataTable 
-        data={replies} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredReplies} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

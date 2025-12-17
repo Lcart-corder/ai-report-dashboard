@@ -65,9 +65,11 @@ export interface Folder {
   id: ID;
   tenant_id: ID;
   name: string;
-  parent_id?: ID; // For nested folders
-  type: 'template' | 'traffic_source' | 'action_schedule' | 'form' | 'step_scenario' | 'rich_menu' | 'media';
-  created_at: DateTime;
+  parent_id?: ID | null; // For nested folders
+  scope: string; // Changed from type to scope to match requirements
+  sort_order: number;
+  created_at: DateTime | Date;
+  updated_at: DateTime | Date;
 }
 
 // Feature: Friends / Contacts
@@ -175,6 +177,7 @@ export interface Reservation {
   tenant_id: ID;
   event_id: ID;
   contact_id: ID;
+  folder_id?: ID; // Added folder support
   status: 'pending' | 'confirmed' | 'canceled' | 'attended';
   created_at: DateTime;
 }

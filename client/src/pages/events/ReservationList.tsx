@@ -21,21 +21,55 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { Reservation } from "@/types/schema";
-import { CheckCircle, XCircle, Calendar, Plus } from "lucide-react";
+import { FolderManager } from "@/components/common/folder-manager";
+import { Reservation, Folder } from "@/types/schema";
+import { CheckCircle, XCircle, Calendar, Plus, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "3月イベント", scope: "reservations", sort_order: 1, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "個別相談会", scope: "reservations", sort_order: 2, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_RESERVATIONS: Reservation[] = [
-  { id: "1", tenant_id: "t1", event_id: "e1", contact_id: "c1", status: "pending", created_at: "2024-02-10T10:00:00Z" },
-  { id: "2", tenant_id: "t1", event_id: "e1", contact_id: "c2", status: "confirmed", created_at: "2024-02-10T11:30:00Z" },
-  { id: "3", tenant_id: "t1", event_id: "e2", contact_id: "c3", status: "canceled", created_at: "2024-02-11T09:00:00Z" },
+  { id: "1", tenant_id: "t1", event_id: "e1", contact_id: "c1", folder_id: "f1", status: "pending", created_at: "2024-02-10T10:00:00Z" },
+  { id: "2", tenant_id: "t1", event_id: "e1", contact_id: "c2", folder_id: "f1", status: "confirmed", created_at: "2024-02-10T11:30:00Z" },
+  { id: "3", tenant_id: "t1", event_id: "e2", contact_id: "c3", folder_id: "f2", status: "canceled", created_at: "2024-02-11T09:00:00Z" },
 ];
 
 export default function ReservationListPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [reservations, setReservations] = useState<Reservation[]>(MOCK_RESERVATIONS);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", date: "" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      scope: "reservations",
+      sort_order: folders.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setReservations(reservations.map(r => r.folder_id === id ? { ...r, folder_id: undefined } : r));
+    toast.success("フォルダを削除しました");
+  };
 
   const updateStatus = (id: string, status: 'confirmed' | 'canceled') => {
     setReservations(reservations.map(r => r.id === id ? { ...r, status } : r));
@@ -44,15 +78,37 @@ export default function ReservationListPage() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
+    const newReservation: Reservation = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      event_id: "e_new",
+      contact_id: "c_new",
+      folder_id: selectedFolderId || undefined,
+      status: "pending",
+      created_at: new Date().toISOString(),
+    };
+    setReservations([newReservation, ...reservations]);
     toast.success("予約を作成しました");
     setIsDialogOpen(false);
   };
 
+  const filteredReservations = selectedFolderId
+    ? reservations.filter(r => r.folder_id === selectedFolderId)
+    : reservations;
+
   const columns = [
     {
       header: "予約ID",
-      accessorKey: "id" as keyof Reservation,
-      className: "font-mono text-xs",
+      cell: (item: Reservation) => (
+        <div>
+          <div className="font-mono text-xs">{item.id}</div>
+          {item.folder_id && (
+            <span className="text-xs text-gray-400 block mt-1">
+              {folders.find(f => f.id === item.folder_id)?.name}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       header: "予約日時",
@@ -105,12 +161,32 @@ export default function ReservationListPage() {
         </Button>
       }
     >
-      <DataTable 
-        data={reservations} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての予約"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredReservations} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

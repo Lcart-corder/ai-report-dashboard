@@ -4,27 +4,41 @@ import { AppSidebar } from "./components/app-sidebar";
 import Dashboard from "./pages/Dashboard";
 import AIReportDetailPage from "./pages/AIReportDetail";
 import PlaceholderPage from "./pages/PlaceholderPage";
-import FriendsListPage from "./pages/FriendsList";
-import FriendInfoPage from "./pages/friends/FriendInfoEdit";
+
+// Friends
+import FriendListPage from "./pages/friends/FriendList";
+import FriendInfoListPage from "./pages/friends/FriendInfoList";
+import TagsPage from "./pages/friends/Tags";
+
+// Messages
 import BroadcastPage from "./pages/messages/Broadcast";
 import StepPage from "./pages/messages/Step";
 import AutoReplyPage from "./pages/messages/AutoReply";
-import ActionScheduleCreatePage from "./pages/messages/ActionScheduleCreate";
+import ActionSchedulePage from "./pages/messages/ActionSchedule";
 import TemplatesPage from "./pages/messages/Templates";
+import RichMenuListPage from "./pages/messages/RichMenuList";
 import RichMenuCreatePage from "./pages/messages/RichMenuCreate";
 import TemplateCreatePage from "./pages/messages/TemplateCreate";
 import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
-import EventsDashboard from "./pages/events/index";
+
+// Events
+import EventListPage from "./pages/events/EventList";
 import ReservationListPage from "./pages/events/ReservationList";
 import EventCreatePage from "./pages/events/EventCreate";
+
+// Forms
 import FormsPage from "./pages/forms/index";
 import FormCreatePage from "./pages/forms/FormCreate";
+
+// Analysis
 import AnalysisDashboard from "./pages/analysis/index";
 import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
 import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
 import TrafficSourcesPage from "./pages/analysis/TrafficSources";
 import TrafficSourceCreatePage from "./pages/analysis/TrafficSourceCreate";
 import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
+
+// Others
 import AIDashboard from "./pages/ai/index";
 import IntegrationsPage from "./pages/integrations/index";
 import AdminDashboard from "./pages/admin/index";
@@ -40,10 +54,10 @@ function App() {
             <Route path="/" component={Dashboard} />
             
             {/* Friends */}
-            <Route path="/friends" component={FriendsListPage} />
-            <Route path="/friends/list" component={FriendsListPage} />
-            <Route path="/friends/info" component={FriendInfoPage} />
-            <Route path="/friends/tags" component={PlaceholderPage} />
+            <Route path="/friends" component={FriendListPage} />
+            <Route path="/friends/list" component={FriendListPage} />
+            <Route path="/friends/info" component={FriendInfoListPage} />
+            <Route path="/friends/tags" component={TagsPage} />
             <Route path="/friends/conversions" component={PlaceholderPage} />
 
             {/* Messages */}
@@ -53,9 +67,9 @@ function App() {
             <Route path="/messages/templates" component={TemplatesPage} />
             <Route path="/messages/templates/create" component={TemplateCreatePage} />
             <Route path="/messages/templates/analysis" component={TemplateAnalysisPage} />
-            <Route path="/messages/action-schedule" component={ActionScheduleCreatePage} />
+            <Route path="/messages/action-schedule" component={ActionSchedulePage} />
             <Route path="/messages/greeting" component={PlaceholderPage} />
-            <Route path="/messages/rich-menus" component={PlaceholderPage} />
+            <Route path="/messages/rich-menus" component={RichMenuListPage} />
             <Route path="/messages/rich-menus/create" component={RichMenuCreatePage} />
 
             {/* Forms */}
@@ -68,15 +82,16 @@ function App() {
             <Route path="/analysis/friends" component={FriendsAnalysisPage} />
             <Route path="/analysis/messages" component={MessagesAnalysisPage} />
             <Route path="/analysis/traffic" component={TrafficSourcesPage} />
-      <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
-      <Route path="/analysis/conversions" component={ConversionSettingsPage} />
+            <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
+            <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}
-            <Route path="/events" component={EventsDashboard} />
-      <Route path="/events/reservations" component={ReservationListPage} />
-      <Route path="/events/create" component={EventCreatePage} />
-      <Route path="/events/calendar" component={PlaceholderPage} />
+            <Route path="/events" component={EventListPage} />
+            <Route path="/events/list" component={EventListPage} />
+            <Route path="/events/reservations" component={ReservationListPage} />
+            <Route path="/events/create" component={EventCreatePage} />
+            <Route path="/events/calendar" component={PlaceholderPage} />
             <Route path="/events/settings" component={PlaceholderPage} />
 
             {/* AI Reports */}

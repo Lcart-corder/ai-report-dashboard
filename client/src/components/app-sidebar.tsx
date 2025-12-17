@@ -14,7 +14,30 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  LogOut
+  Tag,
+  UserCog,
+  Ban,
+  Send,
+  GitMerge,
+  MessageCircle,
+  LayoutTemplate,
+  MousePointerClick,
+  CalendarDays,
+  List,
+  UserCheck,
+  FileInput,
+  PlusCircle,
+  PieChart,
+  TrendingUp,
+  Globe,
+  FileBarChart,
+  History,
+  Sliders,
+  ShoppingBag,
+  Smartphone,
+  User,
+  CreditCard,
+  Menu
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -59,10 +82,10 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "友だち管理", 
       href: "/friends",
       subItems: [
-        { label: "友だちリスト", href: "/friends/list" },
-        { label: "タグ管理", href: "/friends/tags" },
-        { label: "友だち情報管理", href: "/friends/info/create" }, // Updated to point to the new creation page for now, ideally should be a list
-        { label: "ブロックリスト", href: "/friends/blocked" }
+        { label: "友だちリスト", href: "/friends/list", icon: List },
+        { label: "タグ管理", href: "/friends/tags", icon: Tag },
+        { label: "友だち情報管理", href: "/friends/info", icon: UserCog },
+        { label: "ブロックリスト", href: "/friends/blocked", icon: Ban }
       ]
     },
     { 
@@ -70,11 +93,13 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "メッセージ", 
       href: "/messages",
       subItems: [
-        { label: "一斉配信", href: "/messages/broadcast" },
-        { label: "ステップ配信", href: "/messages/step" },
-        { label: "自動応答", href: "/messages/auto-reply" },
-        { label: "テンプレート", href: "/messages/templates" },
-        { label: "アクションスケジュール", href: "/messages/schedule/create" } // Updated
+        { label: "一斉配信", href: "/messages/broadcast", icon: Send },
+        { label: "ステップ配信", href: "/messages/step", icon: GitMerge },
+        { label: "自動応答", href: "/messages/auto-reply", icon: MessageCircle },
+        { label: "テンプレート", href: "/messages/templates", icon: LayoutTemplate },
+        { label: "リッチメニュー", href: "/messages/rich-menus", icon: Menu },
+        { label: "アクションスケジュール", href: "/messages/action-schedule", icon: CalendarDays },
+        { label: "挨拶メッセージ", href: "/messages/greeting", icon: MessageSquare }
       ]
     },
     { 
@@ -82,9 +107,10 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "予約・イベント", 
       href: "/events",
       subItems: [
-        { label: "予約カレンダー", href: "/events/calendar" },
-        { label: "イベント一覧", href: "/events/list" },
-        { label: "参加者管理", href: "/events/participants" }
+        { label: "予約カレンダー", href: "/events/calendar", icon: CalendarDays },
+        { label: "予約一覧", href: "/events/reservations", icon: List },
+        { label: "イベントページ", href: "/events", icon: Globe },
+        { label: "予約設定", href: "/events/settings", icon: Settings }
       ]
     },
     { 
@@ -92,8 +118,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "フォーム", 
       href: "/forms",
       subItems: [
-        { label: "回答一覧", href: "/forms/responses" },
-        { label: "フォーム作成", href: "/forms/create" }
+        { label: "回答フォーム一覧", href: "/forms", icon: List },
+        { label: "回答一覧", href: "/forms/responses", icon: FileInput }
       ]
     },
     { 
@@ -101,10 +127,12 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "分析", 
       href: "/analysis",
       subItems: [
-        { label: "ダッシュボード", href: "/analysis" },
-        { label: "友だち分析", href: "/analysis/friends" },
-        { label: "メッセージ分析", href: "/analysis/messages" },
-        { label: "流入経路分析", href: "/analysis/traffic" }
+        { label: "ダッシュボード", href: "/analysis", icon: PieChart },
+        { label: "友だち分析", href: "/analysis/friends", icon: Users },
+        { label: "メッセージ分析", href: "/analysis/messages", icon: MessageSquare },
+        { label: "流入経路分析", href: "/analysis/traffic", icon: TrendingUp },
+        { label: "コンバージョン設定", href: "/analysis/conversions", icon: MousePointerClick },
+        { label: "サイト計測設定", href: "/analysis/site", icon: Globe }
       ]
     },
     { 
@@ -112,9 +140,9 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "AI", 
       href: "/ai",
       subItems: [
-        { label: "分析レポート", href: "/ai/reports" },
-        { label: "生成履歴", href: "/ai/history" },
-        { label: "モデル設定", href: "/ai/settings" }
+        { label: "分析レポート", href: "/ai/reports", icon: FileBarChart },
+        { label: "生成履歴", href: "/ai/history", icon: History },
+        { label: "モデル設定", href: "/ai/settings", icon: Sliders }
       ]
     },
     { 
@@ -122,8 +150,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "連携", 
       href: "/integrations",
       subItems: [
-        { label: "Shopify連携", href: "/integrations/shopify" },
-        { label: "LINE公式アカウント", href: "/integrations/line" }
+        { label: "Shopify連携", href: "/integrations/shopify", icon: ShoppingBag },
+        { label: "LINE公式アカウント", href: "/integrations/line", icon: Smartphone }
       ]
     },
     { 
@@ -131,9 +159,9 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "管理", 
       href: "/admin",
       subItems: [
-        { label: "アカウント設定", href: "/admin/account" },
-        { label: "メンバー管理", href: "/admin/members" },
-        { label: "プラン・支払い", href: "/admin/billing" }
+        { label: "アカウント設定", href: "/admin/account", icon: User },
+        { label: "メンバー管理", href: "/admin/members", icon: Users },
+        { label: "プラン・支払い", href: "/admin/billing", icon: CreditCard }
       ]
     },
   ]
@@ -220,12 +248,13 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
                       <Link key={subItem.href} href={subItem.href}>
                         <div
                           className={cn(
-                            "block px-3 py-2 text-sm rounded-md transition-colors cursor-pointer",
+                            "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer",
                             activePath === subItem.href || activePath.startsWith(subItem.href)
                               ? "text-[#06C755] bg-[#06C755]/5 font-medium"
                               : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                           )}
                         >
+                          {subItem.icon && <subItem.icon className="w-4 h-4 opacity-70" />}
                           {subItem.label}
                         </div>
                       </Link>

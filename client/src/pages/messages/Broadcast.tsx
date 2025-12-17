@@ -15,21 +15,55 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { Broadcast } from "@/types/schema";
+import { FolderManager } from "@/components/common/folder-manager";
+import { Broadcast, Folder } from "@/types/schema";
 import { Plus, Send, Clock, Edit2, Trash2, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "キャンペーン", scope: "broadcasts", sort_order: 1, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "定期配信", scope: "broadcasts", sort_order: 2, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_BROADCASTS: Broadcast[] = [
-  { id: "1", tenant_id: "t1", name: "新春キャンペーン告知", status: "sent", target_filter_json: {}, messages_json: [], sent_count: 2124, created_at: "2025-01-15T10:00:00Z", scheduled_at: "2025-01-15T10:00:00Z" },
-  { id: "2", tenant_id: "t1", name: "2月セール予告", status: "scheduled", target_filter_json: {}, messages_json: [], sent_count: 0, created_at: "2025-01-20T14:00:00Z", scheduled_at: "2025-02-01T09:00:00Z" },
-  { id: "3", tenant_id: "t1", name: "未購入者向けクーポン", status: "draft", target_filter_json: {}, messages_json: [], sent_count: 0, created_at: "2025-01-22T11:30:00Z" },
+  { id: "1", tenant_id: "t1", name: "新春キャンペーン告知", folder_id: "f1", status: "sent", target_filter_json: {}, messages_json: [], sent_count: 2124, created_at: "2025-01-15T10:00:00Z", scheduled_at: "2025-01-15T10:00:00Z" },
+  { id: "2", tenant_id: "t1", name: "2月セール予告", folder_id: "f1", status: "scheduled", target_filter_json: {}, messages_json: [], sent_count: 0, created_at: "2025-01-20T14:00:00Z", scheduled_at: "2025-02-01T09:00:00Z" },
+  { id: "3", tenant_id: "t1", name: "未購入者向けクーポン", folder_id: undefined, status: "draft", target_filter_json: {}, messages_json: [], sent_count: 0, created_at: "2025-01-22T11:30:00Z" },
 ];
 
 export default function BroadcastPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>(MOCK_BROADCASTS);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", message: "", schedule: "" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      scope: "broadcasts",
+      sort_order: folders.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setBroadcasts(broadcasts.map(b => b.folder_id === id ? { ...b, folder_id: undefined } : b));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +76,7 @@ export default function BroadcastPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       name: formData.name,
+      folder_id: selectedFolderId || undefined,
       status: formData.schedule ? "scheduled" : "draft",
       target_filter_json: {},
       messages_json: [{ type: "text", text: formData.message }],
@@ -62,11 +97,23 @@ export default function BroadcastPage() {
     });
   };
 
+  const filteredBroadcasts = selectedFolderId
+    ? broadcasts.filter(b => b.folder_id === selectedFolderId)
+    : broadcasts;
+
   const columns = [
     {
       header: "配信名",
-      accessorKey: "name" as keyof Broadcast,
-      className: "font-medium",
+      cell: (item: Broadcast) => (
+        <div>
+          <div className="font-medium">{item.name}</div>
+          {item.folder_id && (
+            <span className="text-xs text-gray-400 block mt-1">
+              {folders.find(f => f.id === item.folder_id)?.name}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       header: "ステータス",
@@ -111,12 +158,32 @@ export default function BroadcastPage() {
         </Button>
       }
     >
-      <DataTable 
-        data={broadcasts} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredBroadcasts} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">

@@ -12,17 +12,23 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { DataTable, AuditLogViewer } from "@/components/common/ui-kit";
-import { Tag, AuditLog } from "@/types/schema";
+import { FolderManager } from "@/components/common/folder-manager";
+import { Tag, AuditLog, Folder } from "@/types/schema";
 import { Plus, Edit2, Trash2, Tag as TagIcon } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "顧客ランク", scope: "tags", sort_order: 1, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "行動履歴", scope: "tags", sort_order: 2, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_TAGS: Tag[] = [
-  { id: "1", tenant_id: "t1", name: "VIP", color: "#FFD700", count: 124, created_at: "2024-01-01T10:00:00Z" },
-  { id: "2", tenant_id: "t1", name: "1月購入", color: "#06C755", count: 45, created_at: "2024-01-15T14:30:00Z" },
-  { id: "3", tenant_id: "t1", name: "クーポン利用", color: "#3B82F6", count: 89, created_at: "2024-01-20T09:15:00Z" },
-  { id: "4", tenant_id: "t1", name: "カート落ち", color: "#EF4444", count: 12, created_at: "2024-02-01T11:00:00Z" },
-  { id: "5", tenant_id: "t1", name: "メルマガ購読", color: "#8B5CF6", count: 256, created_at: "2024-02-05T16:45:00Z" },
+  { id: "1", tenant_id: "t1", name: "VIP", folder_id: "f1", color: "#FFD700", count: 124, created_at: "2024-01-01T10:00:00Z" },
+  { id: "2", tenant_id: "t1", name: "1月購入", folder_id: "f2", color: "#06C755", count: 45, created_at: "2024-01-15T14:30:00Z" },
+  { id: "3", tenant_id: "t1", name: "クーポン利用", folder_id: "f2", color: "#3B82F6", count: 89, created_at: "2024-01-20T09:15:00Z" },
+  { id: "4", tenant_id: "t1", name: "カート落ち", folder_id: "f2", color: "#EF4444", count: 12, created_at: "2024-02-01T11:00:00Z" },
+  { id: "5", tenant_id: "t1", name: "メルマガ購読", folder_id: undefined, color: "#8B5CF6", count: 256, created_at: "2024-02-05T16:45:00Z" },
 ];
 
 const MOCK_LOGS: AuditLog[] = [
@@ -31,10 +37,38 @@ const MOCK_LOGS: AuditLog[] = [
 ];
 
 export default function TagsPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [tags, setTags] = useState<Tag[]>(MOCK_TAGS);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [formData, setFormData] = useState({ name: "", color: "#06C755" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      scope: "tags",
+      sort_order: folders.length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setTags(tags.map(t => t.folder_id === id ? { ...t, folder_id: undefined } : t));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleOpenDialog = (tag?: Tag) => {
     if (tag) {
@@ -65,6 +99,7 @@ export default function TagsPage() {
         id: Math.random().toString(36).substr(2, 9),
         tenant_id: "t1",
         name: formData.name,
+        folder_id: selectedFolderId || undefined,
         color: formData.color,
         count: 0,
         created_at: new Date().toISOString(),
@@ -82,13 +117,24 @@ export default function TagsPage() {
     }
   };
 
+  const filteredTags = selectedFolderId
+    ? tags.filter(t => t.folder_id === selectedFolderId)
+    : tags;
+
   const columns = [
     {
       header: "タグ名",
       cell: (tag: Tag) => (
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: tag.color }} />
-          <span className="font-medium">{tag.name}</span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: tag.color }} />
+            <span className="font-medium">{tag.name}</span>
+          </div>
+          {tag.folder_id && (
+            <span className="text-xs text-gray-400 ml-6">
+              {folders.find(f => f.id === tag.folder_id)?.name}
+            </span>
+          )}
         </div>
       ),
     },
@@ -129,26 +175,41 @@ export default function TagsPage() {
         </Button>
       }
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <DataTable 
-            data={tags} 
-            columns={columns} 
-            searchable 
-            onSearch={(q) => {
-              // Client-side search for mock
-              if (!q) setTags(MOCK_TAGS);
-              else setTags(MOCK_TAGS.filter(t => t.name.toLowerCase().includes(q.toLowerCase())));
-            }}
-            pagination={{
-              currentPage: 1,
-              totalPages: 1,
-              onPageChange: () => {},
-            }}
-          />
-        </div>
-        <div>
-          <AuditLogViewer logs={MOCK_LOGS} />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <DataTable 
+                  data={filteredTags} 
+                  columns={columns} 
+                  searchable 
+                  pagination={{
+                    currentPage: 1,
+                    totalPages: 1,
+                    onPageChange: () => {},
+                  }}
+                />
+              </div>
+              <div>
+                <AuditLogViewer logs={MOCK_LOGS} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

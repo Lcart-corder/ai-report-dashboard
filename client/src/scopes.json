@@ -1,0 +1,86 @@
+[
+  {
+    "scope": "contacts",
+    "name": "友だちリスト",
+    "path": "/friends/list",
+    "has_list": true
+  },
+  {
+    "scope": "tags",
+    "name": "タグ管理",
+    "path": "/friends/tags",
+    "has_list": true
+  },
+  {
+    "scope": "contact_attributes",
+    "name": "友だち情報管理",
+    "path": "/friends/info",
+    "has_list": true
+  },
+  {
+    "scope": "broadcasts",
+    "name": "一斉配信",
+    "path": "/messages/broadcast",
+    "has_list": true
+  },
+  {
+    "scope": "steps",
+    "name": "ステップ配信",
+    "path": "/messages/step",
+    "has_list": true
+  },
+  {
+    "scope": "auto_replies",
+    "name": "自動応答",
+    "path": "/messages/auto-reply",
+    "has_list": true
+  },
+  {
+    "scope": "templates",
+    "name": "テンプレート",
+    "path": "/messages/templates",
+    "has_list": true
+  },
+  {
+    "scope": "rich_menus",
+    "name": "リッチメニュー",
+    "path": "/messages/rich-menus",
+    "has_list": true
+  },
+  {
+    "scope": "action_schedules",
+    "name": "アクションスケジュール",
+    "path": "/messages/action-schedule",
+    "has_list": true
+  },
+  {
+    "scope": "reservations",
+    "name": "予約管理",
+    "path": "/events/reservations",
+    "has_list": true
+  },
+  {
+    "scope": "events",
+    "name": "イベントページ",
+    "path": "/events",
+    "has_list": true
+  },
+  {
+    "scope": "forms",
+    "name": "回答フォーム",
+    "path": "/forms",
+    "has_list": true
+  },
+  {
+    "scope": "traffic_sources",
+    "name": "流入経路分析",
+    "path": "/analysis/traffic",
+    "has_list": true
+  },
+  {
+    "scope": "conversions",
+    "name": "コンバージョン設定",
+    "path": "/analysis/conversions",
+    "has_list": true
+  }
+]

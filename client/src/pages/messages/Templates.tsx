@@ -21,8 +21,8 @@ import { Link } from "wouter";
 
 // Mock Data
 const MOCK_FOLDERS: Folder[] = [
-  { id: "f1", tenant_id: "t1", name: "予約関連", type: "template", created_at: "2024-01-01T00:00:00Z" },
-  { id: "f2", tenant_id: "t1", name: "商品紹介", type: "template", created_at: "2024-01-01T00:00:00Z" },
+  { id: "f1", tenant_id: "t1", name: "予約関連", scope: "templates", sort_order: 1, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "商品紹介", scope: "templates", sort_order: 2, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
 ];
 
 const MOCK_TEMPLATES: MessageTemplate[] = [
@@ -44,8 +44,10 @@ export default function TemplatesPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       name,
-      type: "template",
+      scope: "templates",
+      sort_order: folders.length + 1,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     setFolders([...folders, newFolder]);
     toast.success("フォルダを作成しました");
