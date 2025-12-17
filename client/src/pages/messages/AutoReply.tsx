@@ -1,0 +1,199 @@
+import React, { useState } from "react";
+import { PageTemplate } from "@/components/page-template";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DataTable, StatusBadge } from "@/components/common/ui-kit";
+import { AutoReply } from "@/types/schema";
+import { Plus, Edit2, Trash2, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
+
+// Mock Data
+const MOCK_AUTO_REPLIES: AutoReply[] = [
+  { id: "1", tenant_id: "t1", keyword: "営業時間", match_type: "partial", response_type: "text", response_content: "営業時間は平日10:00〜18:00です。", is_active: true, created_at: "2024-01-01T10:00:00Z" },
+  { id: "2", tenant_id: "t1", keyword: "アクセス", match_type: "partial", response_type: "text", response_content: "東京都渋谷区...", is_active: true, created_at: "2024-01-15T14:30:00Z" },
+  { id: "3", tenant_id: "t1", keyword: "キャンペーン", match_type: "exact", response_type: "template", response_content: {}, is_active: false, created_at: "2024-02-01T11:00:00Z" },
+];
+
+export default function AutoReplyPage() {
+  const [replies, setReplies] = useState<AutoReply[]>(MOCK_AUTO_REPLIES);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({ keyword: "", matchType: "partial", response: "" });
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.keyword || !formData.response) {
+      toast.error("キーワードと応答内容を入力してください");
+      return;
+    }
+
+    const newReply: AutoReply = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      keyword: formData.keyword,
+      match_type: formData.matchType as any,
+      response_type: "text",
+      response_content: formData.response,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+
+    setReplies([newReply, ...replies]);
+    toast.success("自動応答を作成しました");
+    setIsDialogOpen(false);
+    setFormData({ keyword: "", matchType: "partial", response: "" });
+  };
+
+  const toggleStatus = (id: string) => {
+    setReplies(replies.map(r => {
+      if (r.id === id) {
+        const newStatus = !r.is_active;
+        toast.success(newStatus ? "自動応答を有効化しました" : "自動応答を停止しました");
+        return { ...r, is_active: newStatus };
+      }
+      return r;
+    }));
+  };
+
+  const columns = [
+    {
+      header: "キーワード",
+      cell: (item: AutoReply) => (
+        <div className="font-medium">{item.keyword}</div>
+      ),
+    },
+    {
+      header: "一致条件",
+      cell: (item: AutoReply) => (
+        <span className="text-sm text-gray-600">
+          {item.match_type === "exact" ? "完全一致" : item.match_type === "partial" ? "部分一致" : "正規表現"}
+        </span>
+      ),
+    },
+    {
+      header: "応答内容",
+      cell: (item: AutoReply) => (
+        <div className="text-sm text-gray-600 truncate max-w-[200px]">
+          {typeof item.response_content === 'string' ? item.response_content : 'テンプレート'}
+        </div>
+      ),
+    },
+    {
+      header: "ステータス",
+      cell: (item: AutoReply) => (
+        <div onClick={() => toggleStatus(item.id)} className="cursor-pointer">
+          <StatusBadge 
+            status={item.is_active ? "active" : "inactive"} 
+            label={item.is_active ? "稼働中" : "停止中"}
+          />
+        </div>
+      ),
+    },
+    {
+      header: "操作",
+      className: "text-right",
+      cell: (item: AutoReply) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon">
+            <Edit2 className="w-4 h-4 text-gray-500" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-red-500">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <PageTemplate 
+      title="自動応答" 
+      description="ユーザーからのメッセージに含まれるキーワードに反応して自動で返信します。"
+      breadcrumbs={[{ label: "メッセージ" }, { label: "自動応答" }]}
+      actions={
+        <Button onClick={() => setIsDialogOpen(true)} className="bg-[#06C755] hover:bg-[#05b34c] text-white gap-2">
+          <Plus className="w-4 h-4" />
+          新規作成
+        </Button>
+      }
+    >
+      <DataTable 
+        data={replies} 
+        columns={columns} 
+        searchable 
+        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+      />
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>新規自動応答作成</DialogTitle>
+            <DialogDescription>
+              反応するキーワードと返信内容を設定してください。
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreate}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="keyword">キーワード</Label>
+                <Input 
+                  id="keyword" 
+                  placeholder="例: 営業時間" 
+                  value={formData.keyword}
+                  onChange={(e) => setFormData({...formData, keyword: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="matchType">一致条件</Label>
+                <Select 
+                  value={formData.matchType} 
+                  onValueChange={(v) => setFormData({...formData, matchType: v})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partial">部分一致（キーワードを含む）</SelectItem>
+                    <SelectItem value="exact">完全一致（キーワードのみ）</SelectItem>
+                    <SelectItem value="regex">正規表現</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="response">返信内容</Label>
+                <Textarea 
+                  id="response" 
+                  placeholder="返信するメッセージを入力..." 
+                  value={formData.response}
+                  onChange={(e) => setFormData({...formData, response: e.target.value})}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>キャンセル</Button>
+              <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white">
+                作成する
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </PageTemplate>
+  );
+}

@@ -5,10 +5,27 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LayoutProvider } from "./contexts/layout-context";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import AIReportDetailPage from "./pages/AIReportDetail";
 import DashboardPage from "./pages/Dashboard";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import FriendsListPage from "./pages/FriendsList";
+import TagsPage from "./pages/friends/Tags";
+import BlockedPage from "./pages/friends/Blocked";
+import MessagesDashboard from "./pages/messages/index";
+import BroadcastPage from "./pages/messages/Broadcast";
+import StepPage from "./pages/messages/Step";
+import AutoReplyPage from "./pages/messages/AutoReply";
+import TemplatesPage from "./pages/messages/Templates";
+import EventsDashboard from "./pages/events/index";
+import ReservationListPage from "./pages/events/ReservationList";
+import FormsPage from "./pages/forms/index";
+import AnalysisDashboard from "./pages/analysis/index";
+import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
+import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
+import AIDashboard from "./pages/ai/index";
+import IntegrationsPage from "./pages/integrations/index";
+import AdminDashboard from "./pages/admin/index";
 
 function Router() {
   return (
@@ -24,44 +41,44 @@ function Router() {
       {/* Friends */}
       <Route path="/friends" component={FriendsListPage} />
       <Route path="/friends/list" component={FriendsListPage} />
-      <Route path="/friends/tags" component={PlaceholderPage} />
-      <Route path="/friends/blocked" component={PlaceholderPage} />
+      <Route path="/friends/tags" component={TagsPage} />
+      <Route path="/friends/blocked" component={BlockedPage} />
 
       {/* Messages */}
-      <Route path="/messages" component={PlaceholderPage} />
-      <Route path="/messages/broadcast" component={PlaceholderPage} />
-      <Route path="/messages/step" component={PlaceholderPage} />
-      <Route path="/messages/auto-reply" component={PlaceholderPage} />
-      <Route path="/messages/templates" component={PlaceholderPage} />
+      <Route path="/messages" component={MessagesDashboard} />
+      <Route path="/messages/broadcast" component={BroadcastPage} />
+      <Route path="/messages/step" component={StepPage} />
+      <Route path="/messages/auto-reply" component={AutoReplyPage} />
+      <Route path="/messages/templates" component={TemplatesPage} />
 
       {/* Events */}
-      <Route path="/events" component={PlaceholderPage} />
+      <Route path="/events" component={EventsDashboard} />
       <Route path="/events/calendar" component={PlaceholderPage} />
-      <Route path="/events/list" component={PlaceholderPage} />
+      <Route path="/events/list" component={ReservationListPage} />
       <Route path="/events/participants" component={PlaceholderPage} />
 
       {/* Forms */}
-      <Route path="/forms" component={PlaceholderPage} />
+      <Route path="/forms" component={FormsPage} />
       <Route path="/forms/responses" component={PlaceholderPage} />
       <Route path="/forms/create" component={PlaceholderPage} />
 
       {/* Analysis */}
-      <Route path="/analysis" component={PlaceholderPage} />
-      <Route path="/analysis/friends" component={PlaceholderPage} />
-      <Route path="/analysis/messages" component={PlaceholderPage} />
+      <Route path="/analysis" component={AnalysisDashboard} />
+      <Route path="/analysis/friends" component={FriendsAnalysisPage} />
+      <Route path="/analysis/messages" component={MessagesAnalysisPage} />
 
       {/* AI */}
-      <Route path="/ai" component={PlaceholderPage} />
+      <Route path="/ai" component={AIDashboard} />
       <Route path="/ai/history" component={PlaceholderPage} />
       <Route path="/ai/settings" component={PlaceholderPage} />
 
       {/* Integrations */}
-      <Route path="/integrations" component={PlaceholderPage} />
+      <Route path="/integrations" component={IntegrationsPage} />
       <Route path="/integrations/shopify" component={PlaceholderPage} />
       <Route path="/integrations/line" component={PlaceholderPage} />
 
       {/* Admin */}
-      <Route path="/admin" component={PlaceholderPage} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/account" component={PlaceholderPage} />
       <Route path="/admin/members" component={PlaceholderPage} />
       <Route path="/admin/billing" component={PlaceholderPage} />
@@ -78,10 +95,12 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <NotificationProvider>
           <LayoutProvider>
             <Toaster />
             <Router />
           </LayoutProvider>
+        </NotificationProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
