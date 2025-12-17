@@ -30,8 +30,14 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
   
   // State for collapsible submenus
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    "/friends": true,
+    "/messages": true,
+    "/events": true,
+    "/forms": true,
     "/analysis": true,
-    "/ai": true
+    "/ai": true,
+    "/integrations": true,
+    "/admin": true
   })
 
   const toggleMenu = (href: string) => {
@@ -55,6 +61,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       subItems: [
         { label: "友だちリスト", href: "/friends/list" },
         { label: "タグ管理", href: "/friends/tags" },
+        { label: "友だち情報管理", href: "/friends/info/create" }, // Updated to point to the new creation page for now, ideally should be a list
         { label: "ブロックリスト", href: "/friends/blocked" }
       ]
     },
@@ -66,7 +73,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "一斉配信", href: "/messages/broadcast" },
         { label: "ステップ配信", href: "/messages/step" },
         { label: "自動応答", href: "/messages/auto-reply" },
-        { label: "テンプレート", href: "/messages/templates" }
+        { label: "テンプレート", href: "/messages/templates" },
+        { label: "アクションスケジュール", href: "/messages/schedule/create" } // Updated
       ]
     },
     { 
@@ -93,9 +101,10 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "分析", 
       href: "/analysis",
       subItems: [
-        { label: "ダッシュボード", href: "/analysis/dashboard" },
+        { label: "ダッシュボード", href: "/analysis" },
         { label: "友だち分析", href: "/analysis/friends" },
-        { label: "メッセージ分析", href: "/analysis/messages" }
+        { label: "メッセージ分析", href: "/analysis/messages" },
+        { label: "流入経路分析", href: "/analysis/traffic" }
       ]
     },
     { 
