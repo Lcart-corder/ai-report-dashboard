@@ -357,8 +357,26 @@ export interface ChatMessage {
   sender_id?: string; // user_id or contact_id
   content_type: 'text' | 'image' | 'sticker' | 'template';
   content: string; // JSON string for non-text
+  status: 'pending' | 'sent' | 'failed';
+  meta_json?: JSONValue;
   read_at?: string;
   created_at: string;
+}
+
+export interface UrlShortener {
+  id: string;
+  tenant_id: string;
+  original_url: string;
+  short_url: string;
+  created_at: string;
+}
+
+export interface UrlClickEvent {
+  id: string;
+  tenant_id: string;
+  short_url_id: string;
+  contact_id: string;
+  clicked_at: string;
 }
 
 export interface ChatSettings {
