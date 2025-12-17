@@ -7,33 +7,84 @@ import {
   Plus, 
   TrendingUp, 
   TrendingDown, 
-  Users, 
   ShoppingBag, 
-  MessageCircle, 
   MoreHorizontal,
   ChevronRight,
-  ArrowUpRight,
-  ArrowDownRight
+  Calendar as CalendarIcon,
+  Filter,
+  Search,
+  Folder,
+  Trash2,
+  Copy
 } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function DashboardPage() {
   const { sidebarCollapsed } = useLayout()
   const [timeRange, setTimeRange] = useState("過去30日")
+  const [activeChartTab, setActiveChartTab] = useState("売上")
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false)
+  const [isCreateReportDialogOpen, setIsCreateReportDialogOpen] = useState(false)
 
-  // KPI Data
-  const kpis = [
-    { label: "総売上", value: "¥3.2M", change: "+22.5%", trend: "up", chart: "bg-emerald-500" },
-    { label: "注文数", value: "1,842", change: "+18.3%", trend: "up", chart: "bg-blue-500" },
-    { label: "転換率", value: "6.5%", change: "+5.2%", trend: "up", chart: "bg-purple-500" },
-    { label: "平均注文額", value: "¥1,738", change: "+3.8%", trend: "up", chart: "bg-orange-500" },
-    { label: "リピート率", value: "42.3%", change: "+12.4%", trend: "up", chart: "bg-teal-500" },
-    { label: "友だち純増", value: "+2,124", change: "+8.7%", trend: "up", chart: "bg-emerald-400" },
-    { label: "ブロック率", value: "7.8%", change: "-1.2%", trend: "down", chart: "bg-red-400", isGoodDown: true },
-    { label: "配信クリック率", value: "24.6%", change: "+6.1%", trend: "up", chart: "bg-blue-600" },
-  ]
+  // Mock Data Generators based on Time Range
+  const getKpiData = (range: string) => {
+    const multiplier = range === "過去30日" ? 1 : range === "今月" ? 0.8 : range === "先月" ? 0.9 : 0.25
+    return [
+      { label: "総売上", value: `¥${(3.2 * multiplier).toFixed(1)}M`, change: "+22.5%", trend: "up", chart: "bg-emerald-500" },
+      { label: "注文数", value: Math.floor(1842 * multiplier).toLocaleString(), change: "+18.3%", trend: "up", chart: "bg-blue-500" },
+      { label: "転換率", value: "6.5%", change: "+5.2%", trend: "up", chart: "bg-purple-500" },
+      { label: "平均注文額", value: "¥1,738", change: "+3.8%", trend: "up", chart: "bg-orange-500" },
+      { label: "リピート率", value: "42.3%", change: "+12.4%", trend: "up", chart: "bg-teal-500" },
+      { label: "友だち純増", value: `+${Math.floor(2124 * multiplier).toLocaleString()}`, change: "+8.7%", trend: "up", chart: "bg-emerald-400" },
+      { label: "ブロック率", value: "7.8%", change: "-1.2%", trend: "down", chart: "bg-red-400", isGoodDown: true },
+      { label: "配信クリック率", value: "24.6%", change: "+6.1%", trend: "up", chart: "bg-blue-600" },
+    ]
+  }
 
-  // Mock Data for Tables
+  const kpis = getKpiData(timeRange)
+
+  // Chart Data Mock
+  const getChartPath = (type: string) => {
+    switch(type) {
+      case "売上": return "M0,200 C100,180 200,220 300,150 C400,80 500,120 600,100 C700,80 800,40 900,60"
+      case "注文": return "M0,220 C100,200 200,180 300,190 C400,160 500,140 600,150 C700,120 800,100 900,110"
+      case "友だち追加": return "M0,240 C100,230 200,220 300,200 C400,180 500,160 600,140 C700,120 800,100 900,80"
+      case "クリック": return "M0,250 C100,240 200,250 300,230 C400,200 500,220 600,180 C700,160 800,140 900,120"
+      default: return "M0,200 C100,180 200,220 300,150 C400,80 500,120 600,100 C700,80 800,40 900,60"
+    }
+  }
+
+  const handleExport = () => {
+    toast.success("レポートのエクスポートを開始しました", {
+      description: "完了次第、メールで通知されます。"
+    })
+    setIsExportDialogOpen(false)
+  }
+
+  const handleCreateReport = (e: React.FormEvent) => {
+    e.preventDefault()
+    toast.success("カスタムレポートを作成しました", {
+      description: "「マイレポート」フォルダに保存されました。"
+    })
+    setIsCreateReportDialogOpen(false)
+  }
+
+  // Mock Data for Tables (unchanged)
   const topProducts = [
     { name: "ベーシックTシャツ", price: "¥513K", count: "342件", width: "85%" },
     { name: "デニムパンツ", price: "¥896K", count: "248件", width: "70%" },
@@ -103,38 +154,199 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500 mt-1">売上・友だち・配信の状況をまとめて把握</p>
             </div>
             <div className="flex items-center gap-2">
-              <select 
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]/20 focus:border-[#06C755]"
-              >
-                <option>過去30日</option>
-                <option>今月</option>
-                <option>先月</option>
-                <option>過去7日</option>
-              </select>
-              <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-[140px] bg-white">
+                  <SelectValue placeholder="期間を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="過去30日">過去30日</SelectItem>
+                  <SelectItem value="今月">今月</SelectItem>
+                  <SelectItem value="先月">先月</SelectItem>
+                  <SelectItem value="過去7日">過去7日</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button variant="outline" className="bg-white" onClick={() => toast.info("比較モードは現在開発中です")}>
                 比較
-              </button>
-              <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                エクスポート
-              </button>
-              <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                ファイル
-              </button>
-              <button className="px-3 py-2 bg-[#06C755] text-white rounded-lg text-sm font-bold hover:bg-[#05b34c] flex items-center gap-2 shadow-sm transition-colors">
-                <Plus className="w-4 h-4" />
-                カスタムレポートを作成
-              </button>
+              </Button>
+              
+              <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="bg-white gap-2">
+                    <Download className="w-4 h-4" />
+                    エクスポート
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>データのエクスポート</DialogTitle>
+                    <DialogDescription>
+                      現在のダッシュボードデータをCSVまたはPDF形式でダウンロードします。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="format" className="text-right">形式</Label>
+                      <Select defaultValue="csv">
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="形式を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="csv">CSV (Excel)</SelectItem>
+                          <SelectItem value="pdf">PDF Report</SelectItem>
+                          <SelectItem value="json">JSON Data</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="range" className="text-right">範囲</Label>
+                      <Select defaultValue="all">
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="範囲を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">全データ</SelectItem>
+                          <SelectItem value="visible">表示中のみ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>キャンセル</Button>
+                    <Button onClick={handleExport} className="bg-[#06C755] hover:bg-[#05b34c] text-white">エクスポート実行</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="bg-white gap-2">
+                    <FileText className="w-4 h-4" />
+                    ファイル
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>ファイル管理</DialogTitle>
+                    <DialogDescription>
+                      アップロードされたファイルや生成されたレポートを管理します。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="relative w-64">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input placeholder="ファイルを検索..." className="pl-8" />
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        フィルター
+                      </Button>
+                    </div>
+                    <div className="border rounded-md">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left font-medium text-gray-500">ファイル名</th>
+                            <th className="px-4 py-2 text-left font-medium text-gray-500">サイズ</th>
+                            <th className="px-4 py-2 text-left font-medium text-gray-500">更新日</th>
+                            <th className="px-4 py-2 text-right font-medium text-gray-500">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {[
+                            { name: "2025-01_sales_report.pdf", size: "2.4 MB", date: "2025/01/15" },
+                            { name: "customer_list_v2.csv", size: "856 KB", date: "2025/01/14" },
+                            { name: "campaign_assets.zip", size: "14.2 MB", date: "2025/01/10" },
+                          ].map((file, i) => (
+                            <tr key={i} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-gray-400" />
+                                {file.name}
+                              </td>
+                              <td className="px-4 py-3 text-gray-500">{file.size}</td>
+                              <td className="px-4 py-3 text-gray-500">{file.date}</td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#06C755] text-white hover:bg-[#05b34c] gap-2 shadow-sm">
+                    <Plus className="w-4 h-4" />
+                    カスタムレポートを作成
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>新規カスタムレポート</DialogTitle>
+                    <DialogDescription>
+                      分析したい指標と期間を選択して、新しいレポートを作成します。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateReport}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="report-name">レポート名</Label>
+                        <Input id="report-name" placeholder="例: 2025年新春キャンペーン分析" required />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="report-type">分析タイプ</Label>
+                        <Select defaultValue="sales">
+                          <SelectTrigger>
+                            <SelectValue placeholder="タイプを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sales">売上分析</SelectItem>
+                            <SelectItem value="friends">友だち増減分析</SelectItem>
+                            <SelectItem value="messages">配信パフォーマンス</SelectItem>
+                            <SelectItem value="funnel">コンバージョンファネル</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="folder">保存先フォルダ</Label>
+                        <Select defaultValue="my-reports">
+                          <SelectTrigger>
+                            <SelectValue placeholder="フォルダを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="my-reports">マイレポート</SelectItem>
+                            <SelectItem value="shared">共有レポート</SelectItem>
+                            <SelectItem value="sales">売上管理</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setIsCreateReportDialogOpen(false)}>キャンセル</Button>
+                      <Button type="submit" className="bg-[#06C755] hover:bg-[#05b34c] text-white">作成する</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {kpis.map((kpi, index) => (
-              <div key={index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div key={index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => toast.info(`${kpi.label}の詳細を表示します`)}>
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-sm font-medium text-gray-500">{kpi.label}</span>
                   <div className={cn(
@@ -152,8 +364,8 @@ export default function DashboardPage() {
                   {[40, 65, 45, 70, 55, 80, 60, 90].map((h, i) => (
                     <div 
                       key={i} 
-                      className={cn("w-full rounded-t-sm opacity-80", kpi.chart)} 
-                      style={{ height: `${h}%` }}
+                      className={cn("w-full rounded-t-sm opacity-80 transition-all duration-500", kpi.chart)} 
+                      style={{ height: `${h * (timeRange === "過去30日" ? 1 : 0.7)}%` }}
                     />
                   ))}
                 </div>
@@ -167,25 +379,52 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-gray-900">総売上の推移</h3>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
-                  <button className="px-3 py-1 text-xs font-bold bg-white text-gray-900 rounded shadow-sm">売上</button>
-                  <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-900">注文</button>
-                  <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-900">友だち追加</button>
-                  <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-900">クリック</button>
+                  {["売上", "注文", "友だち追加", "クリック"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveChartTab(tab)}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium rounded transition-all",
+                        activeChartTab === tab
+                          ? "bg-white text-gray-900 shadow-sm font-bold"
+                          : "text-gray-500 hover:text-gray-900"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="h-64 w-full bg-gray-50 rounded-lg flex items-center justify-center relative overflow-hidden">
-                {/* Mock Chart Line */}
+              <div className="h-64 w-full bg-gray-50 rounded-lg flex items-center justify-center relative overflow-hidden group">
+                {/* Chart Line */}
                 <svg className="w-full h-full absolute inset-0" preserveAspectRatio="none">
-                  <path d="M0,200 C100,180 200,220 300,150 C400,80 500,120 600,100 C700,80 800,40 900,60 L900,256 L0,256 Z" fill="url(#gradient)" opacity="0.1" />
-                  <path d="M0,200 C100,180 200,220 300,150 C400,80 500,120 600,100 C700,80 800,40 900,60" fill="none" stroke="#06C755" strokeWidth="3" />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#06C755" />
-                      <stop offset="100%" stopColor="#ffffff" />
+                      <stop offset="0%" stopColor="#06C755" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
                     </linearGradient>
                   </defs>
+                  <path 
+                    d={`${getChartPath(activeChartTab)} L900,256 L0,256 Z`} 
+                    fill="url(#gradient)" 
+                    className="transition-all duration-500 ease-in-out"
+                  />
+                  <path 
+                    d={getChartPath(activeChartTab)} 
+                    fill="none" 
+                    stroke="#06C755" 
+                    strokeWidth="3" 
+                    className="transition-all duration-500 ease-in-out"
+                  />
                 </svg>
-                <span className="text-gray-400 text-sm relative z-10">折れ線グラフプレースホルダ</span>
+                
+                {/* Interactive Overlay (Mock) */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                  <div className="bg-white p-2 rounded shadow-lg border border-gray-100 text-xs">
+                    <div className="font-bold text-gray-900">2025/01/15</div>
+                    <div className="text-[#06C755] font-bold">¥128,400</div>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -209,15 +448,15 @@ export default function DashboardPage() {
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-4">ハイライト</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
                     <span className="text-sm text-gray-600">今日の売上</span>
                     <span className="text-sm font-bold text-emerald-600">+¥128K</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
                     <span className="text-sm text-gray-600">友だち追加</span>
                     <span className="text-sm font-bold text-emerald-600">+124</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
                     <span className="text-sm text-gray-600">ブロック</span>
                     <span className="text-sm font-bold text-red-600">-18</span>
                   </div>
@@ -235,13 +474,13 @@ export default function DashboardPage() {
                     { label: "QRコード", value: "¥256K", width: "15%", color: "bg-gray-500" },
                     { label: "その他", value: "¥64K", width: "5%", color: "bg-gray-300" },
                   ].map((item, i) => (
-                    <div key={i}>
+                    <div key={i} className="cursor-pointer group">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-600">{item.label}</span>
+                        <span className="text-gray-600 group-hover:text-gray-900">{item.label}</span>
                         <span className="font-bold text-gray-900">{item.value}</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", item.color)} style={{ width: item.width }}></div>
+                        <div className={cn("h-full rounded-full transition-all group-hover:opacity-80", item.color)} style={{ width: item.width }}></div>
                       </div>
                     </div>
                   ))}
@@ -263,7 +502,7 @@ export default function DashboardPage() {
                   { label: "Twitter", value: "356", width: "42%" },
                   { label: "Google検索", value: "248", width: "29%" },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded -mx-1">
                     <div className="flex-1">
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-gray-600">{item.label}</span>
@@ -281,8 +520,8 @@ export default function DashboardPage() {
             {/* Device & Sales Composition */}
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
               <h3 className="font-bold text-gray-900 mb-4">売上構成</h3>
-              <div className="flex items-center justify-center py-4">
-                <div className="relative w-32 h-32 rounded-full border-8 border-gray-100 flex items-center justify-center">
+              <div className="flex items-center justify-center py-4 relative group cursor-pointer">
+                <div className="relative w-32 h-32 rounded-full border-8 border-gray-100 flex items-center justify-center transition-transform group-hover:scale-105">
                   <div className="absolute inset-0 rounded-full border-8 border-[#06C755] border-t-transparent border-l-transparent rotate-45"></div>
                   <div className="text-center">
                     <div className="text-xs text-gray-500">Total</div>
@@ -291,21 +530,21 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="space-y-2 mt-2">
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-sm p-1 hover:bg-gray-50 rounded cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#06C755]"></span>
                     <span className="text-gray-600">LINE経由</span>
                   </div>
                   <span className="font-bold text-gray-900">50%</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-sm p-1 hover:bg-gray-50 rounded cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                     <span className="text-gray-600">Shopify経由</span>
                   </div>
                   <span className="font-bold text-gray-900">30%</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-sm p-1 hover:bg-gray-50 rounded cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-gray-300"></span>
                     <span className="text-gray-600">その他</span>
@@ -325,12 +564,12 @@ export default function DashboardPage() {
                   { label: "クリック", value: "7,012", percent: "25%", color: "bg-blue-300 text-blue-900" },
                   { label: "購入", value: "1,842", percent: "26%", color: "bg-[#06C755] text-white" },
                 ].map((item, i) => (
-                  <div key={i} className="relative">
+                  <div key={i} className="relative group cursor-pointer">
                     <div className="flex justify-between text-xs mb-1 z-10 relative px-2">
                       <span className="font-medium">{item.label}</span>
                       <span className="font-bold">{item.value}</span>
                     </div>
-                    <div className={cn("h-8 rounded flex items-center justify-center text-xs font-bold", item.color)} style={{ width: item.percent }}>
+                    <div className={cn("h-8 rounded flex items-center justify-center text-xs font-bold transition-all group-hover:opacity-90", item.color)} style={{ width: item.percent }}>
                       {item.percent}
                     </div>
                   </div>
@@ -346,7 +585,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-gray-900 mb-4">上位商品</h3>
               <div className="space-y-4">
                 {topProducts.map((product, i) => (
-                  <div key={i} className="flex items-center gap-4">
+                  <div key={i} className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
                     <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
                       <ShoppingBag className="w-5 h-5 text-gray-400" />
                     </div>
@@ -382,7 +621,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {recentOrders.map((order, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50">
+                      <tr key={i} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => toast.info(`注文 ${order.id} の詳細を開きます`)}>
                         <td className="px-3 py-3 font-mono text-gray-600">{order.id}</td>
                         <td className="px-3 py-3 text-gray-900">{order.customer}</td>
                         <td className="px-3 py-3 font-medium text-gray-900">{order.amount}</td>
@@ -413,7 +652,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {deliveryPerformance.map((item, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50">
+                      <tr key={i} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => toast.info(`配信「${item.name}」の分析を開きます`)}>
                         <td className="px-3 py-3 text-gray-900">{item.name}</td>
                         <td className="px-3 py-3 text-right text-gray-600">{item.target}</td>
                         <td className="px-3 py-3 text-right font-medium text-blue-600">{item.ctr}</td>
@@ -430,7 +669,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-gray-900 mb-4">未対応チャット</h3>
               <div className="space-y-4">
                 {unreadChats.map((chat, i) => (
-                  <div key={i} className="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div key={i} className="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0 hover:bg-gray-50 p-2 -mx-2 rounded cursor-pointer transition-colors" onClick={() => toast.info(`${chat.customer}さんとのチャットを開きます`)}>
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
                       {chat.customer.slice(0, 1)}
                     </div>
@@ -467,7 +706,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {upcomingEvents.map((event, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50">
+                      <tr key={i} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => toast.info(`イベント「${event.name}」の詳細を開きます`)}>
                         <td className="px-3 py-3 text-gray-900">{event.name}</td>
                         <td className="px-3 py-3 text-gray-600">{event.date}</td>
                         <td className="px-3 py-3 text-gray-600">{event.count}</td>
@@ -487,7 +726,10 @@ export default function DashboardPage() {
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-900">カスタムレポート</h3>
-                <button className="text-sm text-[#06C755] font-medium hover:underline flex items-center gap-1">
+                <button 
+                  onClick={() => setIsCreateReportDialogOpen(true)}
+                  className="text-sm text-[#06C755] font-medium hover:underline flex items-center gap-1"
+                >
                   <Plus className="w-4 h-4" />
                   作成
                 </button>
@@ -505,19 +747,25 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {customReports.map((report, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50">
+                      <tr key={i} className="hover:bg-gray-50/50 cursor-pointer">
                         <td className="px-3 py-3 font-medium text-gray-900">{report.name}</td>
                         <td className="px-3 py-3 text-gray-600">{report.author}</td>
                         <td className="px-3 py-3 text-gray-600">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-xs">
+                            <Folder className="w-3 h-3" />
                             {report.folder}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-gray-600">{report.date}</td>
                         <td className="px-3 py-3">
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button className="text-gray-400 hover:text-gray-600" title="複製">
+                              <Copy className="w-4 h-4" />
+                            </button>
+                            <button className="text-gray-400 hover:text-red-600" title="削除">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
