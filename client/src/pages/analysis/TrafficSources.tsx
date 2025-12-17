@@ -11,24 +11,25 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { TrafficSource } from "@/types/schema";
+import { DataTable } from "@/components/common/ui-kit";
+import { FolderManager } from "@/components/common/folder-manager";
+import { TrafficSource, Folder } from "@/types/schema";
 import { Plus, Edit2, Trash2, Link as LinkIcon, Copy, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "SNS", type: "traffic_source", created_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "キャンペーン", type: "traffic_source", created_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_SOURCES: TrafficSource[] = [
   { 
     id: "1", 
     tenant_id: "t1", 
     name: "Instagramプロフィール", 
+    folder_id: "f1",
     code: "ig_prof", 
     url: "https://liff.line.me/1234567890-AbCdEfGh?param=ig_prof",
     actions_json: { add_tags: ["Instagram", "Organic"] },
@@ -40,6 +41,7 @@ const MOCK_SOURCES: TrafficSource[] = [
     id: "2", 
     tenant_id: "t1", 
     name: "春のキャンペーンLP", 
+    folder_id: "f2",
     code: "spring_lp", 
     url: "https://liff.line.me/1234567890-AbCdEfGh?param=spring_lp",
     actions_json: { add_tags: ["Campaign", "Spring2024"], start_scenario_id: "sc_123" },
@@ -50,9 +52,35 @@ const MOCK_SOURCES: TrafficSource[] = [
 ];
 
 export default function TrafficSourcesPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [sources, setSources] = useState<TrafficSource[]>(MOCK_SOURCES);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", code: "" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      type: "traffic_source",
+      created_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setSources(sources.map(s => s.folder_id === id ? { ...s, folder_id: undefined } : s));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +93,7 @@ export default function TrafficSourcesPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       name: formData.name,
+      folder_id: selectedFolderId || undefined,
       code: formData.code,
       url: `https://liff.line.me/1234567890-AbCdEfGh?param=${formData.code}`,
       actions_json: {},
@@ -84,6 +113,10 @@ export default function TrafficSourcesPage() {
     toast.success("リンクをコピーしました");
   };
 
+  const filteredSources = selectedFolderId
+    ? sources.filter(s => s.folder_id === selectedFolderId)
+    : sources;
+
   const columns = [
     {
       header: "名称 / コード",
@@ -91,6 +124,11 @@ export default function TrafficSourcesPage() {
         <div>
           <div className="font-medium">{item.name}</div>
           <div className="text-xs text-gray-500 font-mono">{item.code}</div>
+          {item.folder_id && (
+            <span className="text-xs text-gray-400 block mt-1">
+              {folders.find(f => f.id === item.folder_id)?.name}
+            </span>
+          )}
         </div>
       ),
     },
@@ -139,9 +177,11 @@ export default function TrafficSourcesPage() {
           <Button variant="ghost" size="icon" title="詳細分析">
             <BarChart2 className="w-4 h-4 text-gray-500" />
           </Button>
-          <Button variant="ghost" size="icon" title="編集">
-            <Edit2 className="w-4 h-4 text-gray-500" />
-          </Button>
+          <Link href={`/analysis/traffic/create`}>
+            <Button variant="ghost" size="icon" title="編集">
+              <Edit2 className="w-4 h-4 text-gray-500" />
+            </Button>
+          </Link>
           <Button variant="ghost" size="icon" className="text-red-500" title="削除">
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -156,18 +196,40 @@ export default function TrafficSourcesPage() {
       description="パラメータ付きリンクを発行し、友だち追加経路やキャンペーン効果を測定します。"
       breadcrumbs={[{ label: "分析" }, { label: "流入経路分析" }]}
       actions={
-        <Button onClick={() => setIsDialogOpen(true)} className="bg-[#06C755] hover:bg-[#05b34c] text-white gap-2">
-          <Plus className="w-4 h-4" />
-          新規リンク作成
-        </Button>
+        <Link href="/analysis/traffic/create">
+          <Button className="bg-[#06C755] hover:bg-[#05b34c] text-white gap-2">
+            <Plus className="w-4 h-4" />
+            新規リンク作成
+          </Button>
+        </Link>
       }
     >
-      <DataTable 
-        data={sources} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredSources} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

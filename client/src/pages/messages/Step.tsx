@@ -19,21 +19,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { StepScenario } from "@/types/schema";
+import { FolderManager } from "@/components/common/folder-manager";
+import { StepScenario, Folder } from "@/types/schema";
 import { Plus, Edit2, Trash2, Zap, GitBranch } from "lucide-react";
 import { toast } from "sonner";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "新規顧客", type: "step_scenario", created_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "リピーター", type: "step_scenario", created_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_SCENARIOS: StepScenario[] = [
-  { id: "1", tenant_id: "t1", name: "友だち追加時あいさつ", is_active: true, trigger_type: "friend_added", nodes_json: {}, created_at: "2024-01-01T10:00:00Z" },
-  { id: "2", tenant_id: "t1", name: "購入後フォローアップ", is_active: true, trigger_type: "tag_added", trigger_value: "購入者", nodes_json: {}, created_at: "2024-01-15T14:30:00Z" },
-  { id: "3", tenant_id: "t1", name: "未購入者引き上げ", is_active: false, trigger_type: "tag_added", trigger_value: "カート落ち", nodes_json: {}, created_at: "2024-02-01T11:00:00Z" },
+  { id: "1", tenant_id: "t1", name: "友だち追加時あいさつ", folder_id: "f1", is_active: true, trigger_type: "friend_added", nodes_json: {}, created_at: "2024-01-01T10:00:00Z" },
+  { id: "2", tenant_id: "t1", name: "購入後フォローアップ", folder_id: "f2", is_active: true, trigger_type: "tag_added", trigger_value: "購入者", nodes_json: {}, created_at: "2024-01-15T14:30:00Z" },
+  { id: "3", tenant_id: "t1", name: "未購入者引き上げ", folder_id: undefined, is_active: false, trigger_type: "tag_added", trigger_value: "カート落ち", nodes_json: {}, created_at: "2024-02-01T11:00:00Z" },
 ];
 
 export default function StepPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [scenarios, setScenarios] = useState<StepScenario[]>(MOCK_SCENARIOS);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", trigger: "friend_added" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      type: "step_scenario",
+      created_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setScenarios(scenarios.map(s => s.folder_id === id ? { ...s, folder_id: undefined } : s));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +78,7 @@ export default function StepPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       name: formData.name,
+      folder_id: selectedFolderId || undefined,
       is_active: false,
       trigger_type: formData.trigger as any,
       nodes_json: {},
@@ -69,6 +102,10 @@ export default function StepPage() {
     }));
   };
 
+  const filteredScenarios = selectedFolderId
+    ? scenarios.filter(s => s.folder_id === selectedFolderId)
+    : scenarios;
+
   const columns = [
     {
       header: "シナリオ名",
@@ -77,7 +114,14 @@ export default function StepPage() {
           <div className="p-2 bg-yellow-100 rounded-lg text-yellow-600">
             <GitBranch className="w-4 h-4" />
           </div>
-          <span className="font-medium">{item.name}</span>
+          <div>
+            <div className="font-medium">{item.name}</div>
+            {item.folder_id && (
+              <span className="text-xs text-gray-400 block mt-1">
+                {folders.find(f => f.id === item.folder_id)?.name}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
@@ -133,12 +177,32 @@ export default function StepPage() {
         </Button>
       }
     >
-      <DataTable 
-        data={scenarios} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredScenarios} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>

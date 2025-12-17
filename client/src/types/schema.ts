@@ -60,6 +60,16 @@ export interface Job {
   created_at: DateTime;
 }
 
+// Feature: Folders
+export interface Folder {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  parent_id?: ID; // For nested folders
+  type: 'template' | 'traffic_source' | 'action_schedule' | 'form' | 'step_scenario' | 'rich_menu' | 'media';
+  created_at: DateTime;
+}
+
 // Feature: Friends / Contacts
 export interface Contact {
   id: ID;
@@ -80,6 +90,7 @@ export interface Tag {
   name: string;
   color: string;
   count: number;
+  folder_id?: ID; // Added folder support
   created_at: DateTime;
 }
 
@@ -88,6 +99,7 @@ export interface MessageTemplate {
   id: ID;
   tenant_id: ID;
   name: string;
+  folder_id?: ID; // Added folder support
   content_type: 'text' | 'image' | 'card' | 'flex';
   content_json: JSONValue;
   created_at: DateTime;
@@ -98,6 +110,7 @@ export interface Broadcast {
   id: ID;
   tenant_id: ID;
   name: string;
+  folder_id?: ID; // Added folder support
   status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
   target_filter_json: JSONValue;
   messages_json: JSONValue[]; // Array of message objects
@@ -110,6 +123,7 @@ export interface StepScenario {
   id: ID;
   tenant_id: ID;
   name: string;
+  folder_id?: ID; // Added folder support
   is_active: boolean;
   trigger_type: 'tag_added' | 'friend_added';
   trigger_value?: string;
@@ -121,9 +135,21 @@ export interface AutoReply {
   id: ID;
   tenant_id: ID;
   keyword: string;
+  folder_id?: ID; // Added folder support
   match_type: 'exact' | 'partial' | 'regex';
   response_type: 'text' | 'template';
   response_content: JSONValue;
+  is_active: boolean;
+  created_at: DateTime;
+}
+
+export interface ActionSchedule {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  folder_id?: ID; // Added folder support
+  trigger_type: 'time' | 'event';
+  actions_json: JSONValue;
   is_active: boolean;
   created_at: DateTime;
 }
@@ -133,6 +159,7 @@ export interface Event {
   id: ID;
   tenant_id: ID;
   title: string;
+  folder_id?: ID; // Added folder support
   description?: string;
   start_at: DateTime;
   end_at: DateTime;
@@ -157,6 +184,7 @@ export interface Form {
   id: ID;
   tenant_id: ID;
   title: string;
+  folder_id?: ID; // Added folder support
   description?: string;
   fields_json: JSONValue; // Array of field definitions
   is_active: boolean;
@@ -189,6 +217,7 @@ export interface TrafficSource {
   id: ID;
   tenant_id: ID;
   name: string;
+  folder_id?: ID; // Added folder support
   code: string; // パラメータ識別子
   url: string;
   actions_json: {

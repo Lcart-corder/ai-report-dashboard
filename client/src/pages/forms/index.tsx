@@ -15,22 +15,54 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/ui-kit";
-import { Form } from "@/types/schema";
+import { FolderManager } from "@/components/common/folder-manager";
+import { Form, Folder } from "@/types/schema";
 import { Plus, Edit2, Trash2, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
 // Mock Data
+const MOCK_FOLDERS: Folder[] = [
+  { id: "f1", tenant_id: "t1", name: "アンケート", type: "form", created_at: "2024-01-01T00:00:00Z" },
+  { id: "f2", tenant_id: "t1", name: "キャンペーン", type: "form", created_at: "2024-01-01T00:00:00Z" },
+];
+
 const MOCK_FORMS: Form[] = [
-  { id: "1", tenant_id: "t1", title: "来店アンケート", description: "サービス向上のため...", fields_json: [], is_active: true, response_count: 45, created_at: "2024-01-01T10:00:00Z" },
-  { id: "2", tenant_id: "t1", title: "キャンペーン応募", description: "抽選で...", fields_json: [], is_active: true, response_count: 128, created_at: "2024-01-15T14:30:00Z" },
-  { id: "3", tenant_id: "t1", title: "お問い合わせ", description: "", fields_json: [], is_active: false, response_count: 12, created_at: "2024-02-01T11:00:00Z" },
+  { id: "1", tenant_id: "t1", title: "来店アンケート", folder_id: "f1", description: "サービス向上のため...", fields_json: [], is_active: true, response_count: 45, created_at: "2024-01-01T10:00:00Z" },
+  { id: "2", tenant_id: "t1", title: "キャンペーン応募", folder_id: "f2", description: "抽選で...", fields_json: [], is_active: true, response_count: 128, created_at: "2024-01-15T14:30:00Z" },
+  { id: "3", tenant_id: "t1", title: "お問い合わせ", folder_id: undefined, description: "", fields_json: [], is_active: false, response_count: 12, created_at: "2024-02-01T11:00:00Z" },
 ];
 
 export default function FormsPage() {
+  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
   const [forms, setForms] = useState<Form[]>(MOCK_FORMS);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "" });
+
+  // Folder Handlers
+  const handleCreateFolder = (name: string) => {
+    const newFolder: Folder = {
+      id: Math.random().toString(36).substr(2, 9),
+      tenant_id: "t1",
+      name,
+      type: "form",
+      created_at: new Date().toISOString(),
+    };
+    setFolders([...folders, newFolder]);
+    toast.success("フォルダを作成しました");
+  };
+
+  const handleUpdateFolder = (id: string, name: string) => {
+    setFolders(folders.map(f => f.id === id ? { ...f, name } : f));
+    toast.success("フォルダ名を変更しました");
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(f => f.id !== id));
+    setForms(forms.map(f => f.folder_id === id ? { ...f, folder_id: undefined } : f));
+    toast.success("フォルダを削除しました");
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +75,7 @@ export default function FormsPage() {
       id: Math.random().toString(36).substr(2, 9),
       tenant_id: "t1",
       title: formData.title,
+      folder_id: selectedFolderId || undefined,
       description: formData.description,
       fields_json: [],
       is_active: true,
@@ -67,6 +100,10 @@ export default function FormsPage() {
     }));
   };
 
+  const filteredForms = selectedFolderId
+    ? forms.filter(f => f.folder_id === selectedFolderId)
+    : forms;
+
   const columns = [
     {
       header: "フォーム名",
@@ -78,6 +115,11 @@ export default function FormsPage() {
           <div>
             <div className="font-medium">{item.title}</div>
             <div className="text-xs text-gray-500 truncate max-w-[200px]">{item.description}</div>
+            {item.folder_id && (
+              <span className="text-xs text-gray-400 block mt-1">
+                {folders.find(f => f.id === item.folder_id)?.name}
+              </span>
+            )}
           </div>
         </div>
       ),
@@ -135,12 +177,32 @@ export default function FormsPage() {
         </Button>
       }
     >
-      <DataTable 
-        data={forms} 
-        columns={columns} 
-        searchable 
-        pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
-      />
+      <div className="flex h-[calc(100vh-220px)] border rounded-lg bg-white overflow-hidden">
+        <FolderManager
+          folders={folders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+        />
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <h2 className="font-bold text-lg">
+              {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : "すべての項目"}
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DataTable 
+              data={filteredForms} 
+              columns={columns} 
+              searchable 
+              pagination={{ currentPage: 1, totalPages: 1, onPageChange: () => {} }}
+            />
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
