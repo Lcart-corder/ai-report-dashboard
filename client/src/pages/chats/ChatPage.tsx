@@ -5,7 +5,7 @@ import {
   Clock, Calendar, Tag, User, AlertCircle, FileText,
   ChevronRight, X, Filter, Settings, Plus, PlusCircle,
   Link as LinkIcon, LayoutTemplate, GitMerge, Menu,
-  Edit2
+  Edit2, Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,8 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ActionBuilder } from "@/components/actions/ActionBuilder";
 import { toast } from "sonner";
+import { executeOmikuji, getContactPoints } from "@/lib/omikuji";
+import { OmikujiConfig, OmikujiResult } from "@/types/schema";
 
 // Mock Data
 const mockThreads: ChatThread[] = [
@@ -738,6 +740,12 @@ export default function ChatPage() {
                     <Menu className="h-4 w-4 mr-2" />
                     リッチメニュー切替
                   </Button>
+                  
+                  <div className="pt-4 border-t mt-4">
+                    <h4 className="text-xs font-medium mb-2 text-muted-foreground">開発用</h4>
+                    <ActionBuilderTrigger />
+                    <OmikujiDebugTrigger contact={selectedContact} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -745,5 +753,82 @@ export default function ChatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ActionBuilderTrigger() {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <>
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        className="w-full justify-start text-xs"
+        onClick={() => setIsOpen(true)}
+      >
+        <Settings className="h-3 w-3 mr-2" />
+        アクション設定UI確認
+      </Button>
+      
+      <ActionBuilder 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+        onSave={(steps) => {
+          console.log("Saved steps:", steps);
+          setIsOpen(false);
+          toast.success("アクション設定を保存しました");
+        }}
+        triggerName="テスト実行"
+      />
+    </>
+  );
+}
+
+function OmikujiDebugTrigger({ contact }: { contact: Contact }) {
+  const handlePlayOmikuji = () => {
+    // Mock Config
+    const config: OmikujiConfig = {
+      id: "omikuji_test",
+      tenant_id: "tenant1",
+      name: "テストおみくじ",
+      status: "published",
+      timezone: "Asia/Tokyo",
+      daily_limit: 1,
+      reset_time: "00:00",
+      points_attribute_key: "points",
+      created_by: "user1",
+      updated_by: "user1",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const results: OmikujiResult[] = [
+      { id: "1", tenant_id: "tenant1", omikuji_id: "omikuji_test", name: "大吉", weight: 10, points_delta: 10, created_at: "", updated_at: "" },
+      { id: "2", tenant_id: "tenant1", omikuji_id: "omikuji_test", name: "中吉", weight: 30, points_delta: 5, created_at: "", updated_at: "" },
+      { id: "3", tenant_id: "tenant1", omikuji_id: "omikuji_test", name: "小吉", weight: 60, points_delta: 1, created_at: "", updated_at: "" },
+    ];
+
+    const result = executeOmikuji(config, results, contact);
+
+    if (result.success) {
+      toast.success(`おみくじ結果: ${result.result_name} (+${result.points_awarded}pt)`, {
+        description: `現在のポイント: ${getContactPoints(contact.id)}pt`
+      });
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  return (
+    <Button 
+      variant="secondary" 
+      size="sm" 
+      className="w-full justify-start text-xs mt-2"
+      onClick={handlePlayOmikuji}
+    >
+      <Gift className="h-3 w-3 mr-2" />
+      おみくじ実行テスト
+    </Button>
   );
 }

@@ -11,6 +11,7 @@ import {
   Link as LinkIcon,
   Settings,
   HelpCircle,
+  Gift,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -110,6 +111,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "自動応答", href: "/messages/auto-reply", icon: MessageCircle },
         { label: "テンプレート", href: "/messages/templates", icon: LayoutTemplate },
         { label: "リッチメニュー", href: "/messages/rich-menus", icon: Menu },
+        { label: "おみくじ", href: "/omikuji", icon: Gift },
         { label: "アクションスケジュール", href: "/messages/action-schedule", icon: CalendarDays },
         { label: "挨拶メッセージ", href: "/messages/greeting", icon: MessageSquare }
       ]

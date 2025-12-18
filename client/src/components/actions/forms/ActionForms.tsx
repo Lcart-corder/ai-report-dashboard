@@ -431,3 +431,29 @@ export function BlockActionForm({ value, onChange }: ActionFormProps) {
     </div>
   );
 }
+
+// 11. Omikuji Action
+export function OmikujiActionForm({ value, onChange }: ActionFormProps) {
+  return (
+    <div className="space-y-4 p-4">
+      <div className="space-y-2">
+        <Label>実行するおみくじ</Label>
+        <Select 
+          value={value?.omikuji_id} 
+          onValueChange={(v) => onChange({ ...value, omikuji_id: v })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="おみくじを選択..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="omikuji_1">毎日運試し！ログインおみくじ</SelectItem>
+            <SelectItem value="omikuji_2">新春キャンペーンおみくじ</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="text-xs text-slate-500">
+          ※ 選択したおみくじの抽選ロジックが実行されます。
+        </div>
+      </div>
+    </div>
+  );
+}

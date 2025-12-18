@@ -250,7 +250,8 @@ export type ActionType =
   | 'bookmark' 
   | 'friend_info' 
   | 'status' 
-  | 'block';
+  | 'block'
+  | 'omikuji';
 
 export interface ActionSet {
   id: ID;
@@ -386,4 +387,83 @@ export interface ChatSettings {
   send_shortcut: 'enter' | 'ctrl_enter';
   created_at: string;
   updated_at: string;
+}
+
+// Feature: Omikuji
+export interface OmikujiConfig {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  status: 'draft' | 'published';
+  timezone: string;
+  richmenu_id?: ID;
+  richmenu_area_id?: ID;
+  daily_limit: number; // default 1
+  reset_time: string; // default "00:00"
+  block_template_id?: ID;
+  points_attribute_key: string; // default "omikuji_points"
+  created_by: ID;
+  updated_by: ID;
+  created_at: DateTime;
+  updated_at: DateTime;
+  deleted_at?: DateTime;
+}
+
+export interface OmikujiResult {
+  id: ID;
+  tenant_id: ID;
+  omikuji_id: ID;
+  name: string;
+  weight: number; // 確率の重み
+  points_delta: number;
+  result_template_id?: ID;
+  created_at: DateTime;
+  updated_at: DateTime;
+  deleted_at?: DateTime;
+}
+
+export interface OmikujiDailyState {
+  tenant_id: ID;
+  omikuji_id: ID;
+  contact_id: ID;
+  last_played_date: string; // YYYY-MM-DD
+  last_result_id?: ID;
+  updated_at: DateTime;
+}
+
+export interface OmikujiReward {
+  id: ID;
+  tenant_id: ID;
+  omikuji_id: ID;
+  name: string;
+  required_points: number;
+  reward_template_id?: ID;
+  points_cost: number;
+  created_at: DateTime;
+  updated_at: DateTime;
+  deleted_at?: DateTime;
+}
+
+export interface OmikujiRewardRedemption {
+  id: ID;
+  tenant_id: ID;
+  omikuji_id: ID;
+  reward_id: ID;
+  contact_id: ID;
+  redeemed_at: DateTime;
+  points_spent: number;
+  status: 'succeeded' | 'failed';
+  error?: string;
+}
+
+export interface OmikujiPointLedger {
+  id: ID;
+  tenant_id: ID;
+  omikuji_id: ID;
+  contact_id: ID;
+  delta: number;
+  balance_after: number;
+  reason: 'play' | 'redeem' | 'admin_adjust';
+  meta_json?: JSONValue;
+  created_at: DateTime;
 }

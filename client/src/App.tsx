@@ -42,6 +42,8 @@ import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
 import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
 import ChatPage from "./pages/chats/ChatPage";
 import ChatSettingsPage from "./pages/chats/ChatSettings";
+import OmikujiPage from "./pages/omikuji/OmikujiPage";
+import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -98,6 +100,10 @@ function App() {
           {/* Chats */}
           <Route path="/chats" component={ChatPage} />
           <Route path="/chats/settings" component={ChatSettingsPage} />
+
+          {/* Omikuji */}
+          <Route path="/omikuji" component={OmikujiPage} />
+          <Route path="/omikuji/new" component={OmikujiWizard} />
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}

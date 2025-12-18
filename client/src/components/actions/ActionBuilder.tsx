@@ -24,7 +24,10 @@ import {
   Trash2, 
   Filter,
   ChevronRight,
-  X
+  X,
+  HelpCircle,
+  AlertCircle,
+  ArrowLeft
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -37,11 +40,13 @@ import {
   BookmarkActionForm,
   FriendInfoActionForm,
   StatusActionForm,
-  BlockActionForm
+  BlockActionForm,
+  OmikujiActionForm
 } from "./forms/ActionForms";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 interface ActionBuilderProps {
   // Modal mode props
@@ -64,6 +69,7 @@ const ACTION_TYPES: { type: ActionType; label: string; icon: React.ElementType; 
   { type: 'reminder', label: 'リマインド', icon: Clock, description: 'リマインドの開始・停止' },
   { type: 'tag', label: 'タグ', icon: Tag, description: 'タグの付与・解除' },
   { type: 'rich_menu', label: 'リッチメニュー', icon: Layout, description: 'リッチメニューの表示・非表示' },
+  { type: 'omikuji', label: 'おみくじ', icon: Activity, description: 'おみくじを実行' },
   { type: 'bookmark', label: 'ブックマーク', icon: Bookmark, description: 'ブックマークの付与・解除' },
   { type: 'friend_info', label: '友だち情報', icon: User, description: '友だち情報の更新' },
   { type: 'status', label: '対応ステータス', icon: FileText, description: '対応ステータスの変更' },
@@ -167,7 +173,8 @@ export function ActionBuilder({
     setEditingStepId(newStep.id);
   };
 
-  const handleRemoveStep = (index: number) => {
+  const handleRemoveStep = (index: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const newSteps = [...internalSteps];
     newSteps.splice(index, 1);
     // Reorder
@@ -221,220 +228,365 @@ export function ActionBuilder({
     }
   };
 
+  const renderActionForm = (step: ActionSetStep, index: number) => {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <div>
+            <h4 className="font-medium text-base">アクション設定</h4>
+            <p className="text-sm text-gray-500 mt-1">
+              {ACTION_TYPES.find(t => t.type === step.action_type)?.description}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => handleRemoveStep(index)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            削除
+          </Button>
+        </div>
+
+        <div className="py-2">
+          {step.action_type === 'step_scenario' && (
+            <StepScenarioActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'template_message' && (
+            <TemplateMessageActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'text_message' && (
+            <TextMessageActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'reminder' && (
+            <ReminderActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'tag' && (
+            <TagActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'rich_menu' && (
+            <RichMenuActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'bookmark' && (
+            <BookmarkActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'friend_info' && (
+            <FriendInfoActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'omikuji' && (
+            <OmikujiActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'status' && (
+            <StatusActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+          {step.action_type === 'block' && (
+            <BlockActionForm 
+              value={step.action_payload_json} 
+              onChange={(val) => {
+                const newSteps = [...internalSteps];
+                newSteps[index].action_payload_json = val;
+                updateSteps(newSteps);
+              }} 
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const Content = (
-    <div className="flex h-[600px] bg-gray-50 rounded-lg overflow-hidden border">
-      {/* Left: Action Type Selector */}
-      <div className="w-[240px] bg-white border-r flex flex-col">
-        <div className="p-4 border-b bg-gray-50/50">
+    <div className="flex flex-col md:flex-row h-[80vh] max-h-[800px] bg-gray-50 rounded-lg overflow-hidden border relative">
+      {/* Left Column: Action Type Selector */}
+      <div className={cn(
+        "bg-white border-r flex shrink-0 z-10 transition-all duration-300",
+        // Mobile: Horizontal scrollable strip
+        "w-full h-auto border-b md:border-b-0 flex-row overflow-x-auto",
+        // Desktop: Vertical fixed width
+        "md:flex-col md:w-[260px] md:h-full md:overflow-y-auto",
+        // Hide on mobile when editing
+        editingStepId ? "hidden md:flex" : "flex"
+      )}>
+        <div className="p-3 border-b bg-gray-50/50 shrink-0 hidden md:block">
           <h3 className="font-medium text-sm text-gray-700">アクションを追加</h3>
         </div>
-        <ScrollArea className="flex-1 p-2">
-          <div className="space-y-1">
-            {ACTION_TYPES.map((type) => (
-              <button
-                key={type.type}
-                onClick={() => handleAddAction(type.type)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md transition-colors group border border-transparent hover:border-gray-200"
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:text-[#06C755] group-hover:shadow-sm transition-all">
-                  <Plus className="w-4 h-4" />
-                </div>
-                <span className="font-medium">{type.label}</span>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="p-2 flex md:flex-col gap-1 min-w-max md:min-w-0">
+          {ACTION_TYPES.map((type) => (
+            <button
+              key={type.type}
+              onClick={() => handleAddAction(type.type)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md transition-colors group border border-transparent hover:border-gray-200 text-left",
+                "flex-col md:flex-row items-center md:items-center justify-center md:justify-start w-[70px] md:w-full"
+              )}
+            >
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:text-[#06C755] group-hover:shadow-sm transition-all shrink-0">
+                <type.icon className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0 text-center md:text-left">
+                <span className="font-medium block truncate text-xs md:text-sm">{type.label}</span>
+                <span className="text-xs text-gray-400 hidden md:block truncate">{type.description}</span>
+              </div>
+              <Plus className="w-4 h-4 text-gray-300 group-hover:text-[#06C755] opacity-0 group-hover:opacity-100 transition-opacity hidden md:block" />
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Right: Action List */}
-      <div className="flex-1 flex flex-col bg-gray-50/50">
-        <div className="p-4 border-b bg-white flex justify-between items-center">
+      {/* Middle Column: Action List */}
+      <div className={cn(
+        "flex flex-col bg-gray-50/50 border-r shrink-0 transition-all duration-300",
+        // Mobile: Full width
+        "w-full flex-1",
+        // Desktop: Fixed width
+        "md:w-[320px]",
+        // Hide on mobile when editing
+        editingStepId ? "hidden md:flex" : "flex"
+      )}>
+        <div className="p-4 border-b bg-white flex justify-between items-center h-[57px] shrink-0">
           <h3 className="font-medium text-sm text-gray-700">設定済みアクション ({internalSteps.length})</h3>
-          <span className="text-xs text-gray-500">上から順に実行されます</span>
         </div>
         
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-2 max-w-3xl mx-auto">
+        <ScrollArea className="flex-1 p-3">
+          <div className="space-y-2">
             {internalSteps.map((step, index) => {
               const actionDef = ACTION_TYPES.find(t => t.type === step.action_type);
               const isEditing = editingStepId === step.id;
               const hasConditions = step.conditions_json && Object.keys(step.conditions_json as object).length > 0;
 
               return (
-                <div key={step.id} className="bg-white rounded-lg border shadow-sm transition-all hover:shadow-md">
-                  {/* Action Header / Summary Row */}
-                  <div className="flex items-center p-3 gap-4">
-                    <div className="flex items-center gap-3 min-w-[140px]">
-                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-mono text-gray-500">
+                <div 
+                  key={step.id} 
+                  className={cn(
+                    "bg-white rounded-lg border transition-all cursor-pointer relative group",
+                    isEditing ? "border-[#06C755] ring-1 ring-[#06C755] shadow-sm" : "hover:border-gray-300 hover:shadow-sm"
+                  )}
+                  onClick={() => setEditingStepId(step.id)}
+                >
+                  <div className="p-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono shrink-0",
+                        isEditing ? "bg-[#06C755] text-white" : "bg-gray-100 text-gray-500"
+                      )}>
                         {index + 1}
                       </div>
-                      <span className="font-bold text-sm text-gray-700">{actionDef?.label}</span>
+                      <span className="font-bold text-sm text-gray-700 truncate flex-1">{actionDef?.label}</span>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleRemoveStep(index, e)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
 
-                    <div className="flex-1 text-sm font-medium text-gray-600 truncate">
+                    <div className="text-xs text-gray-600 line-clamp-2 pl-9 mb-2 min-h-[1.5em]">
                       {getActionSummary(step)}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="pl-9 flex gap-2">
                       <Button
                         variant={hasConditions ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "h-8 text-xs",
+                          "h-6 text-[10px] px-2",
                           hasConditions 
                             ? "bg-blue-500 hover:bg-blue-600 text-white border-transparent" 
                             : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
                         )}
-                        onClick={() => setFilterStepId(step.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFilterStepId(step.id);
+                        }}
                       >
                         <Filter className="w-3 h-3 mr-1" />
-                        {hasConditions ? "絞込 設定済" : "絞込"}
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "h-8 text-xs",
-                          isEditing ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-900"
-                        )}
-                        onClick={() => setEditingStepId(isEditing ? null : step.id)}
-                      >
-                        {isEditing ? "閉じる" : "編集"}
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        onClick={() => handleRemoveStep(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
+                        {hasConditions ? "絞込あり" : "絞込"}
                       </Button>
                     </div>
                   </div>
-
-                  {/* Action Detail Form (Expandable) */}
+                  
                   {isEditing && (
-                    <div className="border-t bg-gray-50/50 p-4 animate-in slide-in-from-top-2 duration-200">
-                      <div className="bg-white rounded border p-4">
-                        {step.action_type === 'step_scenario' && (
-                          <StepScenarioActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'template_message' && (
-                          <TemplateMessageActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'text_message' && (
-                          <TextMessageActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'reminder' && (
-                          <ReminderActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'tag' && (
-                          <TagActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'rich_menu' && (
-                          <RichMenuActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'bookmark' && (
-                          <BookmarkActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'friend_info' && (
-                          <FriendInfoActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'status' && (
-                          <StatusActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                        {step.action_type === 'block' && (
-                          <BlockActionForm 
-                            value={step.action_payload_json} 
-                            onChange={(val) => {
-                              const newSteps = [...internalSteps];
-                              newSteps[index].action_payload_json = val;
-                              updateSteps(newSteps);
-                            }} 
-                          />
-                        )}
-                      </div>
-                    </div>
+                    <div className="absolute right-[-1px] top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-l border-t border-b border-[#06C755] rounded-l-full z-20 hidden md:block"></div>
                   )}
                 </div>
               );
             })}
 
             {internalSteps.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400 border-2 border-dashed rounded-lg bg-white/50">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  <Plus className="w-6 h-6 text-gray-300" />
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400 border-2 border-dashed rounded-lg bg-white/50 mx-1">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                  <Plus className="w-5 h-5 text-gray-300" />
                 </div>
-                <p className="text-sm font-medium">左側のメニューからアクションを追加してください</p>
+                <p className="text-xs font-medium text-center px-4">左側のメニューから<br/>アクションを追加</p>
               </div>
             )}
           </div>
         </ScrollArea>
+      </div>
+
+      {/* Right Column: Action Detail Form (Flexible) */}
+      <div className={cn(
+        "bg-white flex flex-col min-w-0 transition-all duration-300",
+        // Mobile: Full width overlay
+        "w-full h-full absolute inset-0 z-20 md:static md:h-auto md:z-auto",
+        // Desktop: Flexible width
+        "md:flex-1",
+        // Visibility
+        editingStepId ? "flex" : "hidden md:flex"
+      )}>
+        {editingStepId ? (
+          <div className="flex flex-col h-full md:flex-row">
+            {/* Mobile Header with Back Button */}
+            <div className="md:hidden p-4 border-b flex items-center gap-2 bg-white shrink-0">
+              <Button variant="ghost" size="icon" onClick={() => setEditingStepId(null)}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <span className="font-bold">アクション設定</span>
+            </div>
+
+            {/* Form Area */}
+            <div className="flex-1 flex flex-col min-w-0">
+              <ScrollArea className="flex-1">
+                <div className="p-4 md:p-6 max-w-3xl mx-auto w-full">
+                  {internalSteps.map((step, index) => {
+                    if (step.id !== editingStepId) return null;
+                    return (
+                      <div key={step.id} className="animate-in fade-in duration-200">
+                        {renderActionForm(step, index)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+            
+            {/* Help/Preview Area (Far Right) */}
+            <div className="w-[300px] border-l bg-gray-50/30 hidden xl:flex flex-col shrink-0">
+              <div className="p-4 border-b bg-gray-50/50">
+                <h3 className="font-medium text-sm text-gray-700 flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4" />
+                  ヘルプ・仕様
+                </h3>
+              </div>
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4 text-sm text-gray-600">
+                  <div className="bg-blue-50 border border-blue-100 rounded-md p-3">
+                    <h4 className="font-medium text-blue-800 mb-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      設定のヒント
+                    </h4>
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      アクションは上から順に実行されます。順序を変更するには、リスト内の項目をドラッグ＆ドロップしてください（実装予定）。
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">このアクションについて</h4>
+                    <p className="text-xs leading-relaxed text-gray-500">
+                      {internalSteps.find(s => s.id === editingStepId) 
+                        ? ACTION_TYPES.find(t => t.type === internalSteps.find(s => s.id === editingStepId)?.action_type)?.description
+                        : 'アクションを選択してください'}
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">よくある質問</h4>
+                    <ul className="space-y-2 text-xs text-gray-500 list-disc pl-4">
+                      <li>複数のアクションを組み合わせることで、複雑な自動化が可能です。</li>
+                      <li>「絞り込み」を設定すると、特定の条件を満たす友だちにのみアクションを実行できます。</li>
+                    </ul>
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50/30 hidden md:flex">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Layout className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="font-medium text-gray-900 mb-1">アクションを選択してください</h3>
+            <p className="text-sm text-gray-500">
+              リストからアクションを選択して編集するか、<br/>
+              左側のメニューから新しいアクションを追加してください。
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Filter Settings Dialog */}
@@ -455,8 +607,8 @@ export function ActionBuilder({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose && onClose()}>
-      <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden">
-        <DialogHeader className="p-4 border-b bg-white">
+      <DialogContent className="max-w-[1440px] w-[92vw] h-[88vh] max-h-[900px] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogHeader className="p-4 border-b bg-white shrink-0">
           <DialogTitle>アクション設定</DialogTitle>
           {triggerName && (
             <DialogDescription>
@@ -465,9 +617,11 @@ export function ActionBuilder({
           )}
         </DialogHeader>
         
-        {Content}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {Content}
+        </div>
 
-        <DialogFooter className="p-4 border-t bg-white">
+        <DialogFooter className="p-4 border-t bg-white shrink-0">
           <Button variant="outline" onClick={onClose}>キャンセル</Button>
           <Button onClick={handleSave} className="bg-[#06C755] hover:bg-[#05b34c] text-white">
             設定を保存
