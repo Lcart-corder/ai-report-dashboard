@@ -373,7 +373,7 @@ export function ActionBuilder({
         // Mobile: Horizontal scrollable strip
         "w-full h-auto border-b md:border-b-0 flex-row overflow-x-auto",
         // Desktop: Vertical fixed width
-        "md:flex-col md:w-[260px] md:h-full md:overflow-y-auto",
+        "md:flex-col md:w-[240px] md:h-full md:overflow-y-auto",
         // Hide on mobile when editing
         editingStepId ? "hidden md:flex" : "flex"
       )}>
@@ -409,7 +409,7 @@ export function ActionBuilder({
         // Mobile: Full width
         "w-full flex-1",
         // Desktop: Fixed width
-        "md:w-[320px]",
+        "md:w-[280px]",
         // Hide on mobile when editing
         editingStepId ? "hidden md:flex" : "flex"
       )}>
@@ -534,7 +534,7 @@ export function ActionBuilder({
             </div>
             
             {/* Help/Preview Area (Far Right) */}
-            <div className="w-[300px] border-l bg-gray-50/30 hidden xl:flex flex-col shrink-0">
+            <div className="w-[280px] border-l bg-gray-50/30 hidden xl:flex flex-col shrink-0">
               <div className="p-4 border-b bg-gray-50/50">
                 <h3 className="font-medium text-sm text-gray-700 flex items-center gap-2">
                   <HelpCircle className="w-4 h-4" />
@@ -607,7 +607,7 @@ export function ActionBuilder({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose && onClose()}>
-      <DialogContent className="max-w-[1440px] w-[92vw] h-[88vh] max-h-[900px] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-[1440px] w-[95vw] h-[90vh] max-h-[900px] p-0 gap-0 overflow-hidden flex flex-col">
         <DialogHeader className="p-4 border-b bg-white shrink-0">
           <DialogTitle>アクション設定</DialogTitle>
           {triggerName && (
