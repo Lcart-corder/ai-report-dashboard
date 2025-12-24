@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { LayoutProvider } from "./contexts/layout-context";
+import { AuthProvider } from "./contexts/AuthContext";
 import { AppSidebar } from "./components/app-sidebar";
 import Dashboard from "./pages/Dashboard";
 import AIReportDetailPage from "./pages/AIReportDetail";
@@ -44,6 +45,7 @@ import ChatPage from "./pages/chats/ChatPage";
 import ChatSettingsPage from "./pages/chats/ChatSettings";
 import OmikujiPage from "./pages/omikuji/OmikujiPage";
 import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
+import MyPage from "./pages/settings/MyPage";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -52,7 +54,8 @@ import AdminDashboard from "./pages/admin/index";
 
 function App() {
   return (
-    <LayoutProvider>
+    <AuthProvider>
+      <LayoutProvider>
       <div className="flex min-h-screen w-full bg-slate-50">
         <AppSidebar />
         <main className="flex-1 overflow-y-auto">
@@ -101,9 +104,12 @@ function App() {
           <Route path="/chats" component={ChatPage} />
           <Route path="/chats/settings" component={ChatSettingsPage} />
 
-          {/* Omikuji */}
-          <Route path="/omikuji" component={OmikujiPage} />
-          <Route path="/omikuji/new" component={OmikujiWizard} />
+            {/* Omikuji */}
+            <Route path="/omikuji" component={OmikujiPage} />
+            <Route path="/omikuji/new" component={OmikujiWizard} />
+
+            {/* Settings */}
+            <Route path="/mypage" component={MyPage} />
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}
@@ -129,7 +135,8 @@ function App() {
           </Switch>
         </main>
       </div>
-    </LayoutProvider>
+      </LayoutProvider>
+    </AuthProvider>
   );
 }
 

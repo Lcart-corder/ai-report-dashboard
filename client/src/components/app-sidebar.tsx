@@ -183,6 +183,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       label: "管理", 
       href: "/admin",
       subItems: [
+        { label: "マイページ", href: "/mypage", icon: UserCheck },
         { label: "アカウント設定", href: "/admin/account", icon: User },
         { label: "メンバー管理", href: "/admin/members", icon: Users },
         { label: "プラン・支払い", href: "/admin/billing", icon: CreditCard }

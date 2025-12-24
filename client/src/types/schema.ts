@@ -467,3 +467,32 @@ export interface OmikujiPointLedger {
   meta_json?: JSONValue;
   created_at: DateTime;
 }
+
+// Feature: Authentication
+export interface AuthSession {
+  id: ID;
+  user_id: ID;
+  refresh_token_hash: string;
+  user_agent?: string;
+  ip?: string;
+  expires_at: DateTime;
+  revoked_at?: DateTime;
+  created_at: DateTime;
+}
+
+export interface PasswordReset {
+  id: ID;
+  user_id: ID;
+  reset_token_hash: string;
+  expires_at: DateTime;
+  used_at?: DateTime;
+  created_at: DateTime;
+}
+
+export interface LoginAttempt {
+  id: ID;
+  email: string;
+  ip?: string;
+  success: boolean;
+  created_at: DateTime;
+}
