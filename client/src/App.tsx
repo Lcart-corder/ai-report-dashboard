@@ -13,7 +13,8 @@ import TagsPage from "./pages/friends/Tags";
 
 // Messages
 import BroadcastPage from "./pages/messages/Broadcast";
-import StepPage from "./pages/messages/Step";
+import StepManagerPage from "./pages/messages/StepManager";
+import ScenarioEditorPage from "./pages/messages/ScenarioEditor";
 import AutoReplyPage from "./pages/messages/AutoReply";
 import ActionSchedulePage from "./pages/messages/ActionSchedule";
 import TemplatesPage from "./pages/messages/Templates";
@@ -23,13 +24,14 @@ import TemplateCreatePage from "./pages/messages/TemplateCreate";
 import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
 
 // Events
-import EventListPage from "./pages/events/EventList";
+import EventManagerPage from "./pages/events/EventManager";
 import ReservationListPage from "./pages/events/ReservationList";
 import EventCreatePage from "./pages/events/EventCreate";
 
 // Forms
-import FormsPage from "./pages/forms/index";
+import FormManagerPage from "./pages/forms/FormManager";
 import FormCreatePage from "./pages/forms/FormCreate";
+import FormResponsesPage from "./pages/forms/FormResponses";
 
 // Analysis
 import AnalysisDashboard from "./pages/analysis/index";
@@ -72,7 +74,9 @@ function App() {
 
             {/* Messages */}
             <Route path="/messages/broadcast" component={BroadcastPage} />
-            <Route path="/messages/step" component={StepPage} />
+            <Route path="/messages/step" component={StepManagerPage} />
+            <Route path="/messages/step/create" component={ScenarioEditorPage} />
+            <Route path="/messages/step/:id/edit" component={ScenarioEditorPage} />
             <Route path="/messages/auto-reply" component={AutoReplyPage} />
             <Route path="/messages/templates" component={TemplatesPage} />
             <Route path="/messages/templates/create" component={TemplateCreatePage} />
@@ -83,9 +87,11 @@ function App() {
             <Route path="/messages/rich-menus/create" component={RichMenuCreatePage} />
 
             {/* Forms */}
-            <Route path="/forms" component={FormsPage} />
+            <Route path="/forms" component={FormManagerPage} />
             <Route path="/forms/create" component={FormCreatePage} />
-            <Route path="/forms/responses" component={PlaceholderPage} />
+            <Route path="/forms/responses" component={FormResponsesPage} />
+            <Route path="/forms/:id/responses" component={FormResponsesPage} />
+            <Route path="/forms/:id/edit" component={FormCreatePage} />
 
             {/* Analysis */}
             <Route path="/analysis" component={AnalysisDashboard} />
@@ -113,8 +119,8 @@ function App() {
             <Route path="/analysis/site" component={PlaceholderPage} />
 
             {/* Events */}
-            <Route path="/events" component={EventListPage} />
-            <Route path="/events/list" component={EventListPage} />
+            <Route path="/events" component={EventManagerPage} />
+            <Route path="/events/:id/edit" component={EventCreatePage} />
             <Route path="/events/reservations" component={ReservationListPage} />
             <Route path="/events/create" component={EventCreatePage} />
             <Route path="/events/calendar" component={PlaceholderPage} />

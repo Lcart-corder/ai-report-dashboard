@@ -8,16 +8,20 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, GripVertical, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Save, Trash2, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { PageTemplate } from "@/components/page-template";
+import { ActionBuilder } from "@/components/actions/ActionBuilder";
+import { ActionSetStep } from "@/types/schema";
 
 export default function FormCreatePage() {
   const [questions, setQuestions] = useState([
     { id: 1, type: "text", label: "お名前", required: true },
     { id: 2, type: "email", label: "メールアドレス", required: true },
   ]);
+  const [actions, setActions] = useState<ActionSetStep[]>([]);
+  const [isActionBuilderOpen, setIsActionBuilderOpen] = useState(false);
 
   const addQuestion = () => {
     setQuestions([
@@ -149,28 +153,66 @@ export default function FormCreatePage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>完了アクション</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>回答時アクション</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => setIsActionBuilderOpen(true)}>
+                <Settings className="mr-2 h-4 w-4" /> アクション設定
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>回答後のメッセージ</Label>
-                <Textarea placeholder="回答ありがとうございました。" />
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">設定済みのアクション: {actions.length}件</span>
+                </div>
+                {actions.length === 0 ? (
+                  <div className="text-sm text-slate-500 text-center py-4">
+                    アクションは設定されていません
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {actions.map((action, index) => (
+                      <div key={index} className="text-sm bg-white p-2 rounded border flex items-center gap-2">
+                        <span className="bg-slate-100 text-xs px-2 py-1 rounded text-slate-600">
+                          {index + 1}
+                        </span>
+                        <span>
+                          {action.action_type === 'tag' && '【タグ操作】'}
+                          {action.action_type === 'text_message' && '【メッセージ送信】'}
+                          {action.action_type === 'template_message' && '【テンプレート送信】'}
+                          {action.action_type === 'step_scenario' && '【シナリオ操作】'}
+                          {/* 他のアクションタイプも必要に応じて追加 */}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
-              <div className="space-y-2">
-                <Label>タグ付け</Label>
-                <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[40px]">
-                  <span className="text-xs text-muted-foreground p-1">タグを選択...</span>
-                </div>
+              <div className="space-y-2 pt-4 border-t">
+                <Label>回答後の表示メッセージ</Label>
+                <Textarea placeholder="回答ありがとうございました。" className="min-h-[100px]" />
+                <p className="text-xs text-slate-500">
+                  ※ フォーム送信完了後に画面に表示されるメッセージです。LINEのトークルームには送信されません。
+                </p>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 pt-2">
                 <Switch id="notify-admin" />
                 <Label htmlFor="notify-admin">管理者に通知メールを送る</Label>
               </div>
             </CardContent>
           </Card>
+
+          <ActionBuilder
+            isOpen={isActionBuilderOpen}
+            onClose={() => setIsActionBuilderOpen(false)}
+            onSave={(newActions) => {
+              setActions(newActions);
+              setIsActionBuilderOpen(false);
+            }}
+            initialSteps={actions}
+            triggerName="フォーム回答"
+          />
         </div>
 
         {/* Right Column: Preview */}

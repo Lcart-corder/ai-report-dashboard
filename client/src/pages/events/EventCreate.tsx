@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +9,12 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Save, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Save, Image as ImageIcon, Plus, Trash2, Settings, Calendar as CalendarIconLucide } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { PageTemplate } from "@/components/page-template";
+import { ActionBuilder } from "@/components/actions/ActionBuilder";
+import { ActionSetStep } from "@/types/schema";
 import { cn } from "@/lib/utils";
 
 export default function EventCreatePage() {
@@ -19,6 +22,10 @@ export default function EventCreatePage() {
   const [tickets, setTickets] = useState([
     { id: 1, name: "一般参加", price: 0, capacity: 10 },
   ]);
+  const [reserveActions, setReserveActions] = useState<ActionSetStep[]>([]);
+  const [cancelActions, setCancelActions] = useState<ActionSetStep[]>([]);
+  const [isReserveActionBuilderOpen, setIsReserveActionBuilderOpen] = useState(false);
+  const [isCancelActionBuilderOpen, setIsCancelActionBuilderOpen] = useState(false);
 
   const addTicket = () => {
     setTickets([
@@ -130,32 +137,150 @@ export default function EventCreatePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>申し込みフォーム設定</CardTitle>
+              <CardTitle>連携・リマインダー設定</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>利用する回答フォーム</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="フォームを選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">新規作成</SelectItem>
-                    <SelectItem value="form1">アンケートフォーム</SelectItem>
-                    <SelectItem value="form2">イベント申込フォーム</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-6">
+              <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarIconLucide className="h-5 w-5 text-blue-600" />
+                    <Label className="text-base">Googleカレンダー連携</Label>
+                  </div>
+                  <Switch id="google-calendar" />
+                </div>
+                <div className="pl-7 space-y-2">
+                  <Label>連携するカレンダー</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="連携設定を行ってください" />
+                    </SelectTrigger>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    予約が入ると自動的にGoogleカレンダーに予定が作成されます。
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <Switch id="reminder" />
-                <Label htmlFor="reminder">リマインダー配信を有効にする</Label>
+              <div className="space-y-4 border p-4 rounded-lg bg-slate-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-orange-600" />
+                    <Label className="text-base">リマインダー配信</Label>
+                  </div>
+                  <Switch id="reminder" />
+                </div>
+                <div className="pl-7 space-y-4">
+                  <div className="space-y-2">
+                    <Label>配信タイミング</Label>
+                    <div className="flex gap-2 items-center">
+                      <Select defaultValue="1day_before">
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1day_before">開催日の1日前</SelectItem>
+                          <SelectItem value="2days_before">開催日の2日前</SelectItem>
+                          <SelectItem value="1hour_before">開催の1時間前</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="time" defaultValue="10:00" className="w-[120px]" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>配信メッセージ</Label>
+                    <Select defaultValue="tmpl1">
+                      <SelectTrigger>
+                        <SelectValue placeholder="テンプレートを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tmpl1">イベント前日リマインド</SelectItem>
+                        <SelectItem value="tmpl2">イベント直前リマインド</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground pl-12">
-                イベント開催日の前日や当日に、自動でリマインドメッセージを送信します。
-              </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>アクション設定</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Reserve Actions */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">予約確定時のアクション</Label>
+                  <Button variant="outline" size="sm" onClick={() => setIsReserveActionBuilderOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> 設定
+                  </Button>
+                </div>
+                <div className="bg-slate-50 p-3 rounded border min-h-[60px] flex items-center">
+                  {reserveActions.length === 0 ? (
+                    <span className="text-sm text-slate-500 pl-2">アクションは設定されていません</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {reserveActions.map((action, i) => (
+                        <Badge key={i} variant="secondary" className="bg-white border">
+                          {action.action_type === 'tag' ? 'タグ操作' : 
+                           action.action_type === 'text_message' ? 'メッセージ送信' : 'アクション'}
+                        </Badge>
+                      ))}
+                      <span className="text-xs text-slate-500 self-center ml-1">他{reserveActions.length}件</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cancel Actions */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">キャンセル時のアクション</Label>
+                  <Button variant="outline" size="sm" onClick={() => setIsCancelActionBuilderOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> 設定
+                  </Button>
+                </div>
+                <div className="bg-slate-50 p-3 rounded border min-h-[60px] flex items-center">
+                  {cancelActions.length === 0 ? (
+                    <span className="text-sm text-slate-500 pl-2">アクションは設定されていません</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {cancelActions.map((action, i) => (
+                        <Badge key={i} variant="secondary" className="bg-white border">
+                          {action.action_type === 'tag' ? 'タグ操作' : 
+                           action.action_type === 'text_message' ? 'メッセージ送信' : 'アクション'}
+                        </Badge>
+                      ))}
+                      <span className="text-xs text-slate-500 self-center ml-1">他{cancelActions.length}件</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <ActionBuilder
+            isOpen={isReserveActionBuilderOpen}
+            onClose={() => setIsReserveActionBuilderOpen(false)}
+            onSave={(newActions) => {
+              setReserveActions(newActions);
+              setIsReserveActionBuilderOpen(false);
+            }}
+            initialSteps={reserveActions}
+            triggerName="イベント予約確定"
+          />
+
+          <ActionBuilder
+            isOpen={isCancelActionBuilderOpen}
+            onClose={() => setIsCancelActionBuilderOpen(false)}
+            onSave={(newActions) => {
+              setCancelActions(newActions);
+              setIsCancelActionBuilderOpen(false);
+            }}
+            initialSteps={cancelActions}
+            triggerName="イベント予約キャンセル"
+          />
         </div>
 
         {/* Right Column: Preview */}
