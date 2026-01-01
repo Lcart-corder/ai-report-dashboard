@@ -19,6 +19,7 @@ import AutoReplyPage from "./pages/messages/AutoReply";
 import ActionSchedulePage from "./pages/messages/ActionSchedule";
 import TemplatesPage from "./pages/messages/Templates";
 import RichMenuListPage from "./pages/messages/RichMenuList";
+import RichMenuEditorPage from "./pages/messages/RichMenuEditor";
 import RichMenuCreatePage from "./pages/messages/RichMenuCreate";
 import TemplateCreatePage from "./pages/messages/TemplateCreate";
 import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
@@ -84,7 +85,9 @@ function App() {
             <Route path="/messages/action-schedule" component={ActionSchedulePage} />
             <Route path="/messages/greeting" component={PlaceholderPage} />
             <Route path="/messages/rich-menus" component={RichMenuListPage} />
-            <Route path="/messages/rich-menus/create" component={RichMenuCreatePage} />
+            <Route path="/messages/rich-menus/create" component={RichMenuEditorPage} />
+            <Route path="/messages/rich-menus/:id/edit" component={RichMenuEditorPage} />
+            
 
             {/* Forms */}
             <Route path="/forms" component={FormManagerPage} />
