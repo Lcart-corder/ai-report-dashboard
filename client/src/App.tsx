@@ -34,6 +34,12 @@ import FormManagerPage from "./pages/forms/FormManager";
 import FormCreatePage from "./pages/forms/FormCreate";
 import FormResponsesPage from "./pages/forms/FormResponses";
 
+// Orders & Products
+import OrderListPage from "./pages/orders/OrderList";
+import ShippingManagementPage from "./pages/orders/ShippingManagement";
+import ProductListPage from "./pages/shop/ProductList";
+import ProductManagementPage from "./pages/orders/ProductManagement";
+
 // Analysis
 import AnalysisDashboard from "./pages/analysis/index";
 import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
@@ -95,6 +101,14 @@ function App() {
             <Route path="/forms/responses" component={FormResponsesPage} />
             <Route path="/forms/:id/responses" component={FormResponsesPage} />
             <Route path="/forms/:id/edit" component={FormCreatePage} />
+
+            {/* Orders */}
+            <Route path="/orders" component={OrderListPage} />
+            <Route path="/orders/shipments" component={ShippingManagementPage} />
+
+            {/* Products */}
+            <Route path="/products" component={ProductListPage} />
+            <Route path="/products/inventory" component={ProductManagementPage} />
 
             {/* Analysis */}
             <Route path="/analysis" component={AnalysisDashboard} />

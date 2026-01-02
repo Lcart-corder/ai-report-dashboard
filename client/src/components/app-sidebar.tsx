@@ -39,7 +39,9 @@ import {
   User,
   CreditCard,
   Menu,
-  Keyboard
+  Keyboard,
+  Truck,
+  Package
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -143,8 +145,16 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       href: "/orders",
       subItems: [
         { label: "注文一覧", href: "/orders", icon: List },
-        { label: "商品管理", href: "/orders/products", icon: Tag },
-        { label: "配送管理", href: "/orders/shipments", icon: Send },
+        { label: "配送管理", href: "/orders/shipments", icon: Truck },
+      ]
+    },
+    {
+      icon: Package,
+      label: "商品管理",
+      href: "/products",
+      subItems: [
+        { label: "商品一覧", href: "/products", icon: List },
+        { label: "在庫管理", href: "/products/inventory", icon: BarChart2 },
       ]
     },
     {
