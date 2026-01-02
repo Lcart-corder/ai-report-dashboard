@@ -69,6 +69,24 @@ async function startServer() {
     res.json(product);
   });
 
+  apiRouter.put("/products/:id", (req, res) => {
+    const product = PRODUCTS.find(p => p.id === req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    
+    const { variants } = req.body;
+    if (variants && Array.isArray(variants)) {
+      variants.forEach((newVariant: any) => {
+        const existingVariant = product.variants.find(v => v.id === newVariant.id);
+        if (existingVariant) {
+          existingVariant.stock_quantity = newVariant.stock_quantity;
+          existingVariant.price = newVariant.price;
+        }
+      });
+    }
+    
+    res.json(product);
+  });
+
   // Cart
   apiRouter.get("/cart", (req, res) => {
     // Mock user_id from header or default
@@ -145,17 +163,28 @@ async function startServer() {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
-    // Calculate totals
+    // Check stock and calculate totals
     let subtotal = 0;
-    const orderItems = cart.items.map((item: any) => {
+    const orderItems = [];
+
+    for (const item of cart.items) {
       const product = PRODUCTS.find(p => p.id === item.product_id);
       const variant = product?.variants.find(v => v.id === item.variant_id);
-      if (!product || !variant) throw new Error("Invalid item");
+      
+      if (!product || !variant) {
+        return res.status(400).json({ error: "Invalid item in cart" });
+      }
+
+      if (variant.stock_quantity < item.quantity) {
+        return res.status(400).json({ 
+          error: `Stock shortage for ${product.name} (${variant.name}). Available: ${variant.stock_quantity}` 
+        });
+      }
       
       const price = variant.price;
       subtotal += price * item.quantity;
       
-      return {
+      orderItems.push({
         id: `oi_${Date.now()}_${item.id}`,
         product_id: item.product_id,
         variant_id: item.variant_id,
@@ -164,8 +193,17 @@ async function startServer() {
         price: price,
         tax_rate: 0.1,
         quantity: item.quantity
-      };
-    });
+      });
+    }
+
+    // Deduct stock
+    for (const item of orderItems) {
+      const product = PRODUCTS.find(p => p.id === item.product_id);
+      const variant = product?.variants.find(v => v.id === item.variant_id);
+      if (variant) {
+        variant.stock_quantity -= item.quantity;
+      }
+    }
 
     const shipping_fee = subtotal > 5000 ? 0 : 500;
     const tax_total = Math.floor(subtotal * 0.1);

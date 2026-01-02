@@ -507,6 +507,7 @@ export interface Product {
   description?: string;
   images: string[]; // URLs
   is_active: boolean;
+  variants: ProductVariant[]; // Added variants
   created_at: DateTime;
   updated_at: DateTime;
 }

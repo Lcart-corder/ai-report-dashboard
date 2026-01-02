@@ -92,7 +92,14 @@ export default function ProductDetailPage() {
 
           {/* Variant Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">バリエーション</label>
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">バリエーション</label>
+              {selectedVariant && (
+                <span className={`text-sm font-medium ${selectedVariant.stock_quantity === 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                  {selectedVariant.stock_quantity === 0 ? '在庫切れ' : `残り ${selectedVariant.stock_quantity} 点`}
+                </span>
+              )}
+            </div>
             <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
               <SelectTrigger>
                 <SelectValue />
@@ -145,12 +152,18 @@ export default function ProductDetailPage() {
         {/* Fixed Bottom Action */}
         <div className="fixed bottom-16 left-0 right-0 p-4 bg-white border-t max-w-md mx-auto">
           <Button 
-            className="w-full h-12 text-lg font-bold bg-[#06C755] hover:bg-[#05b34c]"
+            className={`w-full h-12 text-lg font-bold ${(!selectedVariant || selectedVariant.stock_quantity === 0) ? 'bg-gray-400 hover:bg-gray-400' : 'bg-[#06C755] hover:bg-[#05b34c]'}`}
             onClick={handleAddToCart}
             disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
           >
-            <ShoppingCart className="mr-2 w-5 h-5" />
-            カートに入れる
+            {(!selectedVariant || selectedVariant.stock_quantity === 0) ? (
+              <>売り切れ</>
+            ) : (
+              <>
+                <ShoppingCart className="mr-2 w-5 h-5" />
+                カートに入れる
+              </>
+            )}
           </Button>
         </div>
       </div>
