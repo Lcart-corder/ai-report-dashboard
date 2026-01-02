@@ -496,3 +496,165 @@ export interface LoginAttempt {
   success: boolean;
   created_at: DateTime;
 }
+
+// Feature: Cart & Checkout (L-Cart)
+
+// 1. Products
+export interface Product {
+  id: ID;
+  tenant_id: ID;
+  name: string;
+  description?: string;
+  images: string[]; // URLs
+  is_active: boolean;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+export interface ProductVariant {
+  id: ID;
+  product_id: ID;
+  sku: string;
+  name: string; // e.g., "Red / L"
+  price: number;
+  stock_quantity: number;
+  is_active: boolean;
+  image_url?: string;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+// 2. Cart
+export interface Cart {
+  id: ID;
+  tenant_id: ID;
+  user_id: ID; // line_user_id linked via Contact
+  is_active: boolean;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+export interface CartItem {
+  id: ID;
+  cart_id: ID;
+  product_id: ID;
+  variant_id: ID;
+  quantity: number;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+// 3. Order
+export type OrderStatus = 
+  | 'draft' 
+  | 'awaiting_payment' 
+  | 'paid' 
+  | 'canceled' 
+  | 'fulfilled' 
+  | 'refunded';
+
+export interface Order {
+  id: ID;
+  tenant_id: ID;
+  order_no: string; // Unique human-readable ID
+  user_id: ID;
+  status: OrderStatus;
+  
+  // Pricing (Server Calculated)
+  subtotal: number;
+  tax_total: number;
+  shipping_fee: number;
+  discount_total: number;
+  grand_total: number;
+  currency: string; // e.g., "JPY"
+
+  // Customer Info
+  shipping_info_json: {
+    name: string;
+    postal_code: string;
+    address: string;
+    phone: string;
+  };
+  customer_note?: string;
+
+  created_at: DateTime;
+  updated_at: DateTime;
+  paid_at?: DateTime;
+  canceled_at?: DateTime;
+  fulfilled_at?: DateTime;
+}
+
+export interface OrderItem {
+  id: ID;
+  order_id: ID;
+  product_id: ID;
+  variant_id: ID;
+  product_name: string;
+  variant_name: string;
+  price: number; // Snapshot at order time
+  tax_rate: number;
+  quantity: number;
+}
+
+// 4. Payment
+export type PaymentStatus = 
+  | 'initiated' 
+  | 'requires_action' 
+  | 'succeeded' 
+  | 'failed' 
+  | 'canceled' 
+  | 'refunded';
+
+export interface Payment {
+  id: ID;
+  tenant_id: ID;
+  order_id: ID;
+  provider: string; // e.g., "stripe", "paypay"
+  provider_payment_id?: string;
+  status: PaymentStatus;
+  amount: number;
+  currency: string;
+  raw_response_json?: JSONValue;
+  expires_at?: DateTime;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+// 5. Shipment
+export type ShipmentStatus = 'preparing' | 'shipped' | 'delivered' | 'returned';
+
+export interface Shipment {
+  id: ID;
+  order_id: ID;
+  tracking_number?: string;
+  carrier?: string;
+  status: ShipmentStatus;
+  shipped_at?: DateTime;
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+// 6. Inventory Reservation
+export interface InventoryReservation {
+  id: ID;
+  variant_id: ID;
+  order_id: ID;
+  quantity: number;
+  expires_at: DateTime;
+  status: 'reserved' | 'confirmed' | 'released';
+  created_at: DateTime;
+}
+
+// 7. Message Job (Notification Queue)
+export interface MessageJob {
+  id: ID;
+  tenant_id: ID;
+  type: 'order_confirmation' | 'payment_reminder' | 'shipping_notice' | 'cancellation_notice';
+  target_user_id: ID;
+  order_id: ID;
+  status: JobStatus;
+  scheduled_at?: DateTime;
+  retry_count: number;
+  created_at: DateTime;
+  updated_at: DateTime;
+}

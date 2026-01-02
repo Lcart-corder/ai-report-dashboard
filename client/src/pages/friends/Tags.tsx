@@ -220,7 +220,7 @@ export default function TagsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0">
+        <DialogContent className="bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 w-[98vw] max-w-[1600px] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border shadow-lg duration-200 h-[80vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>{editingTag ? "タグを編集" : "新規タグ作成"}</DialogTitle>
             <DialogDescription>

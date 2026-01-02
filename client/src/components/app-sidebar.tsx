@@ -64,7 +64,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
     "/analysis": true,
     "/ai": true,
     "/integrations": true,
-    "/admin": true
+    "/admin": true,
+    "/orders": true
   })
 
   const toggleMenu = (href: string) => {
@@ -134,6 +135,16 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       subItems: [
         { label: "回答フォーム一覧", href: "/forms", icon: List },
         { label: "回答一覧", href: "/forms/responses", icon: FileInput }
+      ]
+    },
+    {
+      icon: ShoppingBag,
+      label: "注文管理",
+      href: "/orders",
+      subItems: [
+        { label: "注文一覧", href: "/orders", icon: List },
+        { label: "商品管理", href: "/orders/products", icon: Tag },
+        { label: "配送管理", href: "/orders/shipments", icon: Send },
       ]
     },
     {
