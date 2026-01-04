@@ -9,10 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { StaticPage } from "@/types/schema";
 import { toast } from "sonner";
-import { ArrowLeft, Calendar, Eye } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { format } from "date-fns";
-// import ReactQuill from "react-quill";
-// import "react-quill/dist/quill.snow.css";
 
 export default function StaticPageEditPage() {
   const [match, params] = useRoute("/admin/static-pages/:id");
@@ -67,7 +65,6 @@ export default function StaticPageEditPage() {
     const newTitle = e.target.value;
     setTitle(newTitle);
     if (isNew && !handle) {
-      // Simple slugify for preview (server handles actual uniqueness)
       const slug = newTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       setHandle(slug);
     }
@@ -139,25 +136,25 @@ export default function StaticPageEditPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6 pb-24">
-        <div className="flex items-center justify-between max-w-5xl mx-auto">
+        <div className="flex items-center justify-between max-w-5xl mx-auto pt-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/static-pages")} className="-ml-2">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/static-pages")} className="-ml-2 text-gray-500 hover:bg-gray-100">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="text-xl font-bold tracking-tight text-gray-900">
-              {isNew ? "ページを追加" : title}
+              {isNew ? "ページを追加" : title || "無題のページ"}
             </h1>
           </div>
           <div className="flex gap-3">
             {!isNew && (
-              <Button variant="outline" asChild className="bg-white">
+              <Button variant="outline" asChild className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm h-9">
                 <a href={`/pages/${handle}`} target="_blank" rel="noopener noreferrer">
                   <Eye className="w-4 h-4 mr-2" />
                   ページを表示
                 </a>
               </Button>
             )}
-            <Button onClick={handleSave} disabled={saving} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm">
+            <Button onClick={handleSave} disabled={saving} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm h-9 px-4 font-medium">
               {saving ? "保存中..." : "保存"}
             </Button>
           </div>
@@ -169,8 +166,13 @@ export default function StaticPageEditPage() {
             <Card className="shadow-sm border-gray-200">
               <CardContent className="p-5 space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">タイトル</Label>
-                  <Input value={title} onChange={handleTitleChange} placeholder="例: お問い合わせ" className="h-9" />
+                  <Label className="text-gray-700 font-medium text-sm">タイトル</Label>
+                  <Input 
+                    value={title} 
+                    onChange={handleTitleChange} 
+                    placeholder="例: お問い合わせ" 
+                    className="h-9 border-gray-300 focus:border-[#008060] focus:ring-[#008060]" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-medium">コンテンツ</Label>
@@ -258,92 +260,88 @@ export default function StaticPageEditPage() {
           {/* Right Column: Settings */}
           <div className="space-y-4">
             <Card className="shadow-sm border-gray-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">公開範囲</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="radio" 
-                      id="vis-published" 
-                      name="visibility" 
-                      checked={status === "published"} 
-                      onChange={() => setStatus("published")}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <Label htmlFor="vis-published" className="font-normal">公開</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="radio" 
-                      id="vis-scheduled" 
-                      name="visibility" 
-                      checked={status === "scheduled"} 
-                      onChange={() => setStatus("scheduled")}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <Label htmlFor="vis-scheduled" className="font-normal">公開日時を設定する</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="radio" 
-                      id="vis-draft" 
-                      name="visibility" 
-                      checked={status === "draft"} 
-                      onChange={() => setStatus("draft")}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <Label htmlFor="vis-draft" className="font-normal">非公開（下書き）</Label>
-                  </div>
+              <CardHeader className="pb-3 border-b border-gray-100">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-sm font-semibold text-gray-900">公開範囲</CardTitle>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {status === 'published' ? '公開中' : status === 'draft' ? '非公開' : '予約済み'}
+                  </span>
                 </div>
-
-                {status === "scheduled" && (
-                  <div className="pt-4 border-t space-y-4 animate-in fade-in slide-in-from-top-2">
-                    <div className="space-y-2">
-                      <Label>公開日</Label>
-                      <div className="relative">
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-3">
+                  <Label className="text-gray-700 text-sm">公開ステータス</Label>
+                  <Select 
+                    value={status === "scheduled" ? "scheduled" : (status === "published" ? "published" : "draft")} 
+                    onValueChange={(v) => {
+                      if (v === "scheduled") {
+                        setStatus("scheduled");
+                        if (!publishDate) setPublishDate(format(new Date(), "yyyy-MM-dd"));
+                        if (!publishTime) setPublishTime(format(new Date(), "HH:mm"));
+                      } else {
+                        setStatus(v as any);
+                        setPublishDate("");
+                        setPublishTime("");
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-9 border-gray-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="published">公開</SelectItem>
+                      <SelectItem value="draft">非公開（下書き）</SelectItem>
+                      <SelectItem value="scheduled">予約公開設定...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {status === "scheduled" && (
+                    <div className="pt-2 space-y-2 animate-in fade-in slide-in-from-top-2 bg-gray-50 p-3 rounded border border-gray-200">
+                      <Label className="text-xs text-gray-600 font-medium">公開日時を指定</Label>
+                      <div className="flex gap-2">
                         <Input 
                           type="date" 
-                          value={publishDate} 
-                          onChange={e => setPublishDate(e.target.value)} 
+                          value={publishDate}
+                          onChange={(e) => setPublishDate(e.target.value)}
+                          className="bg-white h-8 text-sm w-full"
+                        />
+                        <Input 
+                          type="time" 
+                          value={publishTime}
+                          onChange={(e) => setPublishTime(e.target.value)}
+                          className="bg-white h-8 text-sm w-24"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>公開時間</Label>
-                      <Input 
-                        type="time" 
-                        value={publishTime} 
-                        onChange={e => setPublishTime(e.target.value)} 
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      指定した日時に自動的に公開されます。
-                    </p>
-                  </div>
-                )}
+                  )}
+                  
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {status === "published" ? "オンラインストアですぐに公開されます。" : 
+                     status === "draft" ? "オンラインストアでは非表示になります。" : 
+                     `指定した日時（${publishDate} ${publishTime}）に自動的に公開されます。`}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="shadow-sm border-gray-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">オンラインストア</CardTitle>
+              <CardHeader className="pb-3 border-b border-gray-100">
+                <CardTitle className="text-sm font-semibold text-gray-900">オンラインストア</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-700">テーマテンプレート</Label>
+                  <Label className="text-gray-700 text-sm">テーマテンプレート</Label>
                   <Select value={templateKey} onValueChange={setTemplateKey}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">Default page</SelectItem>
-                      <SelectItem value="contact">contact</SelectItem>
+                      <SelectItem value="default">デフォルトページ</SelectItem>
+                      <SelectItem value="contact">お問い合わせ (contact)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">
-                    現在のテーマ: Dawn
+                    現在のテーマでページを表示するテンプレートを割り当てます。
                   </p>
                 </div>
               </CardContent>

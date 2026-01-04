@@ -54,20 +54,20 @@ export default function StaticPageListPage() {
 
   const getStatusBadge = (page: StaticPage) => {
     if (page.status === "published") {
-      return <Badge className="bg-green-500">公開中</Badge>;
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">公開中</span>;
     } else if (page.status === "scheduled") {
-      return <Badge variant="outline" className="text-orange-500 border-orange-500">予約済み</Badge>;
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">予約済み</span>;
     } else {
-      return <Badge variant="secondary">下書き</Badge>;
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">下書き</span>;
     }
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-4">
           <h1 className="text-xl font-bold tracking-tight text-gray-900">ページ</h1>
-          <Button onClick={() => setLocation("/admin/static-pages/new")} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm">
+          <Button onClick={() => setLocation("/admin/static-pages/new")} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm h-9 px-4 font-medium">
             <Plus className="mr-2 h-4 w-4" />
             ページを追加
           </Button>
@@ -90,31 +90,31 @@ export default function StaticPageListPage() {
             ) : (
               <Table>
                 <TableHeader className="bg-gray-50">
-                  <TableRow>
-                    <TableHead className="w-[40%]">タイトル</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>最終更新日</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                  <TableRow className="border-b border-gray-200">
+                    <TableHead className="w-[40%] font-medium text-gray-600 text-xs uppercase tracking-wider pl-6">タイトル</TableHead>
+                    <TableHead className="font-medium text-gray-600 text-xs uppercase tracking-wider">ステータス</TableHead>
+                    <TableHead className="font-medium text-gray-600 text-xs uppercase tracking-wider">URL</TableHead>
+                    <TableHead className="font-medium text-gray-600 text-xs uppercase tracking-wider">最終更新日</TableHead>
+                    <TableHead className="text-right font-medium text-gray-600 text-xs uppercase tracking-wider pr-6">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pages.map((page) => (
-                    <TableRow key={page.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">
-                        <Link href={`/admin/static-pages/${page.id}`} className="hover:underline text-[#005bd3] font-semibold">
+                    <TableRow key={page.id} className="hover:bg-gray-50 border-b border-gray-100 last:border-0 group">
+                      <TableCell className="font-medium pl-6 py-3">
+                        <Link href={`/admin/static-pages/${page.id}`} className="hover:underline text-gray-900 font-semibold text-sm">
                           {page.title}
                         </Link>
                       </TableCell>
-                      <TableCell>{getStatusBadge(page)}</TableCell>
-                      <TableCell className="text-sm text-gray-500">
+                      <TableCell className="py-3">{getStatusBadge(page)}</TableCell>
+                      <TableCell className="text-sm text-gray-500 py-3">
                         /pages/{page.handle}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">
+                      <TableCell className="text-sm text-gray-500 py-3">
                         {format(new Date(page.updated_at), "yyyy/MM/dd HH:mm")}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="text-right pr-6 py-3">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           {page.status === "published" && (
                             <Button variant="ghost" size="icon" asChild className="text-gray-500 hover:text-gray-900">
                               <a href={`/pages/${page.handle}`} target="_blank" rel="noopener noreferrer">
