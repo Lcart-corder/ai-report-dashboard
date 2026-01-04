@@ -11,6 +11,8 @@ import { StaticPage } from "@/types/schema";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import { format } from "date-fns";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 export default function StaticPageEditPage() {
   const [match, params] = useRoute("/admin/static-pages/:id");
@@ -137,82 +139,80 @@ export default function StaticPageEditPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6 pb-24">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/static-pages")}>
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/static-pages")} className="-ml-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">
               {isNew ? "ページを追加" : title}
             </h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {!isNew && (
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="bg-white">
                 <a href={`/pages/${handle}`} target="_blank" rel="noopener noreferrer">
                   <Eye className="w-4 h-4 mr-2" />
                   ページを表示
                 </a>
               </Button>
             )}
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm">
               {saving ? "保存中..." : "保存"}
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* Left Column: Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-6 space-y-4">
+          <div className="lg:col-span-2 space-y-4">
+            <Card className="shadow-sm border-gray-200">
+              <CardContent className="p-5 space-y-4">
                 <div className="space-y-2">
-                  <Label>タイトル</Label>
-                  <Input value={title} onChange={handleTitleChange} placeholder="例: お問い合わせ" />
+                  <Label className="text-gray-700 font-medium">タイトル</Label>
+                  <Input value={title} onChange={handleTitleChange} placeholder="例: お問い合わせ" className="h-9" />
                 </div>
                 <div className="space-y-2">
-                  <Label>コンテンツ</Label>
-                  <div className="border rounded-md">
-                    {/* Simple Toolbar Placeholder */}
-                    <div className="bg-gray-50 border-b p-2 flex gap-2 text-sm text-gray-600">
-                      <button className="p-1 hover:bg-gray-200 rounded font-bold">B</button>
-                      <button className="p-1 hover:bg-gray-200 rounded italic">I</button>
-                      <button className="p-1 hover:bg-gray-200 rounded underline">U</button>
-                      <div className="w-px bg-gray-300 mx-1"></div>
-                      <button className="p-1 hover:bg-gray-200 rounded">H2</button>
-                      <button className="p-1 hover:bg-gray-200 rounded">Link</button>
-                      <button className="p-1 hover:bg-gray-200 rounded">Image</button>
-                    </div>
-                    <Textarea 
-                      value={content} 
-                      onChange={e => setContent(e.target.value)} 
-                      className="min-h-[300px] border-0 focus-visible:ring-0 rounded-none resize-y p-4"
-                      placeholder="ここに内容を入力してください..."
+                  <Label className="text-gray-700 font-medium">コンテンツ</Label>
+                  <div className="prose-editor">
+                    <ReactQuill 
+                      theme="snow"
+                      value={content}
+                      onChange={setContent}
+                      modules={{
+                        toolbar: [
+                          [{ 'header': [1, 2, 3, false] }],
+                          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                          [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+                          ['link', 'image'],
+                          ['clean']
+                        ],
+                      }}
+                      className="h-[300px] mb-12"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 text-right">HTML形式で入力可能です</p>
                 </div>
               </CardContent>
             </Card>
 
             {/* SEO Settings */}
-            <Card>
-              <CardHeader>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">検索エンジンでの表示プレビュー</CardTitle>
-                  <Button variant="link" className="text-blue-600 h-auto p-0">
+                  <CardTitle className="text-base font-semibold text-gray-900">検索エンジンでの表示プレビュー</CardTitle>
+                  <Button variant="link" className="text-[#008060] h-auto p-0 font-normal">
                     ウェブサイトのSEOを編集する
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 mt-1">
                   検索結果に表示されるページのタイトルと説明を追加して、検索エンジンのランキングを改善しましょう。
                 </p>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-2">
                 {/* Preview Box */}
                 <div className="bg-white p-0">
                   <div className="text-sm text-[#202124] mb-1">{title}</div>
-                  <div className="text-xl text-[#1a0dab] hover:underline cursor-pointer mb-1 truncate">
+                  <div className="text-xl text-[#1a0dab] hover:underline cursor-pointer mb-1 truncate font-medium">
                     {previewTitle}
                   </div>
                   <div className="text-sm text-[#006621] mb-1">{previewUrl}</div>
@@ -221,32 +221,35 @@ export default function StaticPageEditPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="space-y-2">
-                    <Label>ページタイトル</Label>
+                    <Label className="text-gray-700">ページタイトル</Label>
                     <Input 
                       value={seoTitle} 
                       onChange={e => setSeoTitle(e.target.value)} 
                       placeholder={title}
+                      className="h-9"
                     />
                     <p className="text-xs text-gray-500">0 / 70文字</p>
                   </div>
                   <div className="space-y-2">
-                    <Label>メタディスクリプション</Label>
+                    <Label className="text-gray-700">メタディスクリプション</Label>
                     <Textarea 
                       value={seoDescription} 
                       onChange={e => setSeoDescription(e.target.value)} 
                       rows={3}
+                      className="resize-y"
                     />
                     <p className="text-xs text-gray-500">0 / 320文字</p>
                   </div>
                   <div className="space-y-2">
-                    <Label>URLとハンドル</Label>
+                    <Label className="text-gray-700">URLとハンドル</Label>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-500 whitespace-nowrap">/pages/</span>
                       <Input 
                         value={handle} 
                         onChange={e => setHandle(e.target.value)} 
+                        className="h-9"
                       />
                     </div>
                   </div>
@@ -256,10 +259,10 @@ export default function StaticPageEditPage() {
           </div>
 
           {/* Right Column: Settings */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">公開範囲</CardTitle>
+          <div className="space-y-4">
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900">公開範囲</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -326,15 +329,15 @@ export default function StaticPageEditPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">オンラインストア</CardTitle>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900">オンラインストア</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>テーマテンプレート</Label>
+                  <Label className="text-gray-700">テーマテンプレート</Label>
                   <Select value={templateKey} onValueChange={setTemplateKey}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

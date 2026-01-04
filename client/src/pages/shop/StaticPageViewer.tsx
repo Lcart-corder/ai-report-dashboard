@@ -3,6 +3,10 @@ import { useRoute, Link } from "wouter";
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { StaticPage } from "@/types/schema";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 // Mock Helmet if not available
 const MetaTags = ({ title, description }: { title: string, description: string }) => {
@@ -64,6 +68,12 @@ export default function StaticPageViewer() {
   const seoTitle = page.seo_title || `${page.title} - L-Cart Shop`;
   const seoDesc = page.seo_description || page.content.replace(/<[^>]*>/g, "").slice(0, 160);
 
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success("お問い合わせを受け付けました。");
+    // In real app, send to API
+  };
+
   return (
     <ShopLayout>
       <MetaTags title={seoTitle} description={seoDesc} />
@@ -72,9 +82,36 @@ export default function StaticPageViewer() {
         <h1 className="text-3xl font-bold mb-8 text-center">{page.title}</h1>
         
         <div 
-          className="prose prose-lg max-w-none"
+          className="prose prose-lg max-w-none mb-12"
           dangerouslySetInnerHTML={{ __html: page.content }}
         />
+
+        {page.template_key === "contact" && (
+          <div className="max-w-xl mx-auto bg-gray-50 p-8 rounded-lg border">
+            <h2 className="text-xl font-semibold mb-6">お問い合わせ</h2>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">お名前</Label>
+                  <Input id="name" required placeholder="山田 太郎" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">メールアドレス</Label>
+                  <Input id="email" type="email" required placeholder="example@email.com" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">電話番号</Label>
+                <Input id="phone" type="tel" placeholder="090-1234-5678" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message">お問い合わせ内容</Label>
+                <Textarea id="message" required rows={5} placeholder="ご質問内容をご記入ください" />
+              </div>
+              <Button type="submit" className="w-full">送信する</Button>
+            </form>
+          </div>
+        )}
       </div>
     </ShopLayout>
   );

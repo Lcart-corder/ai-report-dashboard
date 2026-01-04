@@ -64,25 +64,17 @@ export default function StaticPageListPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-5xl mx-auto">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">ページ管理</h1>
-            <p className="text-muted-foreground">
-              About Us、プライバシーポリシーなどの固定ページを作成・管理します。
-            </p>
-          </div>
-          <Button onClick={() => setLocation("/admin/static-pages/new")}>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">ページ</h1>
+          <Button onClick={() => setLocation("/admin/static-pages/new")} className="bg-[#008060] hover:bg-[#006e52] text-white shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             ページを追加
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>ページ一覧</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Card className="shadow-sm border-gray-200">
+          <CardContent className="p-0">
             {loading ? (
               <div className="text-center py-8">読み込み中...</div>
             ) : pages.length === 0 ? (
@@ -97,9 +89,9 @@ export default function StaticPageListPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-gray-50">
                   <TableRow>
-                    <TableHead>タイトル</TableHead>
+                    <TableHead className="w-[40%]">タイトル</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead>URL</TableHead>
                     <TableHead>最終更新日</TableHead>
@@ -108,9 +100,9 @@ export default function StaticPageListPage() {
                 </TableHeader>
                 <TableBody>
                   {pages.map((page) => (
-                    <TableRow key={page.id}>
+                    <TableRow key={page.id} className="hover:bg-gray-50">
                       <TableCell className="font-medium">
-                        <Link href={`/admin/static-pages/${page.id}`} className="hover:underline">
+                        <Link href={`/admin/static-pages/${page.id}`} className="hover:underline text-[#005bd3] font-semibold">
                           {page.title}
                         </Link>
                       </TableCell>
@@ -124,14 +116,14 @@ export default function StaticPageListPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {page.status === "published" && (
-                            <Button variant="ghost" size="icon" asChild>
+                            <Button variant="ghost" size="icon" asChild className="text-gray-500 hover:text-gray-900">
                               <a href={`/pages/${page.handle}`} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-4 w-4" />
                               </a>
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(page.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(page.id)} className="text-gray-400 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
