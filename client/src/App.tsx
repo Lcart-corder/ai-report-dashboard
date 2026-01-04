@@ -43,6 +43,9 @@ import ProductEditPage from "./pages/orders/ProductEdit";
 import PageListPage from "./pages/admin/pages/PageList";
 import PageEditPage from "./pages/admin/pages/PageEdit";
 import PublicPageViewer from "./pages/shop/PublicPageViewer";
+import StaticPageListPage from "./pages/admin/static-pages/StaticPageList";
+import StaticPageEditPage from "./pages/admin/static-pages/StaticPageEdit";
+import StaticPageViewer from "./pages/shop/StaticPageViewer";
 
 // Analysis
 import AnalysisDashboard from "./pages/analysis/index";
@@ -162,8 +165,14 @@ function App() {
             <Route path="/admin/pages/new" component={PageEditPage} />
             <Route path="/admin/pages/:id" component={PageEditPage} />
 
+            {/* Static Pages (Shopify-like) */}
+            <Route path="/admin/static-pages" component={StaticPageListPage} />
+            <Route path="/admin/static-pages/new" component={StaticPageEditPage} />
+            <Route path="/admin/static-pages/:id" component={StaticPageEditPage} />
+
             {/* Public Pages */}
             <Route path="/s/:slug" component={PublicPageViewer} />
+            <Route path="/pages/:handle" component={StaticPageViewer} />
 
             {/* Fallback */}
             <Route component={PlaceholderPage} />

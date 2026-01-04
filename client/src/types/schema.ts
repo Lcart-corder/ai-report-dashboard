@@ -713,3 +713,20 @@ export interface Page {
   created_at: DateTime;
   updated_at: DateTime;
 }
+
+// 9. Static Pages (Shopify-like Standard Pages)
+export interface StaticPage {
+  id: ID;
+  tenant_id: ID;
+  title: string;
+  content: string; // HTML content
+  seo_title?: string;
+  seo_description?: string;
+  handle: string; // URL slug
+  status: 'draft' | 'published' | 'scheduled';
+  publish_at?: DateTime;
+  template_key: string; // default: 'default'
+  deleted_at?: DateTime;
+  created_at: DateTime;
+  updated_at: DateTime;
+}

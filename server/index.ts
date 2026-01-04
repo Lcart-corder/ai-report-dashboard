@@ -78,6 +78,22 @@ let ORDERS: any[] = [];
 let PAYMENTS: any[] = [];
 
 // Mock Pages
+let STATIC_PAGES: any[] = [
+  {
+    id: "sp_1",
+    tenant_id: "t1",
+    title: "About Us",
+    content: "<h1>私たちについて</h1><p>私たちは最高品質の商品をお届けすることに情熱を注いでいます。</p>",
+    seo_title: "About Us - L-Cart Shop",
+    seo_description: "L-Cart Shopの理念と歴史についてご紹介します。",
+    handle: "about-us",
+    status: "published",
+    template_key: "default",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 let PAGES: any[] = [
   {
     id: "page_1",
@@ -396,6 +412,112 @@ async function startServer() {
       payment_id: payment.id,
       pay_url: `/checkout/pay/${payment.id}`, // Internal mock page
     });
+  });
+
+  // Static Pages API (Admin)
+  apiRouter.get("/admin/static-pages", (req, res) => {
+    const pages = STATIC_PAGES.filter(p => !p.deleted_at);
+    res.json(pages);
+  });
+
+  apiRouter.get("/admin/static-pages/:id", (req, res) => {
+    const page = STATIC_PAGES.find(p => p.id === req.params.id && !p.deleted_at);
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  apiRouter.post("/admin/static-pages", (req, res) => {
+    const { title, content, seo_title, seo_description, handle, status, publish_at, template_key } = req.body;
+    
+    // Handle generation logic
+    let finalHandle = handle || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!finalHandle) finalHandle = `page-${Date.now()}`;
+    
+    // Check handle uniqueness
+    let counter = 1;
+    let originalHandle = finalHandle;
+    while (STATIC_PAGES.some(p => p.handle === finalHandle && !p.deleted_at)) {
+      finalHandle = `${originalHandle}-${counter}`;
+      counter++;
+    }
+
+    const newPage = {
+      id: `sp_${Date.now()}`,
+      tenant_id: "t1",
+      title,
+      content,
+      seo_title,
+      seo_description,
+      handle: finalHandle,
+      status: status || "draft",
+      publish_at,
+      template_key: template_key || "default",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    STATIC_PAGES.push(newPage);
+    res.status(201).json(newPage);
+  });
+
+  apiRouter.put("/admin/static-pages/:id", (req, res) => {
+    const pageIndex = STATIC_PAGES.findIndex(p => p.id === req.params.id);
+    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
+
+    const updates = req.body;
+    const currentPage = STATIC_PAGES[pageIndex];
+
+    // Handle uniqueness check if changed
+    if (updates.handle && updates.handle !== currentPage.handle) {
+      let finalHandle = updates.handle;
+      let counter = 1;
+      let originalHandle = finalHandle;
+      while (STATIC_PAGES.some(p => p.handle === finalHandle && p.id !== currentPage.id && !p.deleted_at)) {
+        finalHandle = `${originalHandle}-${counter}`;
+        counter++;
+      }
+      updates.handle = finalHandle;
+    }
+
+    const updatedPage = {
+      ...currentPage,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
+    STATIC_PAGES[pageIndex] = updatedPage;
+    res.json(updatedPage);
+  });
+
+  apiRouter.delete("/admin/static-pages/:id", (req, res) => {
+    const pageIndex = STATIC_PAGES.findIndex(p => p.id === req.params.id);
+    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
+
+    STATIC_PAGES[pageIndex].deleted_at = new Date().toISOString();
+    res.json({ success: true });
+  });
+
+  // Public Static Page API
+  apiRouter.get("/pages/:handle", (req, res) => {
+    const page = STATIC_PAGES.find(p => p.handle === req.params.handle && !p.deleted_at);
+    
+    if (!page) return res.status(404).json({ error: "Page not found" });
+
+    // Visibility check
+    if (page.status === "draft") {
+      // In real app, allow admin to view draft
+      return res.status(404).json({ error: "Page not found" });
+    }
+    
+    if (page.status === "scheduled") {
+      const now = new Date();
+      const publishAt = new Date(page.publish_at);
+      if (now < publishAt) {
+        return res.status(404).json({ error: "Page not found" });
+      }
+    }
+
+    res.json(page);
   });
 
   // Pages API (Admin)
