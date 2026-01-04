@@ -684,3 +684,32 @@ export interface MessageJob {
   created_at: DateTime;
   updated_at: DateTime;
 }
+
+// 8. Pages (Shopify-like Page Builder)
+export type PageStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type BlockType = 'PRODUCT_LIST' | 'HERO_IMAGE' | 'TEXT' | 'CTA';
+
+export interface PageBlock {
+  id: ID;
+  page_id: ID;
+  block_type: BlockType;
+  sort_order: number;
+  config_json: JSONValue; // { image_url, headline, collection_id, content, etc. }
+  created_at: DateTime;
+  updated_at: DateTime;
+}
+
+export interface Page {
+  id: ID;
+  tenant_id: ID; // shop_id
+  type: 'SHOP' | 'LP' | 'BLOG';
+  title: string;
+  slug: string;
+  status: PageStatus;
+  template_key: string; // 'top_default', 'landing_page_v1'
+  blocks: PageBlock[];
+  created_by?: ID;
+  updated_by?: ID;
+  created_at: DateTime;
+  updated_at: DateTime;
+}

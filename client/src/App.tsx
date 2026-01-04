@@ -40,6 +40,9 @@ import ShippingManagementPage from "./pages/orders/ShippingManagement";
 import ProductListPage from "./pages/shop/ProductList";
 import ProductManagementPage from "./pages/orders/ProductManagement";
 import ProductEditPage from "./pages/orders/ProductEdit";
+import PageListPage from "./pages/admin/pages/PageList";
+import PageEditPage from "./pages/admin/pages/PageEdit";
+import PublicPageViewer from "./pages/shop/PublicPageViewer";
 
 // Analysis
 import AnalysisDashboard from "./pages/analysis/index";
@@ -155,6 +158,12 @@ function App() {
 
             {/* Admin */}
             <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin/pages" component={PageListPage} />
+            <Route path="/admin/pages/new" component={PageEditPage} />
+            <Route path="/admin/pages/:id" component={PageEditPage} />
+
+            {/* Public Pages */}
+            <Route path="/s/:slug" component={PublicPageViewer} />
 
             {/* Fallback */}
             <Route component={PlaceholderPage} />

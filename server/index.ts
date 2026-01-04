@@ -77,6 +77,59 @@ let CARTS: any[] = [];
 let ORDERS: any[] = [];
 let PAYMENTS: any[] = [];
 
+// Mock Pages
+let PAGES: any[] = [
+  {
+    id: "page_1",
+    tenant_id: "t1",
+    type: "SHOP",
+    title: "サマーセール特設ページ",
+    slug: "summer-sale",
+    status: "PUBLISHED",
+    template_key: "landing_page_v1",
+    blocks: [
+      {
+        id: "blk_1",
+        page_id: "page_1",
+        block_type: "HERO_IMAGE",
+        sort_order: 1,
+        config_json: {
+          image_url: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=1200&q=80",
+          headline: "夏物最大50%OFF",
+          subheadline: "今だけの特別価格でご提供"
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: "blk_2",
+        page_id: "page_1",
+        block_type: "TEXT",
+        sort_order: 2,
+        config_json: {
+          content: "今年の夏は、涼しくて快適な素材にこだわりました。オーガニックコットンを使用したTシャツや、通気性抜群のリネンシャツなど、厳選したアイテムを取り揃えています。"
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: "blk_3",
+        page_id: "page_1",
+        block_type: "PRODUCT_LIST",
+        sort_order: 3,
+        config_json: {
+          title: "おすすめ商品",
+          count: 4
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 async function startServer() {
   const app = express();
   app.use(express.json());
@@ -342,8 +395,76 @@ async function startServer() {
     res.json({
       payment_id: payment.id,
       pay_url: `/checkout/pay/${payment.id}`, // Internal mock page
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString()
     });
+  });
+
+  // Pages API (Admin)
+  apiRouter.get("/admin/pages", (req, res) => {
+    res.json(PAGES);
+  });
+
+  apiRouter.get("/admin/pages/:id", (req, res) => {
+    const page = PAGES.find(p => p.id === req.params.id);
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  apiRouter.post("/admin/pages", (req, res) => {
+    const { title, slug, template_key } = req.body;
+    
+    // Check slug uniqueness
+    if (PAGES.some(p => p.slug === slug)) {
+      return res.status(409).json({ error: "Slug already exists" });
+    }
+
+    const newPage = {
+      id: `page_${Date.now()}`,
+      tenant_id: "t1",
+      type: "SHOP",
+      title,
+      slug,
+      status: "DRAFT",
+      template_key: template_key || "landing_page_v1",
+      blocks: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    PAGES.push(newPage);
+    res.status(201).json(newPage);
+  });
+
+  apiRouter.put("/admin/pages/:id", (req, res) => {
+    const pageIndex = PAGES.findIndex(p => p.id === req.params.id);
+    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
+
+    const updates = req.body;
+    const currentPage = PAGES[pageIndex];
+
+    // Check slug uniqueness if changed
+    if (updates.slug && updates.slug !== currentPage.slug && PAGES.some(p => p.slug === updates.slug)) {
+      return res.status(409).json({ error: "Slug already exists" });
+    }
+
+    const updatedPage = {
+      ...currentPage,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
+    PAGES[pageIndex] = updatedPage;
+    res.json(updatedPage);
+  });
+
+  // Public Page API
+  apiRouter.get("/s/:slug", (req, res) => {
+    const page = PAGES.find(p => p.slug === req.params.slug && p.status === "PUBLISHED");
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    
+    // In a real app, we might want to populate product data for PRODUCT_LIST blocks here
+    // For now, we'll let the frontend fetch products separately or just return the config
+    
+    res.json(page);
   });
 
   // Mock Webhook (for testing)

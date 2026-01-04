@@ -155,6 +155,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       subItems: [
         { label: "商品一覧", href: "/products", icon: List },
         { label: "在庫管理", href: "/products/inventory", icon: BarChart2 },
+        { label: "ショップページ作成", href: "/admin/pages", icon: LayoutTemplate },
       ]
     },
     {
