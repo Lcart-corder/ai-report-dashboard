@@ -11,8 +11,8 @@ import { StaticPage } from "@/types/schema";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import { format } from "date-fns";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+// import ReactQuill from "react-quill";
+// import "react-quill/dist/quill.snow.css";
 
 export default function StaticPageEditPage() {
   const [match, params] = useRoute("/admin/static-pages/:id");
@@ -174,23 +174,20 @@ export default function StaticPageEditPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-medium">コンテンツ</Label>
-                  <div className="prose-editor">
-                    <ReactQuill 
-                      theme="snow"
-                      value={content}
-                      onChange={setContent}
-                      modules={{
-                        toolbar: [
-                          [{ 'header': [1, 2, 3, false] }],
-                          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                          [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-                          ['link', 'image'],
-                          ['clean']
-                        ],
-                      }}
-                      className="h-[300px] mb-12"
+                  <div className="border rounded-md shadow-sm">
+                    <div className="bg-gray-50 border-b p-2 flex gap-2 text-sm text-gray-600">
+                      <button className="p-1 hover:bg-gray-200 rounded font-bold">B</button>
+                      <button className="p-1 hover:bg-gray-200 rounded italic">I</button>
+                      <button className="p-1 hover:bg-gray-200 rounded underline">U</button>
+                    </div>
+                    <Textarea 
+                      value={content} 
+                      onChange={e => setContent(e.target.value)} 
+                      className="min-h-[300px] border-0 focus-visible:ring-0 rounded-none resize-y p-4"
+                      placeholder="ここに内容を入力してください..."
                     />
                   </div>
+                  <p className="text-xs text-gray-500 text-right mt-1">HTML形式で入力可能です</p>
                 </div>
               </CardContent>
             </Card>
