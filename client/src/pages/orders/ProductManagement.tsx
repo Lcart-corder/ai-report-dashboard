@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Product, ProductVariant } from "@/types/schema";
-import { Search, Save, Package } from "lucide-react";
+import { Product, Sku } from "@/types/schema";
+import { Search, Save, Package, Plus, Edit } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function ProductManagementPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingVariants, setEditingVariants] = useState<Record<string, number>>({});
+  const [editingSkus, setEditingSkus] = useState<Record<string, number>>({});
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     fetchProducts();
@@ -31,25 +33,39 @@ export default function ProductManagementPage() {
       });
   };
 
-  const handleStockChange = (variantId: string, value: string) => {
+  const handleStockChange = (skuId: string, value: string) => {
     const numValue = parseInt(value);
     if (!isNaN(numValue) && numValue >= 0) {
-      setEditingVariants(prev => ({
+      setEditingSkus(prev => ({
         ...prev,
-        [variantId]: numValue
+        [skuId]: numValue
       }));
     }
   };
 
   const handleSave = async (product: Product) => {
-    const updatedVariants = product.variants.map(v => {
-      if (editingVariants[v.id] !== undefined) {
-        return { ...v, stock_quantity: editingVariants[v.id] };
-      }
-      return v;
-    });
+    // Extract only modified SKUs for this product
+    const modifiedSkus = product.variants.filter(v => editingSkus[v.id] !== undefined).map(v => ({
+      id: v.id,
+      stock: editingSkus[v.id]
+    }));
+
+    if (modifiedSkus.length === 0) return;
 
     try {
+      // In a real app, we might want a bulk update endpoint or update product endpoint
+      // For now, we'll update the product with the modified variants
+      // But since the API expects the full product structure or specific update logic,
+      // let's assume we can PUT to /api/products/:id with the updated variants list
+      
+      // Construct the full variants list with updates
+      const updatedVariants = product.variants.map(v => {
+        if (editingSkus[v.id] !== undefined) {
+          return { ...v, stock: editingSkus[v.id] };
+        }
+        return v;
+      });
+
       const res = await fetch(`/api/products/${product.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -58,7 +74,14 @@ export default function ProductManagementPage() {
 
       if (res.ok) {
         toast.success("在庫数を更新しました");
-        setEditingVariants({});
+        
+        // Clear editing state for these SKUs
+        setEditingSkus(prev => {
+          const next = { ...prev };
+          modifiedSkus.forEach(sku => delete next[sku.id]);
+          return next;
+        });
+        
         fetchProducts();
       } else {
         toast.error("更新に失敗しました");
@@ -83,6 +106,10 @@ export default function ProductManagementPage() {
               商品の在庫数や価格を管理します。
             </p>
           </div>
+          <Button onClick={() => setLocation("/orders/products/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            新規商品登録
+          </Button>
         </div>
 
         <Card>
@@ -112,20 +139,33 @@ export default function ProductManagementPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
-                          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                          <img 
+                            src={product.images[0]?.image_url || "https://placehold.co/100x100?text=No+Image"} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover" 
+                          />
                         </div>
                         <div>
                           <h3 className="font-bold text-lg">{product.name}</h3>
                           <p className="text-sm text-gray-500">{product.description}</p>
                         </div>
                       </div>
-                      <Button 
-                        onClick={() => handleSave(product)}
-                        disabled={!product.variants.some(v => editingVariants[v.id] !== undefined)}
-                      >
-                        <Save className="mr-2 h-4 w-4" />
-                        変更を保存
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          onClick={() => setLocation(`/orders/products/${product.id}`)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          編集
+                        </Button>
+                        <Button 
+                          onClick={() => handleSave(product)}
+                          disabled={!product.variants.some(v => editingSkus[v.id] !== undefined)}
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          変更を保存
+                        </Button>
+                      </div>
                     </div>
 
                     <Table>
@@ -141,8 +181,8 @@ export default function ProductManagementPage() {
                         {product.variants.map((variant) => (
                           <TableRow key={variant.id}>
                             <TableCell>
-                              <div className="font-medium">{variant.name}</div>
-                              <div className="text-xs text-gray-500">{variant.sku}</div>
+                              <div className="font-medium">{variant.option_name}: {variant.option_value}</div>
+                              <div className="text-xs text-gray-500">{variant.jan_code}</div>
                             </TableCell>
                             <TableCell>¥{variant.price.toLocaleString()}</TableCell>
                             <TableCell>
@@ -150,14 +190,14 @@ export default function ProductManagementPage() {
                                 <Input 
                                   type="number" 
                                   className="w-24 text-right"
-                                  value={editingVariants[variant.id] !== undefined ? editingVariants[variant.id] : variant.stock_quantity}
+                                  value={editingSkus[variant.id] !== undefined ? editingSkus[variant.id] : variant.stock}
                                   onChange={(e) => handleStockChange(variant.id, e.target.value)}
                                 />
                                 <span className="text-sm text-gray-500">個</span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              {(editingVariants[variant.id] !== undefined ? editingVariants[variant.id] : variant.stock_quantity) === 0 ? (
+                              {(editingSkus[variant.id] !== undefined ? editingSkus[variant.id] : variant.stock) === 0 ? (
                                 <span className="text-red-600 font-bold flex items-center gap-1">
                                   <Package className="w-4 h-4" /> 売り切れ
                                 </span>

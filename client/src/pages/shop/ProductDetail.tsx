@@ -3,14 +3,14 @@ import { useRoute, useLocation } from "wouter";
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Product, ProductVariant } from "@/types/schema";
+import { Product, Sku } from "@/types/schema";
 import { toast } from "sonner";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 
 export default function ProductDetailPage() {
   const [match, params] = useRoute("/shop/products/:id");
   const [, setLocation] = useLocation();
-  const [product, setProduct] = useState<Product & { variants: ProductVariant[] } | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -74,7 +74,7 @@ export default function ProductDetailPage() {
         {/* Image */}
         <div className="aspect-square bg-gray-100">
           <img 
-            src={product.images[0]} 
+            src={product.images[0]?.image_url} 
             alt={product.name}
             className="w-full h-full object-cover"
           />
@@ -95,8 +95,8 @@ export default function ProductDetailPage() {
             <div className="flex justify-between items-center">
               <label className="text-sm font-medium">バリエーション</label>
               {selectedVariant && (
-                <span className={`text-sm font-medium ${selectedVariant.stock_quantity === 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {selectedVariant.stock_quantity === 0 ? '在庫切れ' : `残り ${selectedVariant.stock_quantity} 点`}
+                <span className={`text-sm font-medium ${selectedVariant.stock === 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                  {selectedVariant.stock === 0 ? '在庫切れ' : `残り ${selectedVariant.stock} 点`}
                 </span>
               )}
             </div>
@@ -106,8 +106,8 @@ export default function ProductDetailPage() {
               </SelectTrigger>
               <SelectContent>
                 {product.variants.map(v => (
-                  <SelectItem key={v.id} value={v.id} disabled={!v.is_active || v.stock_quantity === 0}>
-                    {v.name} {v.stock_quantity === 0 ? '(在庫切れ)' : ''}
+                  <SelectItem key={v.id} value={v.id} disabled={!v.is_active || v.stock === 0}>
+                    {v.option_name}: {v.option_value} {v.stock === 0 ? '(在庫切れ)' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -132,8 +132,8 @@ export default function ProductDetailPage() {
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8"
-                onClick={() => setQuantity(Math.min(selectedVariant?.stock_quantity || 1, quantity + 1))}
-                disabled={quantity >= (selectedVariant?.stock_quantity || 1)}
+                onClick={() => setQuantity(Math.min(selectedVariant?.stock || 1, quantity + 1))}
+                disabled={quantity >= (selectedVariant?.stock || 1)}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -152,11 +152,11 @@ export default function ProductDetailPage() {
         {/* Fixed Bottom Action */}
         <div className="fixed bottom-16 left-0 right-0 p-4 bg-white border-t max-w-md mx-auto">
           <Button 
-            className={`w-full h-12 text-lg font-bold ${(!selectedVariant || selectedVariant.stock_quantity === 0) ? 'bg-gray-400 hover:bg-gray-400' : 'bg-[#06C755] hover:bg-[#05b34c]'}`}
+            className={`w-full h-12 text-lg font-bold ${(!selectedVariant || selectedVariant.stock === 0) ? 'bg-gray-400 hover:bg-gray-400' : 'bg-[#06C755] hover:bg-[#05b34c]'}`}
             onClick={handleAddToCart}
-            disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
+            disabled={!selectedVariant || selectedVariant.stock === 0}
           >
-            {(!selectedVariant || selectedVariant.stock_quantity === 0) ? (
+            {(!selectedVariant || selectedVariant.stock === 0) ? (
               <>売り切れ</>
             ) : (
               <>

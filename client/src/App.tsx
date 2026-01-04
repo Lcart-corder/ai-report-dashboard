@@ -39,6 +39,7 @@ import OrderListPage from "./pages/orders/OrderList";
 import ShippingManagementPage from "./pages/orders/ShippingManagement";
 import ProductListPage from "./pages/shop/ProductList";
 import ProductManagementPage from "./pages/orders/ProductManagement";
+import ProductEditPage from "./pages/orders/ProductEdit";
 
 // Analysis
 import AnalysisDashboard from "./pages/analysis/index";
@@ -109,6 +110,8 @@ function App() {
             {/* Products */}
             <Route path="/products" component={ProductListPage} />
             <Route path="/products/inventory" component={ProductManagementPage} />
+            <Route path="/orders/products" component={ProductManagementPage} />
+            <Route path="/orders/products/:id" component={ProductEditPage} />
 
             {/* Analysis */}
             <Route path="/analysis" component={AnalysisDashboard} />

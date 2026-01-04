@@ -500,27 +500,52 @@ export interface LoginAttempt {
 // Feature: Cart & Checkout (L-Cart)
 
 // 1. Products
+export type ProductStatus = 'public' | 'private' | 'stopped';
+export type ShippingRule = 'global' | 'per_product';
+
 export interface Product {
   id: ID;
   tenant_id: ID;
   name: string;
   description?: string;
-  images: string[]; // URLs
-  is_active: boolean;
-  variants: ProductVariant[]; // Added variants
+  status: ProductStatus;
+  category_id?: ID;
+  sort_order: number;
+  base_price: number;
+  cost_price?: number;
+  shipping_rule: ShippingRule;
+  per_product_shipping_fee?: number;
+  stock_control_flg: boolean;
+  stock_quantity?: number;
+  stock_alert_threshold?: number;
+  sale_start_at?: DateTime;
+  sale_end_at?: DateTime;
+  purchase_limit_per_user?: number;
+  images: ProductImage[];
+  variants: Sku[]; // Renamed from ProductVariant to match specs
+  deleted_at?: DateTime;
   created_at: DateTime;
   updated_at: DateTime;
 }
 
-export interface ProductVariant {
+export interface ProductImage {
   id: ID;
   product_id: ID;
-  sku: string;
-  name: string; // e.g., "Red / L"
+  image_url: string;
+  sort_order: number;
+  created_at: DateTime;
+}
+
+export interface Sku {
+  id: ID;
+  product_id: ID;
+  option_name: string;
+  option_value: string;
   price: number;
-  stock_quantity: number;
+  stock: number;
+  jan_code?: string;
   is_active: boolean;
-  image_url?: string;
+  deleted_at?: DateTime;
   created_at: DateTime;
   updated_at: DateTime;
 }

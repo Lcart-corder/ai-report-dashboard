@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
-import { Cart, Product, ProductVariant } from "@/types/schema";
+import { Cart, Product, Sku } from "@/types/schema";
 import { Trash2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,7 +12,7 @@ interface CartItemDetail {
   variant_id: string;
   quantity: number;
   product: Product;
-  variant: ProductVariant;
+  variant: Sku;
 }
 
 export default function CartPage() {
@@ -96,14 +96,14 @@ export default function CartPage() {
                 <div key={item.id} className="flex gap-4 bg-white p-4 rounded-lg border shadow-sm">
                   <div className="w-20 h-20 bg-gray-100 rounded-md shrink-0 overflow-hidden">
                     <img 
-                      src={item.product.images[0]} 
+                      src={item.product.images[0]?.image_url} 
                       alt={item.product.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-sm line-clamp-1">{item.product.name}</h3>
-                    <p className="text-xs text-gray-500 mb-2">{item.variant.name}</p>
+                    <p className="text-xs text-gray-500 mb-2">{item.variant.option_name}: {item.variant.option_value}</p>
                     <div className="flex items-center justify-between">
                       <span className="font-bold">¥{item.variant.price.toLocaleString()}</span>
                       <div className="flex items-center gap-3">

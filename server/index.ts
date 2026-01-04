@@ -13,36 +13,63 @@ const PRODUCTS = [
     tenant_id: "t1",
     name: "プレミアムTシャツ",
     description: "最高級コットン100%使用。着心地抜群のTシャツです。",
-    images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80"],
-    is_active: true,
+    status: "public",
+    category_id: "c1",
+    sort_order: 100,
+    base_price: 3500,
+    shipping_rule: "global",
+    stock_control_flg: true,
+    images: [
+      { id: "img1", product_id: "p1", image_url: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80", sort_order: 1, created_at: new Date().toISOString() }
+    ],
     variants: [
-      { id: "v1", product_id: "p1", sku: "TS-W-S", name: "ホワイト / S", price: 3500, stock_quantity: 10, is_active: true },
-      { id: "v2", product_id: "p1", sku: "TS-W-M", name: "ホワイト / M", price: 3500, stock_quantity: 15, is_active: true },
-      { id: "v3", product_id: "p1", sku: "TS-W-L", name: "ホワイト / L", price: 3500, stock_quantity: 5, is_active: true },
-    ]
+      { id: "v1", product_id: "p1", option_name: "サイズ", option_value: "S", price: 3500, stock: 10, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { id: "v2", product_id: "p1", option_name: "サイズ", option_value: "M", price: 3500, stock: 15, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { id: "v3", product_id: "p1", option_name: "サイズ", option_value: "L", price: 3500, stock: 5, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    ],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
     id: "p2",
     tenant_id: "t1",
     name: "オーガニックトートバッグ",
     description: "環境に優しい素材で作られた丈夫なトートバッグ。",
-    images: ["https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80"],
-    is_active: true,
+    status: "public",
+    category_id: "c2",
+    sort_order: 200,
+    base_price: 2800,
+    shipping_rule: "global",
+    stock_control_flg: true,
+    images: [
+      { id: "img2", product_id: "p2", image_url: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80", sort_order: 1, created_at: new Date().toISOString() }
+    ],
     variants: [
-      { id: "v4", product_id: "p2", sku: "TB-NAT", name: "ナチュラル", price: 2800, stock_quantity: 20, is_active: true },
-      { id: "v5", product_id: "p2", sku: "TB-BLK", name: "ブラック", price: 2800, stock_quantity: 8, is_active: true },
-    ]
+      { id: "v4", product_id: "p2", option_name: "カラー", option_value: "ナチュラル", price: 2800, stock: 20, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { id: "v5", product_id: "p2", option_name: "カラー", option_value: "ブラック", price: 2800, stock: 8, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    ],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
     id: "p3",
     tenant_id: "t1",
     name: "セラミックマグカップ",
     description: "手作りの温かみのあるマグカップ。ギフトにも最適。",
-    images: ["https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800&q=80"],
-    is_active: true,
+    status: "public",
+    category_id: "c3",
+    sort_order: 300,
+    base_price: 1800,
+    shipping_rule: "global",
+    stock_control_flg: true,
+    images: [
+      { id: "img3", product_id: "p3", image_url: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800&q=80", sort_order: 1, created_at: new Date().toISOString() }
+    ],
     variants: [
-      { id: "v6", product_id: "p3", sku: "MG-BLU", name: "ブルー", price: 1800, stock_quantity: 30, is_active: true },
-    ]
+      { id: "v6", product_id: "p3", option_name: "カラー", option_value: "ブルー", price: 1800, stock: 30, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    ],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 ];
 
@@ -63,6 +90,38 @@ async function startServer() {
     res.json(PRODUCTS);
   });
 
+  apiRouter.post("/products", (req, res) => {
+    const { name, description, status, base_price, images, variants, shipping_rule, stock_control_flg } = req.body;
+    
+    const newProduct = {
+      id: `p_${Date.now()}`,
+      tenant_id: "t1",
+      name,
+      description,
+      status: status || "private",
+      category_id: "c1",
+      sort_order: PRODUCTS.length * 100 + 100,
+      base_price: base_price || 0,
+      shipping_rule: shipping_rule || "global",
+      stock_control_flg: stock_control_flg ?? true,
+      images: images || [],
+      variants: variants || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Assign IDs to new variants if missing
+    if (newProduct.variants) {
+      newProduct.variants.forEach((v: any, index: number) => {
+        if (!v.id) v.id = `v_${Date.now()}_${index}`;
+        if (!v.product_id) v.product_id = newProduct.id;
+      });
+    }
+
+    PRODUCTS.push(newProduct);
+    res.status(201).json(newProduct);
+  });
+
   apiRouter.get("/products/:id", (req, res) => {
     const product = PRODUCTS.find(p => p.id === req.params.id);
     if (!product) return res.status(404).json({ error: "Product not found" });
@@ -70,21 +129,33 @@ async function startServer() {
   });
 
   apiRouter.put("/products/:id", (req, res) => {
-    const product = PRODUCTS.find(p => p.id === req.params.id);
-    if (!product) return res.status(404).json({ error: "Product not found" });
+    const productIndex = PRODUCTS.findIndex(p => p.id === req.params.id);
+    if (productIndex === -1) return res.status(404).json({ error: "Product not found" });
     
-    const { variants } = req.body;
-    if (variants && Array.isArray(variants)) {
-      variants.forEach((newVariant: any) => {
-        const existingVariant = product.variants.find(v => v.id === newVariant.id);
-        if (existingVariant) {
-          existingVariant.stock_quantity = newVariant.stock_quantity;
-          existingVariant.price = newVariant.price;
-        }
-      });
+    const updates = req.body;
+    const currentProduct = PRODUCTS[productIndex];
+
+    // Update product fields
+    const updatedProduct = {
+      ...currentProduct,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
+    // Handle variants specifically if provided
+    if (updates.variants && Array.isArray(updates.variants)) {
+      // Ensure all variants have IDs and product_id
+      updatedProduct.variants = updates.variants.map((v: any, index: number) => ({
+        ...v,
+        id: v.id || `v_${Date.now()}_${index}`,
+        product_id: currentProduct.id,
+        updated_at: new Date().toISOString(),
+        created_at: v.created_at || new Date().toISOString()
+      }));
     }
-    
-    res.json(product);
+
+    PRODUCTS[productIndex] = updatedProduct;
+    res.json(updatedProduct);
   });
 
   // Cart
@@ -175,9 +246,9 @@ async function startServer() {
         return res.status(400).json({ error: "Invalid item in cart" });
       }
 
-      if (variant.stock_quantity < item.quantity) {
+      if (variant.stock < item.quantity) {
         return res.status(400).json({ 
-          error: `Stock shortage for ${product.name} (${variant.name}). Available: ${variant.stock_quantity}` 
+          error: `Stock shortage for ${product.name} (${variant.option_value}). Available: ${variant.stock}` 
         });
       }
       
@@ -189,7 +260,7 @@ async function startServer() {
         product_id: item.product_id,
         variant_id: item.variant_id,
         product_name: product.name,
-        variant_name: variant.name,
+        variant_name: `${variant.option_name}: ${variant.option_value}`,
         price: price,
         tax_rate: 0.1,
         quantity: item.quantity
@@ -201,7 +272,7 @@ async function startServer() {
       const product = PRODUCTS.find(p => p.id === item.product_id);
       const variant = product?.variants.find(v => v.id === item.variant_id);
       if (variant) {
-        variant.stock_quantity -= item.quantity;
+        variant.stock -= item.quantity;
       }
     }
 

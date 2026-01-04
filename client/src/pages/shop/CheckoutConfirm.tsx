@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Product, ProductVariant } from "@/types/schema";
+import { Product, Sku } from "@/types/schema";
 import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
 
@@ -13,7 +13,7 @@ interface CartItemDetail {
   variant_id: string;
   quantity: number;
   product: Product;
-  variant: ProductVariant;
+  variant: Sku;
 }
 
 export default function CheckoutConfirmPage() {
@@ -125,11 +125,11 @@ export default function CheckoutConfirmPage() {
               {cartItems.map(item => (
                 <div key={item.id} className="flex gap-4">
                   <div className="w-16 h-16 bg-gray-100 rounded shrink-0">
-                    <img src={item.product.images[0]} className="w-full h-full object-cover" />
+                    <img src={item.product.images[0]?.image_url} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 text-sm">
                     <p className="font-medium">{item.product.name}</p>
-                    <p className="text-gray-500">{item.variant.name}</p>
+                    <p className="text-gray-500">{item.variant.option_name}: {item.variant.option_value}</p>
                     <div className="flex justify-between mt-1">
                       <span>¥{item.variant.price.toLocaleString()}</span>
                       <span>x{item.quantity}</span>

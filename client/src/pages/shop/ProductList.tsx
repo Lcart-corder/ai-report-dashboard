@@ -38,11 +38,11 @@ export default function ProductListPage() {
             <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow h-full">
               <div className="aspect-square bg-gray-100 relative">
                 <img 
-                  src={product.images[0]} 
+                  src={product.images[0]?.image_url} 
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
-                {!product.is_active && (
+                {product.status !== 'public' && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold">
                     販売停止中
                   </div>
