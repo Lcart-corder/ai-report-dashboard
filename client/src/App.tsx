@@ -70,6 +70,7 @@ import IntegrationHub from "./pages/admin/integrations/IntegrationHub";
 import ShopifyIntegrationPage from "./pages/admin/integrations/ShopifyIntegration";
 import LineOfficialIntegrationPage from "./pages/admin/integrations/LineOfficialIntegration";
 import LineAdsIntegrationPage from "./pages/admin/integrations/LineAdsIntegration";
+import ChatGPTSettingsPage from "./pages/admin/integrations/ChatGPTSettings";
 import AdminDashboard from "./pages/admin/index";
 import PlanSettingsPage from "./pages/admin/billing/PlanSettings";
 
@@ -167,6 +168,7 @@ function App() {
             <Route path="/admin/integrations/shopify" component={ShopifyIntegrationPage} />
             <Route path="/admin/integrations/line-official" component={LineOfficialIntegrationPage} />
             <Route path="/admin/integrations/line-ads" component={LineAdsIntegrationPage} />
+            <Route path="/admin/integrations/chatgpt" component={ChatGPTSettingsPage} />
 
             {/* Admin */}
             <Route path="/admin" component={AdminDashboard} />

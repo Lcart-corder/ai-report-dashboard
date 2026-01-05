@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, MessageCircle, BarChart, Store } from 'lucide-react';
+import { ShoppingBag, MessageCircle, BarChart, Store, Bot } from 'lucide-react';
 
 export default function IntegrationHub() {
   return (
@@ -90,6 +90,26 @@ export default function IntegrationHub() {
           </CardHeader>
           <CardContent className="mt-auto pt-0">
             <Link href="/rakuten/settings">
+              <Button className="w-full" variant="outline">設定する</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* ChatGPT Integration */}
+        <Card className="flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 bg-[#10A37F]/10 rounded-lg">
+                <Bot className="h-6 w-6 text-[#10A37F]" />
+              </div>
+              <CardTitle>ChatGPT連携</CardTitle>
+            </div>
+            <CardDescription>
+              OpenAI APIを使用して、AIによる自動応答やコンテンツ生成を行います。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto pt-0">
+            <Link href="/admin/integrations/chatgpt">
               <Button className="w-full" variant="outline">設定する</Button>
             </Link>
           </CardContent>
