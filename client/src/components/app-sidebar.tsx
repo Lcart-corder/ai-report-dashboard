@@ -118,7 +118,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "リッチメニュー", href: "/messages/rich-menus", icon: Menu },
         { label: "おみくじ", href: "/omikuji", icon: Gift },
         { label: "アクションスケジュール", href: "/messages/action-schedule", icon: CalendarDays },
-        { label: "挨拶メッセージ", href: "/messages/greeting", icon: MessageSquare }
+        { label: "挨拶メッセージ", href: "/messages/greeting", icon: MessageSquare },
+        { label: "ECチャットボット", href: "/chatbot/builder", icon: Bot }
       ]
     },
     { 
