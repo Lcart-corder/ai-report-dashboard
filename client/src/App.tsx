@@ -65,6 +65,9 @@ import MyPage from "./pages/settings/MyPage";
 
 // Others
 import AIDashboard from "./pages/ai/index";
+import AIReportsPage from "./pages/ai/AIReports";
+import GenerationHistoryPage from "./pages/ai/GenerationHistory";
+import ModelSettingsPage from "./pages/ai/ModelSettings";
 import IntegrationsPage from "./pages/integrations/index";
 import IntegrationHub from "./pages/admin/integrations/IntegrationHub";
 import ShopifyIntegrationPage from "./pages/admin/integrations/ShopifyIntegration";
@@ -161,7 +164,10 @@ function App() {
 
             {/* AI Reports */}
             <Route path="/ai" component={AIDashboard} />
+            <Route path="/ai/reports" component={AIReportsPage} />
             <Route path="/ai/reports/:id" component={AIReportDetailPage} />
+            <Route path="/ai/history" component={GenerationHistoryPage} />
+            <Route path="/ai/settings" component={ModelSettingsPage} />
 
             {/* Integrations */}
             <Route path="/integrations" component={IntegrationsPage} />
