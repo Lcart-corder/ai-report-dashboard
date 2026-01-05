@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const getKpiData = (range: string) => {
     const multiplier = range === "過去30日" ? 1 : range === "今月" ? 0.8 : range === "先月" ? 0.9 : 0.25
     return [
-      { label: "総売上", value: `¥${(3.2 * multiplier).toFixed(1)}M`, change: "+22.5%", trend: "up", chart: "bg-emerald-500" },
+      { label: "総売上", value: `¥${Math.floor(3200000 * multiplier).toLocaleString()}`, change: "+22.5%", trend: "up", chart: "bg-emerald-500" },
       { label: "注文数", value: Math.floor(1842 * multiplier).toLocaleString(), change: "+18.3%", trend: "up", chart: "bg-blue-500" },
       { label: "転換率", value: "6.5%", change: "+5.2%", trend: "up", chart: "bg-purple-500" },
       { label: "平均注文額", value: "¥1,738", change: "+3.8%", trend: "up", chart: "bg-orange-500" },
@@ -86,11 +86,11 @@ export default function DashboardPage() {
 
   // Mock Data for Tables (unchanged)
   const topProducts = [
-    { name: "ベーシックTシャツ", price: "¥513K", count: "342件", width: "85%" },
-    { name: "デニムパンツ", price: "¥896K", count: "248件", width: "70%" },
-    { name: "スニーカー", price: "¥743K", count: "186件", width: "55%" },
-    { name: "キャップ", price: "¥149K", count: "124件", width: "40%" },
-    { name: "トートバッグ", price: "¥196K", count: "98件", width: "30%" },
+    { name: "ベーシックTシャツ", price: "¥513,000", count: "342件", width: "85%" },
+    { name: "デニムパンツ", price: "¥896,000", count: "248件", width: "70%" },
+    { name: "スニーカー", price: "¥743,000", count: "186件", width: "55%" },
+    { name: "キャップ", price: "¥149,000", count: "124件", width: "40%" },
+    { name: "トートバッグ", price: "¥196,000", count: "98件", width: "30%" },
   ]
 
   const recentOrders = [
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
                     <span className="text-sm text-gray-600">今日の売上</span>
-                    <span className="text-sm font-bold text-emerald-600">+¥128K</span>
+                    <span className="text-sm font-bold text-emerald-600">+¥128,000</span>
                   </div>
                   <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
                     <span className="text-sm text-gray-600">友だち追加</span>
@@ -468,11 +468,11 @@ export default function DashboardPage() {
                 <h3 className="font-bold text-gray-900 mb-4">チャネル別売上 Top5</h3>
                 <div className="space-y-4">
                   {[
-                    { label: "LINE経由", value: "¥1280K", width: "80%", color: "bg-[#06C755]" },
-                    { label: "Shopify直販", value: "¥960K", width: "60%", color: "bg-blue-500" },
-                    { label: "Instagram", value: "¥640K", width: "40%", color: "bg-pink-500" },
-                    { label: "QRコード", value: "¥256K", width: "15%", color: "bg-gray-500" },
-                    { label: "その他", value: "¥64K", width: "5%", color: "bg-gray-300" },
+                    { label: "LINE経由", value: "¥1,280,000", width: "80%", color: "bg-[#06C755]" },
+                    { label: "Shopify直販", value: "¥960,000", width: "60%", color: "bg-blue-500" },
+                    { label: "Instagram", value: "¥640,000", width: "40%", color: "bg-pink-500" },
+                    { label: "QRコード", value: "¥256,000", width: "15%", color: "bg-gray-500" },
+                    { label: "その他", value: "¥64,000", width: "5%", color: "bg-gray-300" },
                   ].map((item, i) => (
                     <div key={i} className="cursor-pointer group">
                       <div className="flex justify-between text-xs mb-1">
@@ -525,7 +525,7 @@ export default function DashboardPage() {
                   <div className="absolute inset-0 rounded-full border-8 border-[#06C755] border-t-transparent border-l-transparent rotate-45"></div>
                   <div className="text-center">
                     <div className="text-xs text-gray-500">Total</div>
-                    <div className="font-bold text-gray-900">¥3.2M</div>
+                    <div className="font-bold text-gray-900">¥3,200,000</div>
                   </div>
                 </div>
               </div>

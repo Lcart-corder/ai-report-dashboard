@@ -10,7 +10,6 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import FriendListPage from "./pages/friends/FriendList";
 import FriendInfoListPage from "./pages/friends/FriendInfoList";
 import TagsPage from "./pages/friends/Tags";
-
 // Messages
 import BroadcastPage from "./pages/messages/Broadcast";
 import StepManagerPage from "./pages/messages/StepManager";
