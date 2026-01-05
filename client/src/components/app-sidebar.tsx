@@ -34,6 +34,7 @@ import {
   FileBarChart,
   History,
   Sliders,
+  Sparkles,
   ShoppingBag,
   Smartphone,
   User,
@@ -171,6 +172,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "流入経路分析", href: "/analysis/traffic", icon: TrendingUp },
         { label: "コンバージョン設定", href: "/analysis/conversions", icon: MousePointerClick },
         { label: "アクションログ", href: "/analysis/logs", icon: History },
+        { label: "AI分析・改善提案", href: "/analysis/ai-insights", icon: Sparkles },
         { label: "サイト計測設定", href: "/analysis/site", icon: Globe }
       ]
     },

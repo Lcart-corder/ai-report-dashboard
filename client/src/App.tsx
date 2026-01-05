@@ -54,6 +54,7 @@ import TrafficSourcesPage from "./pages/marketing/TrafficSourceManager";
 import TrafficSourceCreatePage from "./pages/marketing/TrafficSourceCreate";
 import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
 import ActionLogsPage from "./pages/analysis/ActionLogs";
+import AIInsightsPage from "./pages/analysis/AIInsights";
 import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
 import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
 import ChatPage from "./pages/chats/ChatPage";
@@ -132,6 +133,7 @@ function App() {
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/logs" component={ActionLogsPage} />
+            <Route path="/analysis/ai-insights" component={AIInsightsPage} />
           
           {/* Rakuten */}
           <Route path="/rakuten/settings" component={RakutenSettingsPage} />
