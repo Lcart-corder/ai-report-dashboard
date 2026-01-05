@@ -229,7 +229,7 @@ export default function ShopBuilderPage() {
         </Card>
 
         {/* Step Navigation */}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {steps.map((step) => {
             const isActive = step.id === currentStep;
             const isComplete = isStepComplete(step.id) && step.id < currentStep;
