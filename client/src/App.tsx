@@ -10,12 +10,14 @@ import PlaceholderPage from "./pages/PlaceholderPage";
 import FriendListPage from "./pages/friends/FriendList";
 import FriendInfoListPage from "./pages/friends/FriendInfoList";
 import TagsPage from "./pages/friends/Tags";
+import ConversionsPage from "./pages/friends/Conversions";
 // Messages
 import BroadcastPage from "./pages/messages/Broadcast";
 import StepManagerPage from "./pages/messages/StepManager";
 import ScenarioEditorPage from "./pages/messages/ScenarioEditor";
 import AutoReplyPage from "./pages/messages/AutoReply";
 import ActionSchedulePage from "./pages/messages/ActionSchedule";
+import GreetingPage from "./pages/messages/Greeting";
 import TemplatesPage from "./pages/messages/Templates";
 import RichMenuListPage from "./pages/messages/RichMenuList";
 import RichMenuEditorPage from "./pages/messages/RichMenuEditor";
@@ -27,6 +29,8 @@ import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
 import EventManagerPage from "./pages/events/EventManager";
 import ReservationListPage from "./pages/events/ReservationList";
 import EventCreatePage from "./pages/events/EventCreate";
+import EventCalendarPage from "./pages/events/EventCalendar";
+import EventSettingsPage from "./pages/events/EventSettings";
 
 // Forms
 import FormManagerPage from "./pages/forms/FormManager";
@@ -53,6 +57,7 @@ import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
 import TrafficSourcesPage from "./pages/marketing/TrafficSourceManager";
 import TrafficSourceCreatePage from "./pages/marketing/TrafficSourceCreate";
 import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
+import SiteAnalysisPage from "./pages/analysis/SiteAnalysis";
 import ActionLogsPage from "./pages/analysis/ActionLogs";
 import AIInsightsPage from "./pages/analysis/AIInsights";
 import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
@@ -93,7 +98,7 @@ function App() {
             <Route path="/friends/list" component={FriendListPage} />
             <Route path="/friends/info" component={FriendInfoListPage} />
             <Route path="/friends/tags" component={TagsPage} />
-            <Route path="/friends/conversions" component={PlaceholderPage} />
+            <Route path="/friends/conversions" component={ConversionsPage} />
 
             {/* Messages */}
             <Route path="/messages/broadcast" component={BroadcastPage} />
@@ -105,7 +110,7 @@ function App() {
             <Route path="/messages/templates/create" component={TemplateCreatePage} />
             <Route path="/messages/templates/analysis" component={TemplateAnalysisPage} />
             <Route path="/messages/action-schedule" component={ActionSchedulePage} />
-            <Route path="/messages/greeting" component={PlaceholderPage} />
+            <Route path="/messages/greeting" component={GreetingPage} />
             <Route path="/messages/rich-menus" component={RichMenuListPage} />
             <Route path="/messages/rich-menus/create" component={RichMenuEditorPage} />
             <Route path="/messages/rich-menus/:id/edit" component={RichMenuEditorPage} />
@@ -152,15 +157,15 @@ function App() {
 
             {/* Settings */}
             <Route path="/mypage" component={MyPage} />
-            <Route path="/analysis/site" component={PlaceholderPage} />
+            <Route path="/analysis/site" component={SiteAnalysisPage} />
 
             {/* Events */}
             <Route path="/events" component={EventManagerPage} />
             <Route path="/events/:id/edit" component={EventCreatePage} />
             <Route path="/events/reservations" component={ReservationListPage} />
             <Route path="/events/create" component={EventCreatePage} />
-            <Route path="/events/calendar" component={PlaceholderPage} />
-            <Route path="/events/settings" component={PlaceholderPage} />
+            <Route path="/events/calendar" component={EventCalendarPage} />
+            <Route path="/events/settings" component={EventSettingsPage} />
 
             {/* AI Reports */}
             <Route path="/ai" component={AIDashboard} />

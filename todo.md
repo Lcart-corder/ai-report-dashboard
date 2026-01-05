@@ -34,3 +34,15 @@
 - [x] AI分析レポートページの実装
 - [x] AI生成履歴ページの実装
 - [x] AIモデル設定ページの実装
+
+## LINE Messaging API連携と未実装機能の実装
+- [x] LINE Messaging API連携の実装（Webhook受信、メッセージ送信、友だち情報取得）
+- [x] 「準備中」プレースホルダーページの洗い出し
+- [x] プレースホルダーページのルーティング修正
+  - [x] `/messages/greeting` - Greetingページに変更
+  - [x] `/friends/conversions` - Conversionsページに変更（既存）
+  - [x] `/analysis/site` - SiteAnalysisページを新規作成
+  - [x] `/events/calendar` - EventCalendarページに変更（既存）
+  - [x] `/events/settings` - EventSettingsページに変更（既存）
+- [ ] フロントエンドとバックエンドAPIの接続
+- [ ] 実データでの動作検証
