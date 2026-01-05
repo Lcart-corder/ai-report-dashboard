@@ -33,6 +33,8 @@ import EventCalendarPage from "./pages/events/EventCalendar";
 import EventSettingsPage from "@/pages/events/EventSettings";
 import LearningCenterPage from "@/pages/learning/LearningCenter";
 import VideoDetailPage from "@/pages/learning/VideoDetail";
+import ShopBuilderPage from "@/pages/shop-builder/ShopBuilder";
+import UnifiedPageManagerPage from "@/pages/admin/pages/UnifiedPageManager";
 
 // Forms
 import FormManagerPage from "./pages/forms/FormManager";
@@ -132,7 +134,7 @@ function App() {
             {/* Products */}
             <Route path="/products" component={ProductListPage} />
             <Route path="/products/inventory" component={ProductManagementPage} />
-            <Route path="/orders/products" component={ProductManagementPage} />
+            <Route path="/shop-builder" component={ShopBuilderPage} />
             <Route path="/orders/products/:id" component={ProductEditPage} />
 
             {/* Analysis */}
@@ -188,7 +190,7 @@ function App() {
 
             {/* Admin */}
             <Route path="/admin" component={AdminDashboard} />
-            <Route path="/admin/pages" component={PageListPage} />
+            <Route path="/admin/pages" component={UnifiedPageManagerPage} />
             <Route path="/admin/pages/new" component={PageEditPage} />
             <Route path="/admin/pages/:id" component={PageEditPage} />
             <Route path="/admin/billing" component={PlanSettingsPage} />
