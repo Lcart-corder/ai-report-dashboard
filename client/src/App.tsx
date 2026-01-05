@@ -45,6 +45,7 @@ import FormResponsesPage from "./pages/forms/FormResponses";
 import OrderListPage from "./pages/orders/OrderList";
 import ShippingManagementPage from "./pages/orders/ShippingManagement";
 import ProductListPage from "./pages/shop/ProductList";
+import ProductRegistration from "./pages/products/ProductRegistration";
 import ProductManagementPage from "./pages/orders/ProductManagement";
 import ProductEditPage from "./pages/orders/ProductEdit";
 import PageListPage from "./pages/admin/pages/PageList";
@@ -133,6 +134,7 @@ function App() {
 
             {/* Products */}
             <Route path="/products" component={ProductListPage} />
+            <Route path="/products/register" component={ProductRegistration} />
             <Route path="/products/inventory" component={ProductManagementPage} />
             <Route path="/shop-builder" component={ShopBuilderPage} />
             <Route path="/orders/products/:id" component={ProductEditPage} />

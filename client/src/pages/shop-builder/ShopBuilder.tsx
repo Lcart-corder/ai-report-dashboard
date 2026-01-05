@@ -21,9 +21,10 @@ import {
   Shield,
   FileCheck,
   CreditCard,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 // Import step components
 import BasicInfoStep from "./steps/BasicInfoStep";
@@ -208,9 +209,17 @@ export default function ShopBuilderPage() {
               ステップに従って、あなただけのショップページを作成しましょう
             </p>
           </div>
-          <Button variant="outline" onClick={() => setLocation("/products")}>
-            キャンセル
-          </Button>
+          <div className="flex gap-2">
+            <Link href="/products/register">
+              <Button variant="outline" className="gap-2">
+                <Package className="w-4 h-4" />
+                商品登録
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={() => setLocation("/products")}>
+              キャンセル
+            </Button>
+          </div>
         </div>
 
         {/* Progress Bar */}
