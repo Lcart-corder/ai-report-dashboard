@@ -20,6 +20,7 @@ import {
   Mail,
   Shield,
   FileCheck,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -29,6 +30,9 @@ import BasicInfoStep from "./steps/BasicInfoStep";
 import ThemeSelectionStep from "./steps/ThemeSelectionStep";
 import PageStructureStep from "./steps/PageStructureStep";
 import StaticPagesStep from "./steps/StaticPagesStep";
+import PaymentSettingsStep from "./steps/PaymentSettingsStep";
+import DesignCustomizationStep from "./steps/DesignCustomizationStep";
+import LivePreviewStep from "./steps/LivePreviewStep";
 import PreviewStep from "./steps/PreviewStep";
 
 export default function ShopBuilderPage() {
@@ -58,6 +62,27 @@ export default function ShopBuilderPage() {
       { id: "privacy", name: "プライバシーポリシー", icon: Shield, enabled: false, template: "privacy" },
       { id: "law", name: "特定商取引法", icon: FileText, enabled: false, template: "law" },
     ],
+    
+    // Step 5: Payment Settings
+    paymentMethods: [
+      { id: "stripe", name: "Stripe", enabled: true },
+      { id: "bank_transfer", name: "銀行振込", enabled: false },
+      { id: "cod", name: "代金引換", enabled: false },
+    ],
+    
+    // Step 6: Design Customization
+    customization: {
+      colors: {
+        primary: "#06C755",
+        secondary: "#4F46E5",
+        accent: "#F59E0B",
+        background: "#FFFFFF",
+        text: "#1F2937",
+      },
+      font: "noto-sans",
+      layout: "standard",
+      customCSS: "",
+    },
   });
 
   const steps = [
@@ -91,9 +116,30 @@ export default function ShopBuilderPage() {
     },
     {
       id: 5,
+      title: "決済設定",
+      description: "決済方法を選択",
+      icon: CreditCard,
+      component: PaymentSettingsStep,
+    },
+    {
+      id: 6,
+      title: "デザイン",
+      description: "色やフォントを設定",
+      icon: Palette,
+      component: DesignCustomizationStep,
+    },
+    {
+      id: 7,
       title: "プレビュー",
-      description: "確認して公開",
+      description: "リアルタイム確認",
       icon: Eye,
+      component: LivePreviewStep,
+    },
+    {
+      id: 8,
+      title: "公開準備",
+      description: "最終確認と公開",
+      icon: CheckCircle,
       component: PreviewStep,
     },
   ];
@@ -136,6 +182,12 @@ export default function ShopBuilderPage() {
       case 4:
         return true; // Optional step
       case 5:
+        return shopData.paymentMethods?.filter((m: any) => m.enabled).length > 0;
+      case 6:
+        return true; // Optional step
+      case 7:
+        return true; // Preview step
+      case 8:
         return true;
       default:
         return false;

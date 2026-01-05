@@ -22,6 +22,7 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 // Types
 interface AIReport {
@@ -203,14 +204,15 @@ export default function AIReportsPage() {
 
                   {report.status === 'completed' && (
                     <div className="flex gap-2 ml-4">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleView(report)}
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        表示
-                      </Button>
+                      <Link href={`/ai/reports/${report.id}`}>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          表示
+                        </Button>
+                      </Link>
                       <Button 
                         size="sm" 
                         variant="outline"
