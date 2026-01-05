@@ -193,7 +193,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "Shopify連携", href: "/admin/integrations/shopify", icon: ShoppingBag },
         { label: "LINE公式アカウント", href: "/admin/integrations/line-official", icon: Smartphone },
         { label: "LINE広告", href: "/admin/integrations/line-ads", icon: BarChart2 },
-        { label: "楽天連携", href: "/rakuten/settings", icon: ShoppingBag }
+        { label: "楽天連携", href: "/rakuten/settings", icon: ShoppingBag },
+        { label: "ChatGPT連携", href: "/admin/integrations/chatgpt", icon: Bot }
       ]
     },
     { 
