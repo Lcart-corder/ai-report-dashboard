@@ -1,6 +1,7 @@
 import { useLayout } from "@/contexts/layout-context"
 import { AppSidebar } from "@/components/app-sidebar"
 import { cn } from "@/lib/utils"
+import LearningBanner from "@/components/LearningBanner"
 import { 
   Download, 
   FileText, 
@@ -142,8 +143,11 @@ export default function DashboardPage() {
       >
         <div className="p-8 max-w-[1600px] mx-auto space-y-6">
           
+          {/* Learning Banner */}
+          <LearningBanner variant="dashboard" />
+
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
             <div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
                 <span>ホーム</span>

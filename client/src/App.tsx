@@ -30,7 +30,9 @@ import EventManagerPage from "./pages/events/EventManager";
 import ReservationListPage from "./pages/events/ReservationList";
 import EventCreatePage from "./pages/events/EventCreate";
 import EventCalendarPage from "./pages/events/EventCalendar";
-import EventSettingsPage from "./pages/events/EventSettings";
+import EventSettingsPage from "@/pages/events/EventSettings";
+import LearningCenterPage from "@/pages/learning/LearningCenter";
+import VideoDetailPage from "@/pages/learning/VideoDetail";
 
 // Forms
 import FormManagerPage from "./pages/forms/FormManager";
@@ -166,6 +168,8 @@ function App() {
             <Route path="/events/create" component={EventCreatePage} />
             <Route path="/events/calendar" component={EventCalendarPage} />
             <Route path="/events/settings" component={EventSettingsPage} />
+            <Route path="/learning" component={LearningCenterPage} />
+            <Route path="/learning/video/:id" component={VideoDetailPage} />
 
             {/* AI Reports */}
             <Route path="/ai" component={AIDashboard} />

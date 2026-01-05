@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Tag,
   UserCog,
+  BookOpen,
   Ban,
   Send,
   GitMerge,
@@ -315,6 +316,18 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
 
       {/* Footer Actions */}
       <div className="p-3 border-t border-gray-200 space-y-1">
+        <Link href="/learning">
+          <button className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            activePath === "/learning"
+              ? "bg-[#06C755]/10 text-[#06C755]"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+            sidebarCollapsed ? "justify-center" : ""
+          )}>
+            <BookOpen className="w-5 h-5" />
+            {!sidebarCollapsed && <span>学習センター</span>}
+          </button>
+        </Link>
         <button className={cn(
           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors",
           sidebarCollapsed ? "justify-center" : ""
