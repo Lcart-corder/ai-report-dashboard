@@ -71,6 +71,7 @@ import ShopifyIntegrationPage from "./pages/admin/integrations/ShopifyIntegratio
 import LineOfficialIntegrationPage from "./pages/admin/integrations/LineOfficialIntegration";
 import LineAdsIntegrationPage from "./pages/admin/integrations/LineAdsIntegration";
 import AdminDashboard from "./pages/admin/index";
+import PlanSettingsPage from "./pages/admin/billing/PlanSettings";
 
 function App() {
   return (
@@ -172,6 +173,7 @@ function App() {
             <Route path="/admin/pages" component={PageListPage} />
             <Route path="/admin/pages/new" component={PageEditPage} />
             <Route path="/admin/pages/:id" component={PageEditPage} />
+            <Route path="/admin/billing" component={PlanSettingsPage} />
 
             {/* Static Pages (Shopify-like) */}
             <Route path="/admin/static-pages" component={StaticPageListPage} />

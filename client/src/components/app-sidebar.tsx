@@ -159,15 +159,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "固定ページ管理", href: "/admin/static-pages", icon: FileText },
       ]
     },
-    {
-      icon: ShoppingBag,
-      label: "楽天連携",
-      href: "/rakuten",
-      subItems: [
-        { label: "連携設定", href: "/rakuten/settings", icon: Settings },
-        { label: "注文履歴", href: "/rakuten/orders", icon: List },
-      ],
-    },
+
     { 
       icon: BarChart2, 
       label: "分析", 
@@ -200,7 +192,8 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "連携設定", href: "/admin/integrations", icon: Settings },
         { label: "Shopify連携", href: "/admin/integrations/shopify", icon: ShoppingBag },
         { label: "LINE公式アカウント", href: "/admin/integrations/line-official", icon: Smartphone },
-        { label: "LINE広告", href: "/admin/integrations/line-ads", icon: BarChart2 }
+        { label: "LINE広告", href: "/admin/integrations/line-ads", icon: BarChart2 },
+        { label: "楽天連携", href: "/rakuten/settings", icon: ShoppingBag }
       ]
     },
     { 

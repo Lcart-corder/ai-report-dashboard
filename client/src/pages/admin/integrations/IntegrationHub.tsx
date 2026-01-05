@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, MessageCircle, BarChart } from 'lucide-react';
+import { ShoppingBag, MessageCircle, BarChart, Store } from 'lucide-react';
 
 export default function IntegrationHub() {
   return (
@@ -70,6 +70,26 @@ export default function IntegrationHub() {
           </CardHeader>
           <CardContent className="mt-auto pt-0">
             <Link href="/admin/integrations/line-ads">
+              <Button className="w-full" variant="outline">設定する</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Rakuten Integration */}
+        <Card className="flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 bg-[#BF0000]/10 rounded-lg">
+                <Store className="h-6 w-6 text-[#BF0000]" />
+              </div>
+              <CardTitle>楽天連携</CardTitle>
+            </div>
+            <CardDescription>
+              楽天市場の注文データを同期し、LINE公式アカウントと連携させます。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto pt-0">
+            <Link href="/rakuten/settings">
               <Button className="w-full" variant="outline">設定する</Button>
             </Link>
           </CardContent>
