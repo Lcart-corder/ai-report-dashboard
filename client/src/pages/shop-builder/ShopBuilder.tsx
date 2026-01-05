@@ -209,17 +209,9 @@ export default function ShopBuilderPage() {
               ステップに従って、あなただけのショップページを作成しましょう
             </p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/products/register">
-              <Button variant="outline" className="gap-2">
-                <Package className="w-4 h-4" />
-                商品登録
-              </Button>
-            </Link>
-            <Button variant="outline" onClick={() => setLocation("/products")}>
-              キャンセル
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => setLocation("/products")}>
+            キャンセル
+          </Button>
         </div>
 
         {/* Progress Bar */}
