@@ -146,6 +146,41 @@ let PAGES: any[] = [
   }
 ];
 
+// Integrations Mock Data
+let INTEGRATION_SHOPIFY: any = {
+  id: "int_shopify_1",
+  tenant_id: "t1",
+  shop_url: "",
+  access_token: "",
+  sync_products: false,
+  sync_orders: false,
+  status: "inactive",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+let INTEGRATION_LINE_OFFICIAL: any = {
+  id: "int_line_official_1",
+  tenant_id: "t1",
+  channel_id: "",
+  channel_secret: "",
+  webhook_url: "https://api.l-cart.com/webhooks/line/t1",
+  status: "inactive",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+let INTEGRATION_LINE_ADS: any = {
+  id: "int_line_ads_1",
+  tenant_id: "t1",
+  line_tag_id: "",
+  enable_conversion_tracking: false,
+  enable_audience_sync: false,
+  status: "inactive",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
 async function startServer() {
   const app = express();
   app.use(express.json());
@@ -316,38 +351,24 @@ async function startServer() {
       }
 
       if (variant.stock < item.quantity) {
-        return res.status(400).json({ 
-          error: `Stock shortage for ${product.name} (${variant.option_value}). Available: ${variant.stock}` 
-        });
+        return res.status(409).json({ error: `Stock shortage for ${product.name} (${variant.option_value})` });
       }
+
+      // Reduce stock
+      variant.stock -= item.quantity;
       
-      const price = variant.price;
-      subtotal += price * item.quantity;
-      
+      subtotal += variant.price * item.quantity;
       orderItems.push({
         id: `oi_${Date.now()}_${item.id}`,
-        product_id: item.product_id,
-        variant_id: item.variant_id,
+        product_id: product.id,
+        variant_id: variant.id,
         product_name: product.name,
-        variant_name: `${variant.option_name}: ${variant.option_value}`,
-        price: price,
-        tax_rate: 0.1,
-        quantity: item.quantity
+        variant_name: variant.option_value,
+        price: variant.price,
+        quantity: item.quantity,
+        tax_rate: 0.1
       });
     }
-
-    // Deduct stock
-    for (const item of orderItems) {
-      const product = PRODUCTS.find(p => p.id === item.product_id);
-      const variant = product?.variants.find(v => v.id === item.variant_id);
-      if (variant) {
-        variant.stock -= item.quantity;
-      }
-    }
-
-    const shipping_fee = subtotal > 5000 ? 0 : 500;
-    const tax_total = Math.floor(subtotal * 0.1);
-    const grand_total = subtotal + tax_total + shipping_fee;
 
     const order = {
       id: `o_${Date.now()}`,
@@ -356,10 +377,10 @@ async function startServer() {
       user_id: userId,
       status: "awaiting_payment",
       subtotal,
-      tax_total,
-      shipping_fee,
+      tax_total: Math.floor(subtotal * 0.1),
+      shipping_fee: 500,
       discount_total: 0,
-      grand_total,
+      grand_total: Math.floor(subtotal * 1.1) + 500,
       currency: "JPY",
       shipping_info_json: shipping_info,
       customer_note: note,
@@ -371,9 +392,13 @@ async function startServer() {
     ORDERS.push(order);
     
     // Clear cart
-    cart.is_active = false;
-    
-    res.json(order);
+    cart.items = [];
+
+    res.status(201).json(order);
+  });
+
+  apiRouter.get("/orders", (req, res) => {
+    res.json(ORDERS);
   });
 
   apiRouter.get("/orders/:id", (req, res) => {
@@ -382,216 +407,38 @@ async function startServer() {
     res.json(order);
   });
 
-  apiRouter.get("/orders", (req, res) => {
-    const userId = req.headers["x-user-id"] || "u1";
-    const userOrders = ORDERS.filter(o => o.user_id === userId);
-    res.json(userOrders);
-  });
-
   // Payments
-  apiRouter.post("/orders/:id/payments", (req, res) => {
-    const order = ORDERS.find(o => o.id === req.params.id);
-    if (!order) return res.status(404).json({ error: "Order not found" });
-
+  apiRouter.post("/payments", (req, res) => {
+    const { order_id, provider, amount } = req.body;
+    
     const payment = {
       id: `pay_${Date.now()}`,
-      tenant_id: order.tenant_id,
-      order_id: order.id,
-      provider: "stripe",
-      status: "initiated",
-      amount: order.grand_total,
-      currency: order.currency,
+      tenant_id: "t1",
+      order_id,
+      provider,
+      status: "succeeded", // Mock success
+      amount,
+      currency: "JPY",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
     PAYMENTS.push(payment);
-    
-    // Mock payment URL
-    res.json({
-      payment_id: payment.id,
-      pay_url: `/checkout/pay/${payment.id}`, // Internal mock page
-    });
-  });
 
-  // Static Pages API (Admin)
-  apiRouter.get("/admin/static-pages", (req, res) => {
-    const pages = STATIC_PAGES.filter(p => !p.deleted_at);
-    res.json(pages);
-  });
-
-  apiRouter.get("/admin/static-pages/:id", (req, res) => {
-    const page = STATIC_PAGES.find(p => p.id === req.params.id && !p.deleted_at);
-    if (!page) return res.status(404).json({ error: "Page not found" });
-    res.json(page);
-  });
-
-  apiRouter.post("/admin/static-pages", (req, res) => {
-    const { title, content, seo_title, seo_description, handle, status, publish_at, template_key } = req.body;
-    
-    // Handle generation logic
-    let finalHandle = handle || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    if (!finalHandle) finalHandle = `page-${Date.now()}`;
-    
-    // Check handle uniqueness
-    let counter = 1;
-    let originalHandle = finalHandle;
-    while (STATIC_PAGES.some(p => p.handle === finalHandle && !p.deleted_at)) {
-      finalHandle = `${originalHandle}-${counter}`;
-      counter++;
+    // Update order status
+    const order = ORDERS.find(o => o.id === order_id);
+    if (order) {
+      order.status = "paid";
+      order.paid_at = new Date().toISOString();
+      order.updated_at = new Date().toISOString();
     }
 
-    const newPage = {
-      id: `sp_${Date.now()}`,
-      tenant_id: "t1",
-      title,
-      content,
-      seo_title,
-      seo_description,
-      handle: finalHandle,
-      status: status || "draft",
-      publish_at,
-      template_key: template_key || "default",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    STATIC_PAGES.push(newPage);
-    res.status(201).json(newPage);
+    res.json(payment);
   });
 
-  apiRouter.put("/admin/static-pages/:id", (req, res) => {
-    const pageIndex = STATIC_PAGES.findIndex(p => p.id === req.params.id);
-    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
-
-    const updates = req.body;
-    const currentPage = STATIC_PAGES[pageIndex];
-
-    // Handle uniqueness check if changed
-    if (updates.handle && updates.handle !== currentPage.handle) {
-      let finalHandle = updates.handle;
-      let counter = 1;
-      let originalHandle = finalHandle;
-      while (STATIC_PAGES.some(p => p.handle === finalHandle && p.id !== currentPage.id && !p.deleted_at)) {
-        finalHandle = `${originalHandle}-${counter}`;
-        counter++;
-      }
-      updates.handle = finalHandle;
-    }
-
-    const updatedPage = {
-      ...currentPage,
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    STATIC_PAGES[pageIndex] = updatedPage;
-    res.json(updatedPage);
-  });
-
-  apiRouter.delete("/admin/static-pages/:id", (req, res) => {
-    const pageIndex = STATIC_PAGES.findIndex(p => p.id === req.params.id);
-    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
-
-    STATIC_PAGES[pageIndex].deleted_at = new Date().toISOString();
-    res.json({ success: true });
-  });
-
-  // Public Static Page API
-  apiRouter.get("/pages/:handle", (req, res) => {
-    const page = STATIC_PAGES.find(p => p.handle === req.params.handle && !p.deleted_at);
-    
-    if (!page) return res.status(404).json({ error: "Page not found" });
-
-    // Visibility check
-    if (page.status === "draft") {
-      // In real app, allow admin to view draft
-      return res.status(404).json({ error: "Page not found" });
-    }
-    
-    if (page.status === "scheduled") {
-      const now = new Date();
-      const publishAt = new Date(page.publish_at);
-      if (now < publishAt) {
-        return res.status(404).json({ error: "Page not found" });
-      }
-    }
-
-    res.json(page);
-  });
-
-  // Pages API (Admin)
-  apiRouter.get("/admin/pages", (req, res) => {
-    res.json(PAGES);
-  });
-
-  apiRouter.get("/admin/pages/:id", (req, res) => {
-    const page = PAGES.find(p => p.id === req.params.id);
-    if (!page) return res.status(404).json({ error: "Page not found" });
-    res.json(page);
-  });
-
-  apiRouter.post("/admin/pages", (req, res) => {
-    const { title, slug, template_key } = req.body;
-    
-    // Check slug uniqueness
-    if (PAGES.some(p => p.slug === slug)) {
-      return res.status(409).json({ error: "Slug already exists" });
-    }
-
-    const newPage = {
-      id: `page_${Date.now()}`,
-      tenant_id: "t1",
-      type: "SHOP",
-      title,
-      slug,
-      status: "DRAFT",
-      template_key: template_key || "landing_page_v1",
-      blocks: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    PAGES.push(newPage);
-    res.status(201).json(newPage);
-  });
-
-  apiRouter.put("/admin/pages/:id", (req, res) => {
-    const pageIndex = PAGES.findIndex(p => p.id === req.params.id);
-    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
-
-    const updates = req.body;
-    const currentPage = PAGES[pageIndex];
-
-    // Check slug uniqueness if changed
-    if (updates.slug && updates.slug !== currentPage.slug && PAGES.some(p => p.slug === updates.slug)) {
-      return res.status(409).json({ error: "Slug already exists" });
-    }
-
-    const updatedPage = {
-      ...currentPage,
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
-    PAGES[pageIndex] = updatedPage;
-    res.json(updatedPage);
-  });
-
-  // Public Page API
-  apiRouter.get("/s/:slug", (req, res) => {
-    const page = PAGES.find(p => p.slug === req.params.slug && p.status === "PUBLISHED");
-    if (!page) return res.status(404).json({ error: "Page not found" });
-    
-    // In a real app, we might want to populate product data for PRODUCT_LIST blocks here
-    // For now, we'll let the frontend fetch products separately or just return the config
-    
-    res.json(page);
-  });
-
-  // Mock Webhook (for testing)
-  apiRouter.post("/payments/webhook/mock", (req, res) => {
+  apiRouter.post("/webhooks/payment", (req, res) => {
     const { payment_id, status } = req.body;
+    
     const payment = PAYMENTS.find(p => p.id === payment_id);
     if (!payment) return res.status(404).json({ error: "Payment not found" });
 
@@ -608,6 +455,157 @@ async function startServer() {
     }
 
     res.json({ success: true });
+  });
+
+  // Pages (LP Builder)
+  apiRouter.get("/admin/pages", (req, res) => {
+    res.json(PAGES);
+  });
+
+  apiRouter.get("/admin/pages/:id", (req, res) => {
+    const page = PAGES.find(p => p.id === req.params.id);
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  apiRouter.post("/admin/pages", (req, res) => {
+    const { title, slug, template_key } = req.body;
+    const newPage = {
+      id: `page_${Date.now()}`,
+      tenant_id: "t1",
+      type: "SHOP",
+      title,
+      slug,
+      status: "DRAFT",
+      template_key: template_key || "top_default",
+      blocks: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    PAGES.push(newPage);
+    res.status(201).json(newPage);
+  });
+
+  apiRouter.put("/admin/pages/:id", (req, res) => {
+    const pageIndex = PAGES.findIndex(p => p.id === req.params.id);
+    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
+    
+    const updates = req.body;
+    PAGES[pageIndex] = { ...PAGES[pageIndex], ...updates, updated_at: new Date().toISOString() };
+    res.json(PAGES[pageIndex]);
+  });
+
+  apiRouter.get("/s/:slug", (req, res) => {
+    const page = PAGES.find(p => p.slug === req.params.slug && p.status === "PUBLISHED");
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  // Static Pages (Shopify-like)
+  apiRouter.get("/admin/static-pages", (req, res) => {
+    res.json(STATIC_PAGES);
+  });
+
+  apiRouter.get("/admin/static-pages/:id", (req, res) => {
+    const page = STATIC_PAGES.find(p => p.id === req.params.id);
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    res.json(page);
+  });
+
+  apiRouter.post("/admin/static-pages", (req, res) => {
+    const { title } = req.body;
+    // Simple handle generation
+    const handle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `page-${Date.now()}`;
+    
+    const newPage = {
+      id: `sp_${Date.now()}`,
+      tenant_id: "t1",
+      title,
+      content: "",
+      seo_title: title,
+      seo_description: "",
+      handle,
+      status: "draft",
+      template_key: "default",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    STATIC_PAGES.push(newPage);
+    res.status(201).json(newPage);
+  });
+
+  apiRouter.put("/admin/static-pages/:id", (req, res) => {
+    const pageIndex = STATIC_PAGES.findIndex(p => p.id === req.params.id);
+    if (pageIndex === -1) return res.status(404).json({ error: "Page not found" });
+    
+    const updates = req.body;
+    STATIC_PAGES[pageIndex] = { ...STATIC_PAGES[pageIndex], ...updates, updated_at: new Date().toISOString() };
+    res.json(STATIC_PAGES[pageIndex]);
+  });
+
+  apiRouter.delete("/admin/static-pages/:id", (req, res) => {
+    STATIC_PAGES = STATIC_PAGES.filter(p => p.id !== req.params.id);
+    res.json({ success: true });
+  });
+
+  apiRouter.get("/pages/:handle", (req, res) => {
+    const page = STATIC_PAGES.find(p => p.handle === req.params.handle);
+    
+    // Check visibility logic
+    if (!page) return res.status(404).json({ error: "Page not found" });
+    
+    const now = new Date();
+    const isPublished = page.status === "published";
+    const isScheduled = page.status === "scheduled" && page.publish_at && new Date(page.publish_at) <= now;
+    
+    // In a real app, admin users could see drafts. For now, only public.
+    if (!isPublished && !isScheduled) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+    
+    res.json(page);
+  });
+
+  // Integrations API
+  apiRouter.get("/admin/integrations/shopify", (req, res) => {
+    res.json(INTEGRATION_SHOPIFY);
+  });
+
+  apiRouter.put("/admin/integrations/shopify", (req, res) => {
+    INTEGRATION_SHOPIFY = { ...INTEGRATION_SHOPIFY, ...req.body, updated_at: new Date().toISOString() };
+    if (INTEGRATION_SHOPIFY.shop_url && INTEGRATION_SHOPIFY.access_token) {
+      INTEGRATION_SHOPIFY.status = "active";
+    }
+    res.json(INTEGRATION_SHOPIFY);
+  });
+
+  apiRouter.post("/admin/integrations/shopify/sync", (req, res) => {
+    INTEGRATION_SHOPIFY.last_synced_at = new Date().toISOString();
+    res.json({ success: true, message: "Sync started" });
+  });
+
+  apiRouter.get("/admin/integrations/line-official", (req, res) => {
+    res.json(INTEGRATION_LINE_OFFICIAL);
+  });
+
+  apiRouter.put("/admin/integrations/line-official", (req, res) => {
+    INTEGRATION_LINE_OFFICIAL = { ...INTEGRATION_LINE_OFFICIAL, ...req.body, updated_at: new Date().toISOString() };
+    if (INTEGRATION_LINE_OFFICIAL.channel_id && INTEGRATION_LINE_OFFICIAL.channel_secret) {
+      INTEGRATION_LINE_OFFICIAL.status = "active";
+    }
+    res.json(INTEGRATION_LINE_OFFICIAL);
+  });
+
+  apiRouter.get("/admin/integrations/line-ads", (req, res) => {
+    res.json(INTEGRATION_LINE_ADS);
+  });
+
+  apiRouter.put("/admin/integrations/line-ads", (req, res) => {
+    INTEGRATION_LINE_ADS = { ...INTEGRATION_LINE_ADS, ...req.body, updated_at: new Date().toISOString() };
+    if (INTEGRATION_LINE_ADS.line_tag_id) {
+      INTEGRATION_LINE_ADS.status = "active";
+    }
+    res.json(INTEGRATION_LINE_ADS);
   });
 
   app.use("/api", apiRouter);

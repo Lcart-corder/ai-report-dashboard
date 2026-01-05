@@ -66,6 +66,10 @@ import MyPage from "./pages/settings/MyPage";
 // Others
 import AIDashboard from "./pages/ai/index";
 import IntegrationsPage from "./pages/integrations/index";
+import IntegrationHub from "./pages/admin/integrations/IntegrationHub";
+import ShopifyIntegrationPage from "./pages/admin/integrations/ShopifyIntegration";
+import LineOfficialIntegrationPage from "./pages/admin/integrations/LineOfficialIntegration";
+import LineAdsIntegrationPage from "./pages/admin/integrations/LineAdsIntegration";
 import AdminDashboard from "./pages/admin/index";
 
 function App() {
@@ -158,6 +162,10 @@ function App() {
 
             {/* Integrations */}
             <Route path="/integrations" component={IntegrationsPage} />
+            <Route path="/admin/integrations" component={IntegrationHub} />
+            <Route path="/admin/integrations/shopify" component={ShopifyIntegrationPage} />
+            <Route path="/admin/integrations/line-official" component={LineOfficialIntegrationPage} />
+            <Route path="/admin/integrations/line-ads" component={LineAdsIntegrationPage} />
 
             {/* Admin */}
             <Route path="/admin" component={AdminDashboard} />

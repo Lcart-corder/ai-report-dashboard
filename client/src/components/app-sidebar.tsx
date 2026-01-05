@@ -195,10 +195,12 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
     { 
       icon: LinkIcon, 
       label: "連携", 
-      href: "/integrations",
+      href: "/admin/integrations",
       subItems: [
-        { label: "Shopify連携", href: "/integrations/shopify", icon: ShoppingBag },
-        { label: "LINE公式アカウント", href: "/integrations/line", icon: Smartphone }
+        { label: "連携設定", href: "/admin/integrations", icon: Settings },
+        { label: "Shopify連携", href: "/admin/integrations/shopify", icon: ShoppingBag },
+        { label: "LINE公式アカウント", href: "/admin/integrations/line-official", icon: Smartphone },
+        { label: "LINE広告", href: "/admin/integrations/line-ads", icon: BarChart2 }
       ]
     },
     { 
