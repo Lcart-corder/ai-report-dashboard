@@ -31,6 +31,37 @@ const roles = [
   { id: "support", label: "サポート", color: "bg-green-100 text-green-800" },
 ];
 
+// ロール別デフォルト権限テンプレート
+const defaultPermissions: Record<string, string[]> = {
+  sub_admin: [
+    // 副管理人：ほぼ全権限
+    "friends_友だちリスト", "friends_タグ管理", "friends_友だち情報管理", "friends_ブロックリスト",
+    "messages_一齉配信", "messages_ステップ配信", "messages_自動応答", "messages_挨拶メッセージ", "messages_テンプレート", "messages_リッチメニュー",
+    "forms_フォーム管理", "forms_フォーム回答", "forms_予約管理", "forms_予約カレンダー",
+    "shop_商品管理", "shop_在庫管理", "shop_注文管理", "shop_配送管理", "shop_ショップページ",
+    "analysis_友だち分析", "analysis_メッセージ分析", "analysis_流入経路分析", "analysis_サイト分析", "analysis_AI分析",
+    "marketing_流入経路管理", "marketing_コンバージョン設定", "marketing_アクションスケジュール",
+    "chat_1:1チャット", "chat_チャット設定",
+    "system_プラン設定", "system_アカウント設定",
+  ],
+  operator: [
+    // 運用者：日常業務
+    "friends_友だちリスト", "friends_タグ管理",
+    "messages_一齉配信", "messages_ステップ配信", "messages_自動応答", "messages_テンプレート",
+    "forms_フォーム管理", "forms_フォーム回答", "forms_予約管理", "forms_予約カレンダー",
+    "shop_商品管理", "shop_注文管理",
+    "analysis_友だち分析", "analysis_メッセージ分析",
+    "marketing_流入経路管理",
+    "chat_1:1チャット",
+  ],
+  support: [
+    // サポート：顧客対応
+    "friends_友だちリスト",
+    "forms_フォーム回答", "forms_予約管理",
+    "chat_1:1チャット",
+  ],
+};
+
 interface StaffMember {
   id: string;
   name: string;
@@ -133,13 +164,15 @@ export default function StaffManagement() {
   };
 
   const handleOpenPermissionDialog = () => {
-    // 権限マトリックスの初期化
+    // 権限マトリックスの初期化（デフォルト権限を適用）
     const matrix: Record<string, Record<string, boolean>> = {};
     roles.forEach((role) => {
       matrix[role.id] = {};
       permissionCategories.forEach((category) => {
         category.permissions.forEach((permission) => {
-          matrix[role.id][`${category.id}_${permission}`] = false;
+          const permissionKey = `${category.id}_${permission}`;
+          // デフォルト権限に含まれているかチェック
+          matrix[role.id][permissionKey] = defaultPermissions[role.id]?.includes(permissionKey) || false;
         });
       });
     });
@@ -344,9 +377,21 @@ export default function StaffManagement() {
                 <Label htmlFor="edit-staff-role">ロール</Label>
                 <Select
                   value={selectedStaff.role}
-                  onValueChange={(value) =>
-                    setSelectedStaff({ ...selectedStaff, role: value })
-                  }
+                  onValueChange={(value) => {
+                    // ロール変更時にデフォルト権限を自動適用
+                    const newPermissions: Record<string, string[]> = {};
+                    permissionCategories.forEach((category) => {
+                      newPermissions[category.id] = [];
+                      category.permissions.forEach((permission) => {
+                        const permissionKey = `${category.id}_${permission}`;
+                        if (defaultPermissions[value]?.includes(permissionKey)) {
+                          newPermissions[category.id].push(permission);
+                        }
+                      });
+                    });
+                    setSelectedStaff({ ...selectedStaff, role: value, permissions: newPermissions });
+                    toast.success(`${getRoleLabel(value)}のデフォルト権限を適用しました`);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />

@@ -77,6 +77,7 @@ import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
 import MyPage from "./pages/settings/MyPage";
 import MyPageNew from "./pages/settings/MyPageNew";
 import NotificationSettings from "./pages/settings/NotificationSettings";
+import QRCodeActionManager from "./pages/marketing/QRCodeActionManager";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -151,8 +152,9 @@ function App() {
             <Route path="/analysis" component={AnalysisDashboard} />
             <Route path="/analysis/friends" component={FriendsAnalysisPage} />
             <Route path="/analysis/messages" component={MessagesAnalysisPage} />
-            <Route path="/analysis/traffic" component={TrafficSourcesPage} />
+            <Route path="/analysis/traffic" component={QRCodeActionManager} />
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
+            <Route path="/marketing/qr-actions" component={QRCodeActionManager} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/logs" component={ActionLogsPage} />
             <Route path="/analysis/ai-insights" component={AIInsightsPage} />

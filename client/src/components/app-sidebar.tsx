@@ -44,7 +44,8 @@ import {
   Keyboard,
   Truck,
   Package,
-  Bell
+  Bell,
+  QrCode
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -174,7 +175,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "ダッシュボード", href: "/analysis", icon: PieChart },
         { label: "友だち分析", href: "/analysis/friends", icon: Users },
         { label: "メッセージ分析", href: "/analysis/messages", icon: MessageSquare },
-        { label: "流入経路分析", href: "/analysis/traffic", icon: TrendingUp },
+        { label: "QRコードアクション", href: "/analysis/traffic", icon: QrCode },
         { label: "コンバージョン設定", href: "/analysis/conversions", icon: MousePointerClick },
         { label: "アクションログ", href: "/analysis/logs", icon: History },
         { label: "AI分析・改善提案", href: "/analysis/ai-insights", icon: Sparkles },

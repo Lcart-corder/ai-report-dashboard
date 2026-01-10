@@ -143,6 +143,8 @@ export default function ChatPage() {
   const [selectedSender, setSelectedSender] = useState("default");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isSenderDialogOpen, setIsSenderDialogOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -158,7 +160,36 @@ export default function ChatPage() {
 
     setMessages([...messages, message]);
     setNewMessage("");
+    setAiSuggestions([]);
     toast.success("メッセージを送信しました");
+  };
+
+  const handleGenerateAISuggestions = async () => {
+    if (!selectedFriend) return;
+
+    setIsLoadingSuggestions(true);
+    
+    // 最後のユーザーメッセージを取得
+    const lastUserMessage = messages
+      .filter((m) => m.type === "received")
+      .slice(-1)[0];
+
+    // シミュレーション：実際はバックエンドAPIを呼び出す
+    setTimeout(() => {
+      const suggestions = [
+        `お問い合わせありがとうございます。${lastUserMessage?.content || "ご質問"}につきまして、詳しくご案内いたします。ご希望の日時や数量などをお知らせください。`,
+        `ご連絡ありがとうございます。お客様のリクエストについて、確認しておりますので、少々お待ちくださいませ。追ってご連絡させていただきます。`,
+        `こんにちは！${lastUserMessage?.content || "ご質問"}ですね。かしこまりました。詳細を確認して、最適な方法をご提案させていただきます。`,
+      ];
+      setAiSuggestions(suggestions);
+      setIsLoadingSuggestions(false);
+      toast.success("AIが返信候補を生成しました");
+    }, 1000);
+  };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setNewMessage(suggestion);
+    toast.success("返信候補を選択しました");
   };
 
   const filteredFriends = friends.filter((friend) => {
@@ -396,23 +427,61 @@ export default function ChatPage() {
                   ))}
                 </div>
               </CardContent>
-              <div className="p-4 border-t">
+              <div className="p-4 border-t space-y-3">
+                {/* AI返信候補 */}
+                {aiSuggestions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">🤖 AI返信候補</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAiSuggestions([])}
+                      >
+                        閉じる
+                      </Button>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {aiSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                          onClick={() => handleSelectSuggestion(suggestion)}
+                        >
+                          <p className="text-sm text-gray-800">{suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon">
                     <Paperclip className="w-5 h-5" />
                   </Button>
-                  <Textarea
-                    placeholder="メッセージを入力..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    className="flex-1 min-h-[60px] resize-none"
-                  />
+                  <div className="flex-1 space-y-2">
+                    <Textarea
+                      placeholder="メッセージを入力..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      className="min-h-[60px] resize-none"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateAISuggestions}
+                      disabled={isLoadingSuggestions}
+                      className="w-full"
+                    >
+                      {isLoadingSuggestions ? "生成中..." : "🤖 AI返信候補を生成"}
+                    </Button>
+                  </div>
                   <Button onClick={handleSendMessage} size="icon">
                     <Send className="w-5 h-5" />
                   </Button>
