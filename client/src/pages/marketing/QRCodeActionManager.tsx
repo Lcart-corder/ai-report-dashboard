@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ interface QRCodeAction {
 }
 
 export default function QRCodeActionManager() {
+  const [, setLocation] = useLocation();
   const [qrActions, setQrActions] = useState<QRCodeAction[]>([
     {
       id: "1",
@@ -93,12 +95,13 @@ export default function QRCodeActionManager() {
   });
 
   const handleCreateAction = () => {
+    const newId = Date.now().toString();
     const action: QRCodeAction = {
-      id: Date.now().toString(),
+      id: newId,
       name: newAction.name,
       folder: newAction.folder,
       targetAudience: newAction.targetAudience,
-      url: `https://lme.jp/qr/${Date.now()}`,
+      url: `https://lme.jp/qr/${newId}`,
       qrCode: "/qr-sample.png",
       urlReads: 0,
       friendAdds: 0,
@@ -120,6 +123,8 @@ export default function QRCodeActionManager() {
       actions: [],
     });
     toast.success("QRコードアクションを作成しました");
+    // 作成後に詳細設定画面に遷移
+    setLocation(`/marketing/qr-code/${newId}`);
   };
 
   const handleToggleActive = (id: string) => {
