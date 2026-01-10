@@ -169,99 +169,13 @@ export default function QRCodeActionManager() {
             QRコードを発行して流入経路を分析し、自動アクションを実行できます
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg">
-              <Plus className="w-4 h-4 mr-2" />
-              新規作成
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>QRコードアクションの新規作成</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>管理名</Label>
-                <Input
-                  placeholder="例：店舗来店キャンペーン"
-                  value={newAction.name}
-                  onChange={(e) => setNewAction({ ...newAction, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>フォルダ</Label>
-                <Select
-                  value={newAction.folder}
-                  onValueChange={(value) => setNewAction({ ...newAction, folder: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="フォルダを選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="キャンペーン">キャンペーン</SelectItem>
-                    <SelectItem value="SNS">SNS</SelectItem>
-                    <SelectItem value="店舗">店舗</SelectItem>
-                    <SelectItem value="その他">その他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>稼働対象</Label>
-                <Select
-                  value={newAction.targetAudience}
-                  onValueChange={(value: "new" | "all") =>
-                    setNewAction({ ...newAction, targetAudience: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">新規友だちのみ</SelectItem>
-                    <SelectItem value="all">全ての友だち</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-gray-500 mt-1">
-                  {newAction.targetAudience === "new"
-                    ? "初めて友だち追加するユーザーのみが対象です"
-                    : "新規・既存・ブロック解除した全てのユーザーが対象です"}
-                </p>
-              </div>
-              <div>
-                <Label>有効期限（オプション）</Label>
-                <Input
-                  type="date"
-                  value={newAction.validUntil}
-                  onChange={(e) => setNewAction({ ...newAction, validUntil: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>アクション設定</Label>
-                <div className="space-y-2 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="action-message" />
-                    <label htmlFor="action-message">メッセージ送信</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="action-tag" />
-                    <label htmlFor="action-tag">タグ付与</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="action-richmenu" />
-                    <label htmlFor="action-richmenu">リッチメニュー切り替え</label>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  キャンセル
-                </Button>
-                <Button onClick={handleCreateAction}>作成</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          size="lg"
+          onClick={() => setLocation('/marketing/qr-code/new')}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          新規作成
+        </Button>
       </div>
 
       <Card className="mb-6">

@@ -33,6 +33,8 @@ export default function QRCodeDetailComplete() {
   const params = useParams();
   const id = params.id || "new";
   const [, setLocation] = useLocation();
+  const isNewMode = id === "new";
+  const [currentStep, setCurrentStep] = useState(0);
 
   // 基本設定
   const [qrName, setQrName] = useState("新規QRコード");
@@ -69,7 +71,14 @@ export default function QRCodeDetailComplete() {
   const qrUrl = `https://line.me/R/ti/p/@example?qr=${id}`;
 
   const handleSave = () => {
-    toast.success("設定を保存しました");
+    if (isNewMode) {
+      // 新規作成時はデータを保存して管理ページに戻る
+      const newId = Date.now().toString();
+      toast.success("QRコードを作成しました");
+      setLocation("/marketing/qr-code");
+    } else {
+      toast.success("設定を保存しました");
+    }
   };
 
   const handlePreview = () => {
@@ -98,8 +107,8 @@ export default function QRCodeDetailComplete() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{qrName}</h1>
-            <p className="text-gray-600">QRコードの詳細設定</p>
+            <h1 className="text-3xl font-bold">{isNewMode ? "QRコードの新規作成" : qrName}</h1>
+            <p className="text-gray-600">{isNewMode ? "必要な情報を入力してQRコードを作成しましょう" : "QRコードの詳細設定"}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -108,11 +117,52 @@ export default function QRCodeDetailComplete() {
             プレビュー
           </Button>
           <Button onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" />
-            保存
+            {isNewMode ? <CheckCircle className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            {isNewMode ? "作成して完了" : "保存"}
           </Button>
         </div>
       </div>
+
+      {/* 新規作成モードのガイド */}
+      {isNewMode && (
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-2">設定ガイド</h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  以下のタブを順番に設定していきましょう。必須項目を入力後、「作成して完了」ボタンをクリックしてください。
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant="outline" className="bg-white">
+                    <CheckCircle className="w-3 h-3 mr-1 text-green-500" />
+                    1. 基本設定（必須）
+                  </Badge>
+                  <Badge variant="outline" className="bg-white">
+                    <Clock className="w-3 h-3 mr-1 text-gray-400" />
+                    2. 稼働設定
+                  </Badge>
+                  <Badge variant="outline" className="bg-white">
+                    <Gift className="w-3 h-3 mr-1 text-gray-400" />
+                    3. 紹介時アクション
+                  </Badge>
+                  <Badge variant="outline" className="bg-white">
+                    <Palette className="w-3 h-3 mr-1 text-gray-400" />
+                    4. オプション
+                  </Badge>
+                  <Badge variant="outline" className="bg-white">
+                    <Link className="w-3 h-3 mr-1 text-gray-400" />
+                    5. 外部連携
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* QRコード情報カード */}
       <Card className="mb-6">
@@ -176,17 +226,31 @@ export default function QRCodeDetailComplete() {
         <TabsContent value="basic" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>基本情報</CardTitle>
-              <CardDescription>QRコードの名前と基本設定を行います</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                基本情報
+                {isNewMode && <Badge variant="destructive" className="text-xs">必須</Badge>}
+              </CardTitle>
+              <CardDescription>
+                {isNewMode 
+                  ? "QRコードの名前と対象となる友だちを設定します。これらは必須項目です。"
+                  : "QRコードの名前と基本設定を行います"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>管理名</Label>
+                <Label className="flex items-center gap-2">
+                  管理名
+                  {isNewMode && <span className="text-red-500 text-xs">*</span>}
+                </Label>
                 <Input
                   value={qrName}
                   onChange={(e) => setQrName(e.target.value)}
                   placeholder="例：店舗来店キャンペーン"
+                  className={isNewMode && !qrName ? "border-red-300" : ""}
                 />
+                {isNewMode && !qrName && (
+                  <p className="text-sm text-red-500 mt-1">管理名を入力してください</p>
+                )}
               </div>
 
               <div>
@@ -212,7 +276,11 @@ export default function QRCodeDetailComplete() {
           <Card>
             <CardHeader>
               <CardTitle>読み込み時アクション</CardTitle>
-              <CardDescription>QRコード読み取り時に実行するアクションを設定します</CardDescription>
+              <CardDescription>
+                {isNewMode
+                  ? "QRコードを読み取ったときに送信するメッセージを設定できます。（オプション）"
+                  : "QRコード読み取り時に実行するアクションを設定します"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
