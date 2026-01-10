@@ -70,7 +70,7 @@ import AIInsightsPage from "./pages/analysis/AIInsights";
 import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
 import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
 import ChatPage from "./pages/chats/ChatPage";
-import ChatPageNew from "./pages/chat/ChatPage";
+import ChatPageNew from "./pages/chat/ChatPageComplete";
 import ChatSettingsPage from "./pages/chats/ChatSettings";
 import OmikujiPage from "./pages/omikuji/OmikujiPage";
 import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
