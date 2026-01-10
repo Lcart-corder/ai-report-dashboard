@@ -175,7 +175,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "ダッシュボード", href: "/analysis", icon: PieChart },
         { label: "友だち分析", href: "/analysis/friends", icon: Users },
         { label: "メッセージ分析", href: "/analysis/messages", icon: MessageSquare },
-        { label: "QRコードアクション", href: "/analysis/traffic", icon: QrCode },
+        { label: "QRコードアクション", href: "/marketing/qr-code", icon: QrCode },
         { label: "コンバージョン設定", href: "/analysis/conversions", icon: MousePointerClick },
         { label: "アクションログ", href: "/analysis/logs", icon: History },
         { label: "AI分析・改善提案", href: "/analysis/ai-insights", icon: Sparkles },
