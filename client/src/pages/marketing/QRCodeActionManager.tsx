@@ -358,6 +358,14 @@ export default function QRCodeActionManager() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => (window.location.href = `/marketing/qr-code/${action.id}`)}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    詳細設定
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       setSelectedAction(action);
                       setIsDetailDialogOpen(true);

@@ -78,6 +78,7 @@ import MyPage from "./pages/settings/MyPage";
 import MyPageNew from "./pages/settings/MyPageNew";
 import NotificationSettings from "./pages/settings/NotificationSettings";
 import QRCodeActionManager from "./pages/marketing/QRCodeActionManager";
+import QRCodeDetail from "./pages/marketing/QRCodeDetail";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -154,7 +155,8 @@ function App() {
             <Route path="/analysis/messages" component={MessagesAnalysisPage} />
             <Route path="/analysis/traffic" component={QRCodeActionManager} />
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
-            <Route path="/marketing/qr-actions" component={QRCodeActionManager} />
+             <Route path="/marketing/qr-code" component={QRCodeActionManager} />
+            <Route path="/marketing/qr-code/:id" component={QRCodeDetail} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/logs" component={ActionLogsPage} />
             <Route path="/analysis/ai-insights" component={AIInsightsPage} />
