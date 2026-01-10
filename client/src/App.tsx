@@ -70,11 +70,13 @@ import AIInsightsPage from "./pages/analysis/AIInsights";
 import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
 import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
 import ChatPage from "./pages/chats/ChatPage";
+import ChatPageNew from "./pages/chat/ChatPage";
 import ChatSettingsPage from "./pages/chats/ChatSettings";
 import OmikujiPage from "./pages/omikuji/OmikujiPage";
 import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
 import MyPage from "./pages/settings/MyPage";
 import MyPageNew from "./pages/settings/MyPageNew";
+import NotificationSettings from "./pages/settings/NotificationSettings";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -162,6 +164,7 @@ function App() {
           {/* Chats */}
           <Route path="/chats" component={ChatPage} />
           <Route path="/chats/settings" component={ChatSettingsPage} />
+          <Route path="/chat" component={ChatPageNew} />
 
             {/* Omikuji */}
             <Route path="/omikuji" component={OmikujiPage} />
@@ -170,6 +173,7 @@ function App() {
             {/* Settings */}
             <Route path="/mypage" component={MyPage} />
             <Route path="/settings" component={MyPageNew} />
+            <Route path="/settings/notifications" component={NotificationSettings} />
             <Route path="/analysis/site" component={SiteAnalysisPage} />
 
             {/* Events */}

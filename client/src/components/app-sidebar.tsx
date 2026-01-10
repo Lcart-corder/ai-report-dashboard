@@ -43,7 +43,8 @@ import {
   Menu,
   Keyboard,
   Truck,
-  Package
+  Package,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -100,9 +101,9 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
     {
       icon: MessageSquare,
       label: "1:1チャット",
-      href: "/chats",
+      href: "/chat",
       subItems: [
-        { label: "チャット一覧", href: "/chats", icon: MessageSquare },
+        { label: "チャット一覧", href: "/chat", icon: MessageSquare },
         { label: "チャット設定", href: "/chats/settings", icon: Settings },
       ],
     },
@@ -209,6 +210,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       href: "/admin",
       subItems: [
         { label: "マイページ", href: "/settings", icon: UserCheck },
+        { label: "通知設定", href: "/settings/notifications", icon: Bell },
         { label: "メンバー管理", href: "/admin/staff", icon: Users },
         { label: "プラン・支払い", href: "/admin/billing", icon: CreditCard }
       ]
