@@ -323,7 +323,7 @@ export default function StaffManagement() {
 
       {/* 編集ダイアログ */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>スタッフ編集</DialogTitle>
             <DialogDescription>スタッフ情報を編集します</DialogDescription>
@@ -359,6 +359,55 @@ export default function StaffManagement() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* 権限設定セクション */}
+              <div className="space-y-4 border-t pt-4">
+                <Label className="text-base font-semibold">機能権限設定</Label>
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  {permissionCategories.map((category) => (
+                    <div key={category.id} className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-700">{category.label}</h4>
+                      <div className="grid grid-cols-2 gap-2 ml-4">
+                        {category.permissions.map((permission) => {
+                          const key = `${category.id}-${permission}`;
+                          const isChecked = selectedStaff.permissions[category.id]?.includes(permission) || false;
+                          return (
+                            <div key={permission} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={key}
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  const updatedPermissions = { ...selectedStaff.permissions };
+                                  if (!updatedPermissions[category.id]) {
+                                    updatedPermissions[category.id] = [];
+                                  }
+                                  if (checked) {
+                                    updatedPermissions[category.id] = [
+                                      ...updatedPermissions[category.id],
+                                      permission,
+                                    ];
+                                  } else {
+                                    updatedPermissions[category.id] = updatedPermissions[
+                                      category.id
+                                    ].filter((p) => p !== permission);
+                                  }
+                                  setSelectedStaff({ ...selectedStaff, permissions: updatedPermissions });
+                                }}
+                              />
+                              <label
+                                htmlFor={key}
+                                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {permission}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
