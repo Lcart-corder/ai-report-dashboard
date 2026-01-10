@@ -11,6 +11,7 @@ import FriendListPage from "./pages/friends/FriendList";
 import FriendInfoListPage from "./pages/friends/FriendInfoList";
 import TagsPage from "./pages/friends/Tags";
 import ConversionsPage from "./pages/friends/Conversions";
+import BlockedListPage from "./pages/friends/BlockedList";
 // Messages
 import BroadcastPage from "./pages/messages/Broadcast";
 import StepManagerPage from "./pages/messages/StepManager";
@@ -111,6 +112,7 @@ function App() {
             <Route path="/friends/list" component={FriendListPage} />
             <Route path="/friends/info" component={FriendInfoListPage} />
             <Route path="/friends/tags" component={TagsPage} />
+            <Route path="/friends/blocked" component={BlockedListPage} />
             <Route path="/friends/conversions" component={ConversionsPage} />
 
             {/* Messages */}
