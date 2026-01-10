@@ -74,6 +74,7 @@ import ChatSettingsPage from "./pages/chats/ChatSettings";
 import OmikujiPage from "./pages/omikuji/OmikujiPage";
 import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
 import MyPage from "./pages/settings/MyPage";
+import MyPageNew from "./pages/settings/MyPageNew";
 
 // Others
 import AIDashboard from "./pages/ai/index";
@@ -88,6 +89,7 @@ import LineAdsIntegrationPage from "./pages/admin/integrations/LineAdsIntegratio
 import ChatGPTSettingsPage from "./pages/admin/integrations/ChatGPTSettings";
 import AdminDashboard from "./pages/admin/index";
 import PlanSettingsPage from "./pages/admin/billing/PlanSettings";
+import StaffManagement from "./pages/admin/StaffManagement";
 
 function App() {
   return (
@@ -167,6 +169,7 @@ function App() {
 
             {/* Settings */}
             <Route path="/mypage" component={MyPage} />
+            <Route path="/settings" component={MyPageNew} />
             <Route path="/analysis/site" component={SiteAnalysisPage} />
 
             {/* Events */}
@@ -200,6 +203,7 @@ function App() {
             <Route path="/admin/pages/new" component={PageEditPage} />
             <Route path="/admin/pages/:id" component={PageEditPage} />
             <Route path="/admin/billing" component={PlanSettingsPage} />
+            <Route path="/admin/staff" component={StaffManagement} />
 
             {/* Static Pages (Shopify-like) */}
             <Route path="/admin/static-pages" component={StaticPageListPage} />

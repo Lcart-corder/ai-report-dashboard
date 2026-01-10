@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Zap } from 'lucide-react';
+import { Check, CreditCard, Zap, ShoppingCart, MessageSquare, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const plans = [
   {
@@ -64,9 +66,67 @@ const plans = [
   }
 ];
 
+const optionFeatures = [
+  {
+    id: 'rakuten',
+    name: '楽天連携',
+    description: '楽天市場の商品データと連携し、在庫管理や注文情報を自動同期',
+    price: '5,000',
+    icon: ShoppingCart,
+    features: [
+      '商品データの自動同期',
+      '在庫管理の自動化',
+      '注文情報のリアルタイム連携',
+      '楽天ポイント連携'
+    ]
+  },
+  {
+    id: 'shopify',
+    name: 'Shopify連携',
+    description: 'Shopifyストアと連携し、商品管理や顧客データを統合',
+    price: '5,000',
+    icon: ShoppingCart,
+    features: [
+      'Shopify商品の自動インポート',
+      '顧客データの統合管理',
+      '注文ステータスの自動更新',
+      'カート放棄リカバリー'
+    ]
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT連携',
+    description: 'AI搭載の自動応答で顧客対応を効率化',
+    price: '8,000',
+    icon: MessageSquare,
+    features: [
+      'AI自動応答（24時間対応）',
+      '自然な会話生成',
+      'よくある質問の自動対応',
+      '多言語対応'
+    ]
+  }
+];
+
 export default function PlanSettingsPage() {
+  const [enabledOptions, setEnabledOptions] = useState<Record<string, boolean>>({
+    rakuten: false,
+    shopify: false,
+    chatgpt: false
+  });
+
   const handleUpgrade = (planName: string) => {
     toast.info(`${planName}への変更リクエストを受け付けました。`);
+  };
+
+  const handleToggleOption = (optionId: string, enabled: boolean) => {
+    setEnabledOptions(prev => ({ ...prev, [optionId]: enabled }));
+    const option = optionFeatures.find(o => o.id === optionId);
+    if (enabled) {
+      toast.success(`${option?.name}を有効化しました`);
+    } else {
+      toast.info(`${option?.name}を無効化しました`);
+    }
   };
 
   return (
@@ -143,6 +203,70 @@ export default function PlanSettingsPage() {
             </CardFooter>
           </Card>
         ))}
+      </div>
+
+      {/* Optional Features */}
+      <div className="mt-12">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          オプション機能
+        </h2>
+        <p className="text-muted-foreground mb-6">
+          必要な連携機能を追加して、さらに便利にご利用いただけます。
+        </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          {optionFeatures.map((option) => {
+            const Icon = option.icon;
+            const isEnabled = enabledOptions[option.id];
+            return (
+              <Card key={option.id} className={`flex flex-col ${isEnabled ? 'border-[#06C755] bg-green-50/50' : ''}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${isEnabled ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{option.name}</CardTitle>
+                        <div className="mt-1">
+                          <span className="text-xl font-bold">¥{option.price}</span>
+                          <span className="text-muted-foreground text-sm">/月</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={(checked) => handleToggleOption(option.id, checked)}
+                    />
+                  </div>
+                  <CardDescription className="mt-3">{option.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <ul className="space-y-2 text-sm">
+                    {option.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-[#06C755] mt-0.5 shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  {isEnabled && (
+                    <Badge className="w-full justify-center bg-[#06C755] hover:bg-[#05b34c]">
+                      有効
+                    </Badge>
+                  )}
+                  {!isEnabled && (
+                    <Badge variant="outline" className="w-full justify-center">
+                      無効
+                    </Badge>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {/* Payment Method */}
