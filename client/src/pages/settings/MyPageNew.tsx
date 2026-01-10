@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { User, Lock, Bell, Shield, CreditCard, FileText, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 export default function MyPageNew() {
   const [name, setName] = useState("山田太郎");
@@ -44,7 +45,30 @@ export default function MyPageNew() {
   };
 
   const handleDownloadInvoice = (invoiceId: string) => {
-    alert(`請求書 ${invoiceId} をダウンロードします`);
+    const invoice = invoices.find(inv => inv.id === invoiceId);
+    if (!invoice) return;
+
+    const doc = new jsPDF();
+    
+    // ヘッダー
+    doc.setFontSize(20);
+    doc.text("Invoice / \u8acb\u6c42\u66f8", 105, 20, { align: "center" });
+    
+    // 請求\u66f8\u60c5\u5831
+    doc.setFontSize(12);
+    doc.text(`Invoice No: ${invoice.id}`, 20, 40);
+    doc.text(`Date: ${invoice.date}`, 20, 50);
+    doc.text(`Amount: \u00a5${invoice.amount.toLocaleString()}`, 20, 60);
+    doc.text(`Status: ${invoice.status === "paid" ? "Paid" : "Unpaid"}`, 20, 70);
+    
+    // 会\u793e\u60c5\u5831
+    doc.text("Company Information:", 20, 90);
+    doc.setFontSize(10);
+    doc.text("L\u30ab\u30fc\u30c8 - LINE\u516c\u5f0f\u30a2\u30ab\u30a6\u30f3\u30c8EC\u30c4\u30fc\u30eb", 20, 100);
+    doc.text("\u6771\u4eac\u90fd\u6e0b\u8c37\u533a1-1-1", 20, 110);
+    
+    // PDF\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9
+    doc.save(`${invoiceId}.pdf`);
   };
 
   return (

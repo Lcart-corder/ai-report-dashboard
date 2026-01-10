@@ -103,6 +103,48 @@ export const appRouter = router({
       });
     }),
   }),
+
+  // Staff Management
+  staff: router({
+    list: protectedProcedure.query(async () => {
+      return db.getAllStaffMembers();
+    }),
+    getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+      return db.getStaffMemberById(input.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string(),
+      email: z.string().email(),
+      role: z.enum(["sub_admin", "operator", "support"]),
+    })).mutation(async ({ input }) => {
+      return db.createStaffMember(input);
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+      role: z.enum(["sub_admin", "operator", "support"]).optional(),
+      isActive: z.boolean().optional(),
+    })).mutation(async ({ input }) => {
+      return db.updateStaffMember(input.id, input);
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+      return db.deleteStaffMember(input.id);
+    }),
+    getPermissions: protectedProcedure.input(z.object({ staffId: z.number() })).query(async ({ input }) => {
+      return db.getStaffPermissions(input.staffId);
+    }),
+    updatePermissions: protectedProcedure.input(z.object({
+      staffId: z.number(),
+      permissions: z.array(z.object({
+        category: z.string(),
+        permission: z.string(),
+        isAllowed: z.boolean(),
+      })),
+    })).mutation(async ({ input }) => {
+      return db.updateStaffPermissions(input.staffId, input.permissions);
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

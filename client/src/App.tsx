@@ -16,7 +16,7 @@ import BroadcastPage from "./pages/messages/Broadcast";
 import StepManagerPage from "./pages/messages/StepManager";
 import ScenarioEditorPage from "./pages/messages/ScenarioEditor";
 import AutoReplyPage from "./pages/messages/AutoReply";
-import ActionSchedulePage from "./pages/messages/ActionSchedule";
+import ActionSchedulePage from "./pages/messages/ActionScheduleNew";
 import GreetingPage from "./pages/messages/Greeting";
 import TemplatesPage from "./pages/messages/Templates";
 import RichMenuListPage from "./pages/messages/RichMenuList";

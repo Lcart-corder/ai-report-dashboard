@@ -15,6 +15,13 @@
       "when": 1767630688748,
       "tag": "0001_many_the_call",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768048633757,
+      "tag": "0002_silky_silver_fox",
+      "breakpoints": true
     }
   ]
 }

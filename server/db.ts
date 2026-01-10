@@ -234,3 +234,80 @@ export async function upsertIntegration(integration: InsertIntegration) {
     },
   });
 }
+
+// ============================================================
+// Staff Management
+// ============================================================
+
+export async function getAllStaffMembers() {
+  const db = await getDb();
+  if (!db) return [];
+  const { staffMembers } = await import("../drizzle/schema");
+  return db.select().from(staffMembers);
+}
+
+export async function getStaffMemberById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const { staffMembers } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  const result = await db.select().from(staffMembers).where(eq(staffMembers.id, id));
+  return result[0] || null;
+}
+
+export async function createStaffMember(data: { name: string; email: string; role: "sub_admin" | "operator" | "support" }) {
+  const db = await getDb();
+  if (!db) return null;
+  const { staffMembers } = await import("../drizzle/schema");
+  const result = await db.insert(staffMembers).values(data);
+  return result;
+}
+
+export async function updateStaffMember(id: number, data: Partial<{ name: string; email: string; role: "sub_admin" | "operator" | "support"; isActive: boolean }>) {
+  const db = await getDb();
+  if (!db) return null;
+  const { staffMembers } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  const result = await db.update(staffMembers).set(data).where(eq(staffMembers.id, id));
+  return result;
+}
+
+export async function deleteStaffMember(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const { staffMembers } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  const result = await db.delete(staffMembers).where(eq(staffMembers.id, id));
+  return result;
+}
+
+export async function getStaffPermissions(staffId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { staffPermissions } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  return db.select().from(staffPermissions).where(eq(staffPermissions.staffId, staffId));
+}
+
+export async function updateStaffPermissions(staffId: number, permissions: Array<{ category: string; permission: string; isAllowed: boolean }>) {
+  const db = await getDb();
+  if (!db) return null;
+  const { staffPermissions } = await import("../drizzle/schema");
+  const { eq, and } = await import("drizzle-orm");
+  
+  // Delete existing permissions and insert new ones
+  await db.delete(staffPermissions).where(eq(staffPermissions.staffId, staffId));
+  
+  const values = permissions.map(p => ({
+    staffId,
+    category: p.category,
+    permission: p.permission,
+    isAllowed: p.isAllowed,
+  }));
+  
+  if (values.length > 0) {
+    await db.insert(staffPermissions).values(values);
+  }
+  
+  return { success: true };
+}

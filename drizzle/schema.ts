@@ -426,3 +426,35 @@ export const chatMessages = mysqlTable("chat_messages", {
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+// ============================================================
+// Staff Management
+// ============================================================
+
+export const staffMembers = mysqlTable("staff_members", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  role: mysqlEnum("role", ["sub_admin", "operator", "support"]).notNull(),
+  inviteToken: varchar("inviteToken", { length: 128 }).unique(),
+  inviteExpiresAt: timestamp("inviteExpiresAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StaffMember = typeof staffMembers.$inferSelect;
+export type InsertStaffMember = typeof staffMembers.$inferInsert;
+
+export const staffPermissions = mysqlTable("staff_permissions", {
+  id: int("id").autoincrement().primaryKey(),
+  staffId: int("staffId").notNull(),
+  category: varchar("category", { length: 64 }).notNull(), // e.g., "friends", "messages", "analysis"
+  permission: varchar("permission", { length: 64 }).notNull(), // e.g., "view", "edit", "delete"
+  isAllowed: boolean("isAllowed").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StaffPermission = typeof staffPermissions.$inferSelect;
+export type InsertStaffPermission = typeof staffPermissions.$inferInsert;
