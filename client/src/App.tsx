@@ -97,6 +97,13 @@ import AdminDashboard from "./pages/admin/index";
 import PlanSettingsPage from "./pages/admin/billing/PlanSettings";
 import StaffManagement from "./pages/admin/StaffManagement";
 
+// Manufacturing AI
+import ManufacturingDashboard from "./pages/manufacturing/Dashboard";
+import AITroubleshootingPage from "./pages/manufacturing/AITroubleshooting";
+import KnowledgeBasePage from "./pages/manufacturing/KnowledgeBase";
+import EscalationsPage from "./pages/manufacturing/Escalations";
+import ManufacturingSettingsPage from "./pages/manufacturing/Settings";
+
 function App() {
   return (
     <AuthProvider>
@@ -207,6 +214,13 @@ function App() {
             <Route path="/admin/integrations/line-official" component={LineOfficialIntegrationPage} />
             <Route path="/admin/integrations/line-ads" component={LineAdsIntegrationPage} />
             <Route path="/admin/integrations/chatgpt" component={ChatGPTSettingsPage} />
+
+            {/* Manufacturing AI */}
+            <Route path="/manufacturing" component={ManufacturingDashboard} />
+            <Route path="/manufacturing/chat" component={AITroubleshootingPage} />
+            <Route path="/manufacturing/knowledge" component={KnowledgeBasePage} />
+            <Route path="/manufacturing/escalations" component={EscalationsPage} />
+            <Route path="/manufacturing/settings" component={ManufacturingSettingsPage} />
 
             {/* Admin */}
             <Route path="/admin" component={AdminDashboard} />
