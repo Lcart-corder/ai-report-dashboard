@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN           // 管理者（株式会社Lカート）
+  WELFARE_MANAGER // 福祉運営（管理者）
+  QUALITY_MANAGER // 支援品質（サービス管理責任者）
+  STAFF           // 現場職員（職業指導員・生活支援員）
+  STORE           // 提携店舗（外部）
+}
+
+enum ShipmentStatus {
+  PLANNED
+  SHIPPED
+  DELIVERED
+  INSPECTED
+}
+
+enum Grade {
+  A
+  B
+}
+
+enum TxnType {
+  IN
+  OUT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  storeId   String?
+  store     Store?   @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+
+  dailyChecklists  DailyChecklist[]
+  approvedDays     ProductionDay[]   @relation("approver")
+  deliveredShipments Shipment[]
+  storeInspections StoreInspection[]
+}
+
+model DailyChecklist {
+  id           String   @id @default(cuid())
+  date         DateTime @db.Date
+  tempDay      Float
+  tempNight    Float
+  humidity     Float
+  condensation Boolean
+  ventilation  Boolean
+  dehumidifier Boolean
+  cleaning     Boolean
+  fridgeTemp   Float?
+  notes        String?
+  createdBy    String
+  createdByUser User   @relation(fields: [createdBy], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@unique([date])
+}
+
+model ProductionDay {
+  id              String   @id @default(cuid())
+  date            DateTime @db.Date
+  harvestCount    Int?
+  gradeA          Int
+  gradeB          Int
+  waste           Int
+  packCountA      Int
+  packCountB      Int
+  outOfSpecCount  Int      @default(0)
+  outOfSpecReason String?
+  workMinutes     Int
+  lotPrefix       String
+  approvedBy      String?
+  approvedByUser  User?    @relation("approver", fields: [approvedBy], references: [id])
+  createdAt       DateTime @default(now())
+
+  lots Lot[]
+
+  @@unique([date])
+}
+
+model Lot {
+  id              String        @id @default(cuid())
+  lotNumber       String        @unique
+  date            DateTime      @db.Date
+  productionDayId String
+  productionDay   ProductionDay @relation(fields: [productionDayId], references: [id])
+
+  shipmentItems ShipmentItem[]
+  complaints    Complaint[]
+}
+
+model Store {
+  id        String  @id @default(cuid())
+  name      String
+  address   String?
+  contact   String?
+
+  shipments Shipment[]
+  users     User[]
+}
+
+model Shipment {
+  id            String         @id @default(cuid())
+  datePlanned   DateTime       @db.Date
+  dateDelivered DateTime?      @db.Date
+  storeId       String
+  store         Store          @relation(fields: [storeId], references: [id])
+  status        ShipmentStatus @default(PLANNED)
+  deliveredAt   DateTime?
+  deliveredBy   String?
+  deliveredByUser User?        @relation(fields: [deliveredBy], references: [id])
+  createdAt     DateTime       @default(now())
+
+  items      ShipmentItem[]
+  inspection StoreInspection?
+}
+
+model ShipmentItem {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  lotId      String
+  lot        Lot      @relation(fields: [lotId], references: [id])
+  grade      Grade
+  packCount  Int
+}
+
+model StoreInspection {
+  id          String   @id @default(cuid())
+  shipmentId  String   @unique
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+  receivedA   Int
+  receivedB   Int
+  returnedA   Int      @default(0)
+  returnedB   Int      @default(0)
+  discountA   Int      @default(0)
+  discountB   Int      @default(0)
+  reason      String?
+  comment     String?
+  inspectedBy String
+  inspectedByUser User @relation(fields: [inspectedBy], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Complaint {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  lotId      String?
+  lot        Lot?     @relation(fields: [lotId], references: [id])
+  type       String
+  detail     String
+  action     String
+  prevention String
+  createdAt  DateTime @default(now())
+}
+
+model Incident {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  type      String
+  detail    String
+  action    String
+  createdAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id   String @id @default(cuid())
+  name String @unique
+  unit String
+
+  transactions InventoryTxn[]
+}
+
+model InventoryTxn {
+  id        String        @id @default(cuid())
+  itemId    String
+  item      InventoryItem @relation(fields: [itemId], references: [id])
+  date      DateTime      @db.Date
+  type      TxnType
+  qty       Int
+  note      String?
+  createdAt DateTime      @default(now())
+}
+
+// 拡張ポイント: 電力API連携で自動取得
+model MonthlyKpiSettings {
+  id              String @id @default(cuid())
+  yearMonth       String @unique // "2025-01"
+  electricityCost Int?   // 追加電気代（円）
+}
