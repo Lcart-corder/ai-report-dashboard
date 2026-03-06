@@ -185,7 +185,7 @@ export default function GreetingPage() {
                   {isEnabled && (
                     <div className="flex gap-2 items-start">
                       <div className="w-8 h-8 rounded-full bg-white flex-shrink-0 overflow-hidden border border-gray-200">
-                        <img src="/placeholder-logo.png" alt="Bot" className="w-full h-full object-cover" />
+                        <div className="w-full h-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">L</div>
                       </div>
                       <div className="flex flex-col gap-1 max-w-[75%]">
                         <span className="text-[10px] text-white ml-1">Lカート</span>

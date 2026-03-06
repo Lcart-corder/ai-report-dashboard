@@ -1,101 +1,110 @@
 import { Switch, Route } from "wouter";
+import { lazy, Suspense } from "react";
 import { LayoutProvider } from "./contexts/layout-context";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppSidebar } from "./components/app-sidebar";
-import Dashboard from "./pages/Dashboard";
-import AIReportDetailPage from "./pages/AIReportDetail";
-import PlaceholderPage from "./pages/PlaceholderPage";
+
+// Lazy load all pages for code splitting
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AIReportDetailPage = lazy(() => import("./pages/AIReportDetail"));
+const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
 
 // Friends
-import FriendListPage from "./pages/friends/FriendList";
-import FriendInfoListPage from "./pages/friends/FriendInfoList";
-import TagsPage from "./pages/friends/Tags";
-import ConversionsPage from "./pages/friends/Conversions";
-import BlockedListPage from "./pages/friends/BlockedList";
+const FriendListPage = lazy(() => import("./pages/friends/FriendList"));
+const FriendInfoListPage = lazy(() => import("./pages/friends/FriendInfoList"));
+const TagsPage = lazy(() => import("./pages/friends/Tags"));
+const ConversionsPage = lazy(() => import("./pages/friends/Conversions"));
+const BlockedListPage = lazy(() => import("./pages/friends/BlockedList"));
+
 // Messages
-import BroadcastPage from "./pages/messages/Broadcast";
-import StepManagerPage from "./pages/messages/StepManager";
-import ScenarioEditorPage from "./pages/messages/ScenarioEditor";
-import AutoReplyPage from "./pages/messages/AutoReply";
-import ActionSchedulePage from "./pages/messages/ActionScheduleNew";
-import GreetingPage from "./pages/messages/Greeting";
-import TemplatesPage from "./pages/messages/Templates";
-import RichMenuListPage from "./pages/messages/RichMenuList";
-import RichMenuEditorPage from "./pages/messages/RichMenuEditor";
-import RichMenuCreatePage from "./pages/messages/RichMenuCreate";
-import TemplateCreatePage from "./pages/messages/TemplateCreate";
-import TemplateAnalysisPage from "./pages/messages/TemplateAnalysis";
+const BroadcastPage = lazy(() => import("./pages/messages/Broadcast"));
+const StepManagerPage = lazy(() => import("./pages/messages/StepManager"));
+const ScenarioEditorPage = lazy(() => import("./pages/messages/ScenarioEditor"));
+const AutoReplyPage = lazy(() => import("./pages/messages/AutoReply"));
+const ActionSchedulePage = lazy(() => import("./pages/messages/ActionScheduleNew"));
+const GreetingPage = lazy(() => import("./pages/messages/Greeting"));
+const TemplatesPage = lazy(() => import("./pages/messages/Templates"));
+const RichMenuListPage = lazy(() => import("./pages/messages/RichMenuList"));
+const RichMenuEditorPage = lazy(() => import("./pages/messages/RichMenuEditor"));
+const TemplateCreatePage = lazy(() => import("./pages/messages/TemplateCreate"));
+const TemplateAnalysisPage = lazy(() => import("./pages/messages/TemplateAnalysis"));
 
 // Events
-import EventManagerPage from "./pages/events/EventManager";
-import ReservationListPage from "./pages/events/ReservationList";
-import EventCreatePage from "./pages/events/EventCreate";
-import EventCalendarPage from "./pages/events/EventCalendar";
-import EventSettingsPage from "@/pages/events/EventSettings";
-import LearningCenterPage from "@/pages/learning/LearningCenter";
-import VideoDetailPage from "@/pages/learning/VideoDetail";
-import ShopBuilderPage from "@/pages/shop-builder/ShopBuilder";
-import UnifiedPageManagerPage from "@/pages/admin/pages/UnifiedPageManager";
+const EventManagerPage = lazy(() => import("./pages/events/EventManager"));
+const ReservationListPage = lazy(() => import("./pages/events/ReservationList"));
+const EventCreatePage = lazy(() => import("./pages/events/EventCreate"));
+const EventCalendarPage = lazy(() => import("./pages/events/EventCalendar"));
+const EventSettingsPage = lazy(() => import("@/pages/events/EventSettings"));
+const LearningCenterPage = lazy(() => import("@/pages/learning/LearningCenter"));
+const VideoDetailPage = lazy(() => import("@/pages/learning/VideoDetail"));
+const ShopBuilderPage = lazy(() => import("@/pages/shop-builder/ShopBuilder"));
+const UnifiedPageManagerPage = lazy(() => import("@/pages/admin/pages/UnifiedPageManager"));
 
 // Forms
-import FormManagerPage from "./pages/forms/FormManager";
-import FormCreatePage from "./pages/forms/FormCreate";
-import FormResponsesPage from "./pages/forms/FormResponses";
+const FormManagerPage = lazy(() => import("./pages/forms/FormManager"));
+const FormCreatePage = lazy(() => import("./pages/forms/FormCreate"));
+const FormResponsesPage = lazy(() => import("./pages/forms/FormResponses"));
 
 // Orders & Products
-import OrderListPage from "./pages/orders/OrderList";
-import ShippingManagementPage from "./pages/orders/ShippingManagement";
-import ProductListPage from "./pages/shop/ProductList";
-import ProductRegistration from "./pages/products/ProductRegistration";
-import ProductImport from "./pages/products/ProductImport";
-import ChatbotBuilder from "./pages/chatbot/ChatbotBuilder";
-import ProductManagementPage from "./pages/orders/ProductManagement";
-import ProductEditPage from "./pages/orders/ProductEdit";
-import PageListPage from "./pages/admin/pages/PageList";
-import PageEditPage from "./pages/admin/pages/PageEdit";
-import PublicPageViewer from "./pages/shop/PublicPageViewer";
-import StaticPageListPage from "./pages/admin/static-pages/StaticPageList";
-import StaticPageEditPage from "./pages/admin/static-pages/StaticPageEdit";
-import StaticPageViewer from "./pages/shop/StaticPageViewer";
+const OrderListPage = lazy(() => import("./pages/orders/OrderList"));
+const ShippingManagementPage = lazy(() => import("./pages/orders/ShippingManagement"));
+const ProductListPage = lazy(() => import("./pages/shop/ProductList"));
+const ProductRegistration = lazy(() => import("./pages/products/ProductRegistration"));
+const ProductImport = lazy(() => import("./pages/products/ProductImport"));
+const ChatbotBuilder = lazy(() => import("./pages/chatbot/ChatbotBuilder"));
+const ProductManagementPage = lazy(() => import("./pages/orders/ProductManagement"));
+const ProductEditPage = lazy(() => import("./pages/orders/ProductEdit"));
+const PageEditPage = lazy(() => import("./pages/admin/pages/PageEdit"));
+const PublicPageViewer = lazy(() => import("./pages/shop/PublicPageViewer"));
+const StaticPageListPage = lazy(() => import("./pages/admin/static-pages/StaticPageList"));
+const StaticPageEditPage = lazy(() => import("./pages/admin/static-pages/StaticPageEdit"));
+const StaticPageViewer = lazy(() => import("./pages/shop/StaticPageViewer"));
 
 // Analysis
-import AnalysisDashboard from "./pages/analysis/index";
-import FriendsAnalysisPage from "./pages/analysis/FriendsAnalysis";
-import MessagesAnalysisPage from "./pages/analysis/MessagesAnalysis";
-import TrafficSourcesPage from "./pages/marketing/TrafficSourceManager";
-import TrafficSourceCreatePage from "./pages/marketing/TrafficSourceCreate";
-import ConversionSettingsPage from "./pages/analysis/ConversionSettings";
-import SiteAnalysisPage from "./pages/analysis/SiteAnalysis";
-import ActionLogsPage from "./pages/analysis/ActionLogs";
-import AIInsightsPage from "./pages/analysis/AIInsights";
-import RakutenSettingsPage from "./pages/rakuten/RakutenSettings";
-import RakutenOrderListPage from "./pages/rakuten/RakutenOrderList";
-import ChatPage from "./pages/chats/ChatPage";
-import ChatPageNew from "./pages/chat/ChatPageComplete";
-import ChatSettingsPage from "./pages/chats/ChatSettings";
-import OmikujiPage from "./pages/omikuji/OmikujiPage";
-import OmikujiWizard from "./pages/omikuji/OmikujiWizard";
-import MyPage from "./pages/settings/MyPage";
-import MyPageNew from "./pages/settings/MyPageNew";
-import NotificationSettings from "./pages/settings/NotificationSettings";
-import QRCodeActionManager from "./pages/marketing/QRCodeActionManager";
-import QRCodeDetail from "./pages/marketing/QRCodeDetail";
-import QRCodeDetailComplete from "./pages/marketing/QRCodeDetailComplete";
+const AnalysisDashboard = lazy(() => import("./pages/analysis/index"));
+const FriendsAnalysisPage = lazy(() => import("./pages/analysis/FriendsAnalysis"));
+const MessagesAnalysisPage = lazy(() => import("./pages/analysis/MessagesAnalysis"));
+const TrafficSourceCreatePage = lazy(() => import("./pages/marketing/TrafficSourceCreate"));
+const ConversionSettingsPage = lazy(() => import("./pages/analysis/ConversionSettings"));
+const SiteAnalysisPage = lazy(() => import("./pages/analysis/SiteAnalysis"));
+const ActionLogsPage = lazy(() => import("./pages/analysis/ActionLogs"));
+const AIInsightsPage = lazy(() => import("./pages/analysis/AIInsights"));
+const RakutenSettingsPage = lazy(() => import("./pages/rakuten/RakutenSettings"));
+const RakutenOrderListPage = lazy(() => import("./pages/rakuten/RakutenOrderList"));
+const ChatPage = lazy(() => import("./pages/chats/ChatPage"));
+const ChatPageNew = lazy(() => import("./pages/chat/ChatPageComplete"));
+const ChatSettingsPage = lazy(() => import("./pages/chats/ChatSettings"));
+const OmikujiPage = lazy(() => import("./pages/omikuji/OmikujiPage"));
+const OmikujiWizard = lazy(() => import("./pages/omikuji/OmikujiWizard"));
+const MyPage = lazy(() => import("./pages/settings/MyPage"));
+const MyPageNew = lazy(() => import("./pages/settings/MyPageNew"));
+const NotificationSettings = lazy(() => import("./pages/settings/NotificationSettings"));
+const QRCodeActionManager = lazy(() => import("./pages/marketing/QRCodeActionManager"));
+const QRCodeDetailComplete = lazy(() => import("./pages/marketing/QRCodeDetailComplete"));
 
 // Others
-import AIDashboard from "./pages/ai/index";
-import AIReportsPage from "./pages/ai/AIReports";
-import GenerationHistoryPage from "./pages/ai/GenerationHistory";
-import ModelSettingsPage from "./pages/ai/ModelSettings";
-import IntegrationsPage from "./pages/integrations/index";
-import IntegrationHub from "./pages/admin/integrations/IntegrationHub";
-import ShopifyIntegrationPage from "./pages/admin/integrations/ShopifyIntegration";
-import LineOfficialIntegrationPage from "./pages/admin/integrations/LineOfficialIntegration";
-import LineAdsIntegrationPage from "./pages/admin/integrations/LineAdsIntegration";
-import ChatGPTSettingsPage from "./pages/admin/integrations/ChatGPTSettings";
-import AdminDashboard from "./pages/admin/index";
-import PlanSettingsPage from "./pages/admin/billing/PlanSettings";
-import StaffManagement from "./pages/admin/StaffManagement";
+const AIDashboard = lazy(() => import("./pages/ai/index"));
+const AIReportsPage = lazy(() => import("./pages/ai/AIReports"));
+const GenerationHistoryPage = lazy(() => import("./pages/ai/GenerationHistory"));
+const ModelSettingsPage = lazy(() => import("./pages/ai/ModelSettings"));
+const IntegrationsPage = lazy(() => import("./pages/integrations/index"));
+const IntegrationHub = lazy(() => import("./pages/admin/integrations/IntegrationHub"));
+const ShopifyIntegrationPage = lazy(() => import("./pages/admin/integrations/ShopifyIntegration"));
+const LineOfficialIntegrationPage = lazy(() => import("./pages/admin/integrations/LineOfficialIntegration"));
+const LineAdsIntegrationPage = lazy(() => import("./pages/admin/integrations/LineAdsIntegration"));
+const ChatGPTSettingsPage = lazy(() => import("./pages/admin/integrations/ChatGPTSettings"));
+const AdminDashboard = lazy(() => import("./pages/admin/index"));
+const PlanSettingsPage = lazy(() => import("./pages/admin/billing/PlanSettings"));
+const StaffManagement = lazy(() => import("./pages/admin/StaffManagement"));
+
+// Loading fallback
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-full min-h-[200px]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -104,6 +113,7 @@ function App() {
       <div className="flex min-h-screen w-full bg-slate-50">
         <AppSidebar />
         <main className="flex-1 overflow-y-auto">
+          <Suspense fallback={<PageLoader />}>
           <Switch>
             {/* Dashboard */}
             <Route path="/" component={Dashboard} />
@@ -130,7 +140,6 @@ function App() {
             <Route path="/messages/rich-menus" component={RichMenuListPage} />
             <Route path="/messages/rich-menus/create" component={RichMenuEditorPage} />
             <Route path="/messages/rich-menus/:id/edit" component={RichMenuEditorPage} />
-            
 
             {/* Forms */}
             <Route path="/forms" component={FormManagerPage} />
@@ -158,7 +167,7 @@ function App() {
             <Route path="/analysis/messages" component={MessagesAnalysisPage} />
             <Route path="/analysis/traffic" component={QRCodeActionManager} />
             <Route path="/analysis/traffic/create" component={TrafficSourceCreatePage} />
-             <Route path="/marketing/qr-code" component={QRCodeActionManager} />
+            <Route path="/marketing/qr-code" component={QRCodeActionManager} />
             <Route path="/marketing/qr-code/:id" component={QRCodeDetailComplete} />
             <Route path="/analysis/conversions" component={ConversionSettingsPage} />
             <Route path="/analysis/logs" component={ActionLogsPage} />
@@ -228,6 +237,7 @@ function App() {
             {/* Fallback */}
             <Route component={PlaceholderPage} />
           </Switch>
+          </Suspense>
         </main>
       </div>
       </LayoutProvider>

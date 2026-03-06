@@ -52,7 +52,7 @@ export default function QRCodeActionManager() {
       folder: "キャンペーン",
       targetAudience: "all",
       url: "https://lme.jp/qr/store-campaign",
-      qrCode: "/qr-sample.png",
+      qrCode: "",
       urlReads: 1234,
       friendAdds: 856,
       actionExecutions: 723,
@@ -68,7 +68,7 @@ export default function QRCodeActionManager() {
       folder: "SNS",
       targetAudience: "new",
       url: "https://lme.jp/qr/sns-inflow",
-      qrCode: "/qr-sample.png",
+      qrCode: "",
       urlReads: 3421,
       friendAdds: 2156,
       actionExecutions: 2156,
@@ -102,7 +102,7 @@ export default function QRCodeActionManager() {
       folder: newAction.folder,
       targetAudience: newAction.targetAudience,
       url: `https://lme.jp/qr/${newId}`,
-      qrCode: "/qr-sample.png",
+      qrCode: "",
       urlReads: 0,
       friendAdds: 0,
       actionExecutions: 0,
@@ -277,7 +277,7 @@ export default function QRCodeActionManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => (window.location.href = `/marketing/qr-code/${action.id}`)}
+                    onClick={() => setLocation(`/marketing/qr-code/${action.id}`)}
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     詳細設定

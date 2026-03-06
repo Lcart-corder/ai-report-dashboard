@@ -228,7 +228,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       {/* Logo Area */}
       <div className="h-16 flex items-center px-4 border-b border-gray-100 relative">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-gray-900">
-          <img src="/l-cart-logo.png" alt="Lカート" className="w-8 h-8 object-contain" />
+          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663111859783/f2yoSwVXjtwRZ5WPeXuXLf/l-cart-logo_e5e31db7.png" alt="Lカート" className="w-8 h-8 object-contain" />
           {!sidebarCollapsed && (
             <div className="flex flex-col leading-none">
               <span className="text-lg font-bold">Lカート</span>
