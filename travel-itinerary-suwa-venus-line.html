@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>諏訪湖 & ビーナスライン 1泊2日 旅行プラン</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FAF6F0;
+  --warm-beige: #EDE4D8;
+  --soft-brown: #B09A7E;
+  --dark-brown: #4A3C30;
+  --deep-brown: #2E2520;
+  --accent-terracotta: #B5614A;
+  --accent-sage: #7A9474;
+  --accent-blue: #6A8DA6;
+  --text-main: #3A322B;
+  --text-sub: #70655A;
+  --text-light: #9A8E82;
+  --white: #FFFFFF;
+  --gold: #B89B6A;
+  --gold-light: #D4BA8A;
+  --snow-blue: #CDD9E4;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background: var(--cream);
+  color: var(--text-main);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* ===== SCROLL REVEAL ===== */
+.rv { opacity: 0; transform: translateY(40px); transition: opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1); }
+.rv.show { opacity: 1; transform: translateY(0); }
+.d1 { transition-delay:.12s } .d2 { transition-delay:.24s } .d3 { transition-delay:.36s } .d4 { transition-delay:.48s }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--deep-brown);
+}
+
+.hero-img {
+  position: absolute; inset: 0;
+  background: url('https://lh3.googleusercontent.com/place-photos/AL8-SNGmVAie5SyqsHRRG97rYla-NFVXZrSv97QAA063BBwmqxawzWaR3OKxT6x2yU93w3v8dO7hVTlglf1cSy0Xmun0bXK2qb9YYrES-Zp-XBCTsNJ-UZvO3yhcaC7-Y_IwvmG1iSTkbaOr6igQJcIggkC7kg=s4800-w800-h600') center/cover;
+  opacity: .45;
+  animation: heroK 25s ease-in-out infinite alternate;
+}
+@keyframes heroK { from{transform:scale(1.02)} to{transform:scale(1.12)} }
+
+.hero-grad {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(46,37,32,.25) 0%, rgba(46,37,32,.1) 35%, rgba(46,37,32,.55) 75%, rgba(46,37,32,.88) 100%);
+}
+
+.hero-c { position: relative; z-index: 2; text-align: center; padding: 2rem; }
+
+.hero-line { width:1px; height:45px; background:linear-gradient(to bottom,transparent,var(--gold-light)); margin:0 auto 1.8rem; opacity:0; animation:fu 1s .3s forwards }
+.hero-tag { font-family:'Cormorant Garamond',serif; font-size:.78rem; letter-spacing:.6em; color:var(--gold-light); text-transform:uppercase; margin-bottom:1.8rem; opacity:0; animation:fu 1s .5s forwards }
+.hero-h { font-family:'Noto Serif JP',serif; font-weight:200; font-size:clamp(2.2rem,6.5vw,4.8rem); color:#fff; line-height:1.5; opacity:0; animation:fu 1.2s .7s forwards }
+.hero-en { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:clamp(.85rem,1.8vw,1.15rem); letter-spacing:.28em; color:rgba(255,255,255,.4); margin-top:1rem; opacity:0; animation:fu 1s 1s forwards }
+.hero-sub { font-family:'Cormorant Garamond',serif; font-size:clamp(.95rem,2.2vw,1.2rem); font-weight:300; font-style:italic; color:rgba(255,255,255,.38); margin-top:2rem; letter-spacing:.07em; opacity:0; animation:fu 1s 1.2s forwards }
+.hero-date { display:inline-block; margin-top:2.8rem; padding:.75rem 2.8rem; border:1px solid rgba(180,155,106,.35); border-radius:50px; font-family:'Cormorant Garamond',serif; font-size:.88rem; color:var(--gold-light); letter-spacing:.22em; backdrop-filter:blur(8px); background:rgba(180,155,106,.06); opacity:0; animation:fu 1s 1.4s forwards }
+
+@keyframes fu { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+.scroll-i { position:absolute; bottom:2.8rem; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:.4rem; opacity:0; animation:fu 1s 2s forwards }
+.scroll-i-bar { width:1px; height:28px; background:rgba(255,255,255,.18); animation:sp 2.2s ease-in-out infinite }
+.scroll-i span { font-family:'Cormorant Garamond',serif; font-size:.65rem; letter-spacing:.45em; color:rgba(255,255,255,.25); text-transform:uppercase }
+@keyframes sp { 0%,100%{opacity:.2;transform:scaleY(1)} 50%{opacity:.5;transform:scaleY(1.4)} }
+
+/* ===== COMMON ===== */
+.slabel { font-family:'Cormorant Garamond',serif; font-size:.7rem; letter-spacing:.6em; text-transform:uppercase; color:var(--gold); margin-bottom:1.2rem }
+.gdiv { width:45px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:2.8rem auto; opacity:.45 }
+
+/* ===== OVERVIEW ===== */
+.over { padding:6rem 2rem; max-width:780px; margin:0 auto; text-align:center }
+.over h2 { font-family:'Noto Serif JP',serif; font-weight:300; font-size:clamp(1.4rem,3.6vw,2rem); line-height:2.1; margin-bottom:2rem; color:var(--dark-brown) }
+.over p { font-weight:300; font-size:.9rem; line-height:2.4; color:var(--text-sub); max-width:560px; margin:0 auto }
+
+/* ===== PHOTO BANNER ===== */
+.pbanner { position:relative; height:62vh; min-height:380px; overflow:hidden }
+.pbanner-img { position:absolute; inset:-12% 0; background-size:cover; background-position:center; will-change:transform }
+.pbanner-ov { position:absolute; inset:0; background:linear-gradient(180deg,rgba(46,37,32,.12) 0%,rgba(46,37,32,.55) 100%) }
+.pbanner-c { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; justify-content:flex-end; padding:3rem clamp(2rem,6vw,5rem); color:#fff }
+.pbanner-label { font-family:'Cormorant Garamond',serif; font-size:.68rem; letter-spacing:.5em; text-transform:uppercase; color:var(--gold-light); margin-bottom:.7rem }
+.pbanner-h { font-family:'Noto Serif JP',serif; font-weight:200; font-size:clamp(1.5rem,3.8vw,2.6rem); line-height:1.7; max-width:480px }
+.pbanner-sub { font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:.88rem; color:rgba(255,255,255,.45); margin-top:.5rem; letter-spacing:.08em }
+
+/* ===== ROAD INFO ===== */
+.road { background:linear-gradient(160deg,#E5EAF0,var(--snow-blue),#E5EAF0); padding:5rem 2rem }
+.road-in { max-width:700px; margin:0 auto }
+.road h3 { font-family:'Noto Serif JP',serif; font-weight:300; font-size:1.25rem; text-align:center; margin-bottom:2.2rem; color:var(--dark-brown) }
+.rcards { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem }
+.rc { background:#fff; border-radius:16px; padding:1.6rem; box-shadow:0 3px 24px rgba(0,0,0,.04); transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s }
+.rc:hover { transform:translateY(-4px); box-shadow:0 8px 36px rgba(0,0,0,.07) }
+.rc.ok { border-left:3px solid var(--accent-sage) }
+.rc.ng { border-left:3px solid var(--accent-terracotta) }
+.rc-label { font-size:.66rem; letter-spacing:.2em; text-transform:uppercase; margin-bottom:.5rem; font-weight:600 }
+.rc.ok .rc-label { color:var(--accent-sage) }
+.rc.ng .rc-label { color:var(--accent-terracotta) }
+.rc p { font-size:.84rem; line-height:1.9; color:var(--text-main); font-weight:300 }
+.rc small { color:var(--text-light); font-size:.76rem }
+.wbadge { display:inline-flex; align-items:center; gap:.5rem; background:#fff; border-radius:50px; padding:.8rem 2rem; margin-top:1.8rem; box-shadow:0 3px 20px rgba(0,0,0,.04); font-size:.82rem; color:var(--text-main); font-weight:400; letter-spacing:.02em }
+.wbadge span { font-size:1.3rem }
+
+/* ===== DAY ===== */
+.day { padding:5rem 2rem 3rem; max-width:860px; margin:0 auto }
+.day-hd { text-align:center; margin-bottom:4rem }
+.day-num { font-family:'Playfair Display',serif; font-size:4.5rem; font-weight:400; color:var(--gold); opacity:.22; line-height:1 }
+.day-t { font-family:'Noto Serif JP',serif; font-weight:300; font-size:clamp(1.25rem,3.2vw,1.7rem); color:var(--dark-brown); margin-top:.4rem }
+.day-d { font-family:'Cormorant Garamond',serif; font-size:.82rem; color:var(--text-light); margin-top:.5rem; letter-spacing:.15em }
+
+/* Timeline */
+.tl { position:relative; padding-left:3.2rem }
+.tl::before { content:''; position:absolute; left:.42rem; top:.8rem; bottom:.8rem; width:1px; background:linear-gradient(to bottom,var(--gold),var(--gold-light) 50%,transparent); opacity:.25 }
+.tl-i { position:relative; margin-bottom:3.2rem }
+.tl-i::before { content:''; position:absolute; left:-2.78rem; top:.42rem; width:8px; height:8px; border-radius:50%; border:1.5px solid var(--gold); background:var(--cream); transition:all .35s }
+.tl-i:hover::before { background:var(--gold); box-shadow:0 0 10px rgba(184,155,106,.35); transform:scale(1.35) }
+.tl-time { font-family:'Playfair Display',serif; font-size:.88rem; color:var(--gold); margin-bottom:.35rem }
+.tl-place { font-family:'Noto Serif JP',serif; font-weight:500; font-size:1.12rem; color:var(--dark-brown); margin-bottom:.4rem }
+.tl-tags { display:flex; gap:.35rem; flex-wrap:wrap; margin-bottom:.7rem }
+.tl-tag { font-size:.58rem; letter-spacing:.12em; padding:.22rem .8rem; border-radius:20px; font-weight:600; text-transform:uppercase }
+.t-nature { background:rgba(122,148,116,.12); color:var(--accent-sage) }
+.t-food { background:rgba(181,97,74,.1); color:var(--accent-terracotta) }
+.t-hotel { background:rgba(106,141,166,.12); color:var(--accent-blue) }
+.t-drive { background:rgba(184,155,106,.12); color:var(--gold) }
+.tl-desc { font-weight:300; font-size:.86rem; line-height:2.1; color:var(--text-sub) }
+.tl-note { margin-top:.9rem; padding:1rem 1.3rem; background:rgba(184,155,106,.05); border-left:2px solid rgba(184,155,106,.22); border-radius:0 12px 12px 0; font-size:.8rem; color:var(--text-sub); line-height:1.9 }
+.tl-note strong { color:var(--dark-brown); font-weight:500 }
+
+/* Spot photos */
+.spot-photos { display:grid; gap:.8rem; margin-top:1rem; border-radius:14px; overflow:hidden }
+.spot-photos.cols2 { grid-template-columns:1fr 1fr }
+.spot-photos.cols1 { grid-template-columns:1fr }
+.spot-photos img { width:100%; height:200px; object-fit:cover; border-radius:14px; display:block; transition:transform .6s cubic-bezier(.16,1,.3,1),filter .4s; filter:saturate(.92) }
+.spot-photos img:hover { transform:scale(1.03); filter:saturate(1.05) }
+.spot-photos.cols1 img { height:260px }
+
+/* ===== VISUAL BREAK ===== */
+.vbreak { padding:4rem 2rem; text-align:center; background:linear-gradient(180deg,var(--cream),var(--warm-beige),var(--cream)) }
+.vbreak-line { width:1px; height:44px; background:linear-gradient(to bottom,transparent,var(--gold-light),transparent); margin:0 auto 1.2rem; opacity:.3 }
+.vbreak-t { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-style:italic; font-weight:300; color:var(--gold); opacity:.45; letter-spacing:.12em }
+
+/* ===== PACKING ===== */
+.pack { padding:5.5rem 2rem; background:var(--warm-beige); position:relative; overflow:hidden }
+.pack::after { content:''; position:absolute; top:-30%; right:-15%; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(184,155,106,.07),transparent 70%) }
+.pack-in { max-width:700px; margin:0 auto; text-align:center; position:relative; z-index:1 }
+.pack h3 { font-family:'Noto Serif JP',serif; font-weight:200; font-size:1.4rem; color:var(--dark-brown); margin-bottom:2.5rem }
+.pgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem }
+.pi { background:#fff; border-radius:16px; padding:1.4rem 1rem; text-align:center; box-shadow:0 3px 20px rgba(0,0,0,.03); transition:transform .5s cubic-bezier(.16,1,.3,1),box-shadow .5s; cursor:default }
+.pi:hover { transform:translateY(-5px); box-shadow:0 10px 35px rgba(0,0,0,.06) }
+.pi-ic { font-size:1.7rem; margin-bottom:.5rem; transition:transform .3s }
+.pi:hover .pi-ic { transform:scale(1.15) rotate(-5deg) }
+.pi-nm { font-size:.82rem; color:var(--text-main); font-weight:500 }
+.pi-rs { font-size:.68rem; color:var(--text-light); margin-top:.2rem; font-weight:300 }
+
+/* ===== TIPS ===== */
+.tips { padding:5rem 2rem; max-width:700px; margin:0 auto }
+.tips h3 { font-family:'Noto Serif JP',serif; font-weight:200; font-size:1.3rem; text-align:center; color:var(--dark-brown); margin-bottom:2.2rem }
+.tc { display:flex; gap:1.3rem; align-items:flex-start; padding:1.3rem 0; border-bottom:1px solid rgba(184,155,106,.1); transition:transform .3s }
+.tc:hover { transform:translateX(4px) }
+.tc-n { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:400; color:var(--gold); opacity:.3; min-width:2.2rem; text-align:center }
+.tc-t { font-size:.84rem; line-height:2; color:var(--text-sub); font-weight:300 }
+.tc-t strong { color:var(--text-main); font-weight:500 }
+
+/* ===== FOOTER ===== */
+.foot { position:relative; padding:6rem 2rem; text-align:center; overflow:hidden; background:var(--deep-brown) }
+.foot-img { position:absolute; inset:0; background:url('https://lh3.googleusercontent.com/place-photos/AL8-SNEKUU-atc2uoFA0p5-geNVc5RNrxBs8tGNzBlak5PmMwx1FRZEkOrwapu4gIiWjjXDEWm3vuRtrS9e0c27mNMugi8F6-WmdZGHfVMbUulc6nLAsSIwb0ZX54LBrRK4jvuaTtWy2Rdv8ahOKqA=s4800-w800-h600') center 65%/cover; opacity:.2 }
+.foot-ov { position:absolute; inset:0; background:linear-gradient(180deg,rgba(46,37,32,.6),rgba(46,37,32,.9)) }
+.foot-c { position:relative; z-index:2 }
+.foot-msg { font-family:'Noto Serif JP',serif; font-weight:200; font-size:clamp(1.2rem,3.2vw,1.9rem); color:rgba(255,255,255,.78); line-height:2.3 }
+.foot-line { width:36px; height:1px; background:var(--gold); margin:1.5rem auto; opacity:.35 }
+.foot-sub { font-family:'Cormorant Garamond',serif; font-size:.7rem; letter-spacing:.35em; color:rgba(184,155,106,.4); text-transform:uppercase }
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  .rcards { grid-template-columns:1fr }
+  .pgrid { grid-template-columns:repeat(2,1fr) }
+  .tl { padding-left:2.5rem }
+  .tl-i::before { left:-2.08rem }
+  .day { padding:3.5rem 1.5rem 2rem }
+  .spot-photos.cols2 { grid-template-columns:1fr }
+  .spot-photos img { height:190px }
+  .pbanner { height:48vh; min-height:300px }
+}
+
+@media print {
+  .hero { min-height:auto; padding:3rem }
+  .scroll-i { display:none }
+  .rv { opacity:1!important; transform:none!important }
+  .pbanner { height:280px; break-inside:avoid }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-img"></div>
+  <div class="hero-grad"></div>
+  <div class="hero-c">
+    <div class="hero-line"></div>
+    <p class="hero-tag">Travel Plan — 1 Night 2 Days</p>
+    <h1 class="hero-h">諏訪湖と高原の旅</h1>
+    <p class="hero-en">Lake Suwa × Venus Line Drive</p>
+    <p class="hero-sub">湖、山、温泉。自然に包まれる冬の信州へ</p>
+    <p class="hero-date">2026. 3.17 tue — 3.18 wed</p>
+  </div>
+  <div class="scroll-i"><div class="scroll-i-bar"></div><span>scroll</span></div>
+</section>
+
+<!-- OVERVIEW -->
+<section class="over">
+  <p class="slabel rv">About This Trip</p>
+  <h2 class="rv d1">夕暮れの湖、雪の高原、<br>森の中の静かな池。</h2>
+  <p class="rv d2">名古屋・岩塚を夕方に出発して、約2時間半で信州・諏訪へ。<br>初日は諏訪湖の夕景と温泉ホテルでゆっくり。<br>翌日はビーナスラインで標高1,800mの高原をドライブして、<br>蓼科湖や御射鹿池で山の自然に触れる旅。</p>
+  <div class="gdiv rv d3"></div>
+  <p class="rv d3" style="font-size:.8rem;color:var(--text-light);text-align:center">出発：岩塚 16:00 ／ 車：アルファード（スタッドレス装着済）<br>宿泊：HOTEL La fontaine（ラ・フォンテーヌ）諏訪</p>
+</section>
+
+<!-- ROAD INFO -->
+<section class="road">
+  <div class="road-in">
+    <p class="slabel rv" style="text-align:center">Road Conditions</p>
+    <h3 class="rv d1">道路状況・通行止め情報</h3>
+    <div class="rcards">
+      <div class="rc ok rv d2">
+        <p class="rc-label">&#10003; 通行OK</p>
+        <p>茅野市街 → 白樺湖 → 車山高原 → 霧ヶ峰<br><small>県道40号経由・除雪済み</small></p>
+      </div>
+      <div class="rc ng rv d3">
+        <p class="rc-label">&#10005; 通行止め</p>
+        <p>霧ヶ峰 → 八島高原 → 和田峠 → 美ヶ原<br><small>冬期閉鎖 〜 4/21 解除予定</small></p>
+      </div>
+    </div>
+    <div style="text-align:center" class="rv d4"><div class="wbadge"><span>&#9728;&#65039;</span>3/17 晴れ 12℃/-4℃ ｜ 3/18 晴れ 13℃/-1℃</div></div>
+  </div>
+</section>
+
+<!-- PHOTO: SUWA LAKE -->
+<section class="pbanner" data-px>
+  <div class="pbanner-img" style="background-image:url('https://lh3.googleusercontent.com/place-photos/AL8-SNG2XRRgPHTnyV2Arnk0yRsovgUFIAM6fcphBucXXPe3ex4FexU1KuO2f5T4Puj09nmrF2Uv-Beloxa_XTNuXNmE7Vu8kuKVufkuIATMrtG7mGfWLb-9t-jE0tSkA0oVJyYFd_xwZvkmq2aBvisRJRxz3A=s4800-w800-h600')"></div>
+  <div class="pbanner-ov"></div>
+  <div class="pbanner-c">
+    <p class="pbanner-label rv">Day 01 — Evening</p>
+    <h2 class="pbanner-h rv d1">諏訪湖の夕暮れと<br>温泉の夜</h2>
+    <p class="pbanner-sub rv d2">Lake Suwa at Twilight</p>
+  </div>
+</section>
+
+<!-- DAY 1 -->
+<section class="day">
+  <div class="day-hd rv">
+    <p class="day-num">01</p>
+    <h2 class="day-t">湖畔の夕暮れと温泉の夜</h2>
+    <p class="day-d">March 17, 2026 — Tuesday</p>
+  </div>
+  <div class="tl">
+
+    <div class="tl-i rv">
+      <p class="tl-time">16:00</p>
+      <h4 class="tl-place">岩塚 出発</h4>
+      <div class="tl-tags"><span class="tl-tag t-drive">DRIVE 2.5h</span></div>
+      <p class="tl-desc">中央道で一路、諏訪へ。小牧JCT → 諏訪IC まで約2時間半。恵那峡SA・駒ヶ岳SAで休憩しながらのんびりと。</p>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">18:15</p>
+      <h4 class="tl-place">立石公園</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">VIEW POINT</span></div>
+      <p class="tl-desc">諏訪湖を見下ろす高台の絶景展望台。3/17の日没は17:50頃。夕日に染まる湖面と、対岸の山々のシルエットが感動的。「君の名は。」のモデルとも言われるスポット。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNGmVAie5SyqsHRRG97rYla-NFVXZrSv97QAA063BBwmqxawzWaR3OKxT6x2yU93w3v8dO7hVTlglf1cSy0Xmun0bXK2qb9YYrES-Zp-XBCTsNJ-UZvO3yhcaC7-Y_IwvmG1iSTkbaOr6igQJcIggkC7kg=s4800-w800-h600" alt="立石公園からの諏訪湖" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNG0McpiFx9MZZhVr2leXD8fj3BaZPpRgg_kv3cAcDqAFGngf9g7R6AUMxKbcMHhEzPKJ34vl64sYaLmRqcS7jHi2S9kieG7gyEBadCrJcTpcMgKipMJcLfzFY44v8N6m8n0KuqB5Zo_z-FE2tozK3Q5dA=s4800-w800-h600" alt="諏訪湖パノラマ" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">18:50</p>
+      <h4 class="tl-place">諏訪湖畔公園</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">LAKESIDE WALK</span></div>
+      <p class="tl-desc">湖沿いの遊歩道を散策。無料の足湯もあり、夜の静かな湖面を眺めながらほっと一息つけます。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNEeyq5mb-7sWi6VCba0W2BYyYwARhOM6RWbeINsWsbzx9_1iSKIhtsFiESpBtUHxW29knPa35aO_gphPHGfOZQVoe6JptXRbvuPxQZBcvBOcRHWqxOEEV22y5Yfl640jZlRWV60tO_QIluYKIQ=s4800-w800-h600" alt="諏訪湖畔公園" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNHtLHhWbNy0NLXxaEEXdyvvV4xpwHkrSLRK_rlNgmv-Sf_K3Bq3IIT-Nzy89b0eoz8CnFxYVo6QEkGOivxFhj3ED_QR0Pck4wFyskTLcwOLTZaGG1l7b7InbOmHZwYX7nQ5J6P9Lf5pMRwbQ-ns1Hn-=s4800-w800-h600" alt="湖畔の風景" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">19:20</p>
+      <h4 class="tl-place">HOTEL La fontaine</h4>
+      <div class="tl-tags"><span class="tl-tag t-hotel">CHECK IN</span></div>
+      <p class="tl-desc">諏訪湖まで徒歩1分の温泉ホテル。全室に天然温泉付き。お部屋のお風呂の蛇口から上諏訪温泉が出る贅沢な仕様。セルフチェックイン（タブレット）で手軽に。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/places/ANXAkqECkiIfZWlqRhgRCNJOUON4DFmHeHjpqloICr8_IqkByBD9081uKwGMVqFkY5B1OAXzFIEBN1QcZGmo3hGC4fe2CcEfsil5PDM=s4800-w800-h600" alt="ラフォンテーヌ外観" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/places/ANXAkqE6cbD1ihNlbKyAyrX5NGwny-64Nd36P2uYtVtiduMeUTk4QJXE7_-Nahy5E18GOP6BsC4bge3hQdhblcw-tDTAMw0cM6KaSIg=s4800-w800-h600" alt="ラフォンテーヌ客室" loading="lazy">
+      </div>
+      <div class="tl-note">
+        <strong>温泉メモ：</strong>利用停止時間あり（1:00-6:00 / 11:00-16:00）。夜のうちにたっぷり。<br>
+        <strong>駐車場：</strong>13台。ホテル専用スペースに停めてください。
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">20:00</p>
+      <h4 class="tl-place">ディナー</h4>
+      <div class="tl-tags"><span class="tl-tag t-food">DINNER</span></div>
+      <p class="tl-desc">ホテルは素泊まりなので外食を。3/17は火曜日のため定休の店が多めですが、以下がおすすめ。</p>
+      <div class="tl-note">
+        <strong>&#9312; Kawaratei（瓦亭）</strong>— 諏訪湖ビューのフレンチ。火曜営業。車10分。<br>
+        <strong>&#9313; カナディアンロッキー</strong>— 湖岸通りのステーキ。ホテル徒歩5分。<br>
+        <strong>&#9314; ホテル自販機</strong>— お弁当・スイーツあり。お部屋で温泉とともに。
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VISUAL BREAK -->
+<div class="vbreak">
+  <div class="rv"><div class="vbreak-line"></div><p class="vbreak-t">— and the next morning —</p><div class="vbreak-line"></div></div>
+</div>
+
+<!-- PHOTO: VENUS LINE -->
+<section class="pbanner" data-px>
+  <div class="pbanner-img" style="background-image:url('https://lh3.googleusercontent.com/place-photos/AL8-SNF3PKd5IDvhyEVlg7z-7mDzncBrAASyy1IRhceb5vMv8HCBdhhqKOJEnjmeH-rUuquybH0_9-y157YWt1C7GaOap6FISNWwJdeXtc8NdmiROAwU_8Uifb1esTBGHx0zxH4P4aZVF7L3APgtHCo=s4800-w800-h600')"></div>
+  <div class="pbanner-ov"></div>
+  <div class="pbanner-c">
+    <p class="pbanner-label rv">Day 02 — Morning</p>
+    <h2 class="pbanner-h rv d1">雪の高原ドライブと<br>森の湖めぐり</h2>
+    <p class="pbanner-sub rv d2">Venus Line Highland Drive</p>
+  </div>
+</section>
+
+<!-- DAY 2 -->
+<section class="day">
+  <div class="day-hd rv">
+    <p class="day-num">02</p>
+    <h2 class="day-t">雪の高原ドライブと森の湖</h2>
+    <p class="day-d">March 18, 2026 — Wednesday</p>
+  </div>
+  <div class="tl">
+
+    <div class="tl-i rv">
+      <p class="tl-time">8:00</p>
+      <h4 class="tl-place">チェックアウト → ビーナスラインへ</h4>
+      <div class="tl-tags"><span class="tl-tag t-drive">DRIVE</span></div>
+      <p class="tl-desc">諏訪IC方面 → 県道40号経由でビーナスラインに入ります。標高が上がるにつれ、雪景色に変わっていく車窓が楽しい。</p>
+      <div class="tl-note">
+        <strong>朝の路面注意：</strong>最低気温-1℃。日陰は凍結の可能性。速度控えめに。<br>
+        <strong>出発前チェック：</strong>road.lcv.ne.jp でライブカメラ確認がおすすめ。
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">9:00</p>
+      <h4 class="tl-place">白樺湖展望台</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">PANORAMA</span></div>
+      <p class="tl-desc">ビーナスライン沿いの展望スポット。白樺湖と八ヶ岳の山並みが一望。雲が低い日は雲海が見えることも。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNGVQMfgPXh3VQwBaqMwMjD8Yxs5XY929Foq2huZn6dVtxxvJG_rVmI-dCXo9wJVB4VMcmjnYZMoTPNVuafzgwi5qOXXNLadOiYEE7bU3SAqzGx4MBHtrey2Szr7GaFD7cICEezNyWMLOsZ71g=s4800-w800-h600" alt="白樺湖展望台" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNEpm4L0nSpuv2ZraRCmr_f11bGdxZPJyJOBX1irPatWbd80o3xG5Kuk9Gw8wn-GNvZmiiVFm9KaOBW0R08x5yoACwduQXBrKvezM_Jj7ykwAyk6W1hP4qSZmYDS3YylKhbwqUwlc7W-LfmmJg=s4800-w800-h600" alt="白樺湖パノラマ" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">9:30</p>
+      <h4 class="tl-place">車山肩</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">HIGHLAND WALK</span></div>
+      <p class="tl-desc">標高1,800m。広大な車山湿原を見渡せる高原の散策拠点。冬の澄んだ空気の中、八ヶ岳・富士山・南アルプスの大パノラマ。ダイヤモンドダストや霜の結晶が見られることも。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNHMxbKPwlsDWo61yEYoqyTyd3lZbyGOo_LMgn75oJA8N1kQggoHpMORgMSD_qc4aZQkddeEe45IULcW6WfQdXw6PbD5HHW_XhAoa1XU8zMj652Ohwlv8tb1xusJYXRdvQUfBQViKa5yVj_qWA=s4800-w800-h600" alt="車山肩の景色" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNHuGYWfIaS0wwpUjGqBNZ3t1jbTI3KgXTkDNFBgH6zBgPXmhBrtlaEX-AGKXf4BR9l0yacCzSaff_O0JdROipU9UAUNt3bYcxBjJCgCbrWNfkCoxHGIFc1ft2Dq680s-AwEtWdOpDoRM3YJrg=s4800-w800-h600" alt="車山からの眺望" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">10:20</p>
+      <h4 class="tl-place">霧ヶ峰 富士見台</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">VIEW POINT</span><span class="tl-tag t-food">BREAK</span></div>
+      <p class="tl-desc">360°の大パノラマが広がる展望地点。ここがドライブの折り返し地点（この先は4/21まで通行止め）。信州そばや五平餅で休憩を。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNFHqrZg7ANEEuPgLWQQ7nfqyD-AgrC-bOg7EHb5koVX17vs91j4KvpmG0rPxib24Upp-Tt6q8n6gSpZLJ_jFZLKx-6K7Jy1VWpuHbm1kwPDpO2QJILmY-XM8Pfh9kMOlgOgqsaFy650EliQUg=s4800-w800-h600" alt="霧ヶ峰富士見台" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNEe3msoImZynbFCPDsavQhSyUmSRGXesJIbmD1iCkPz6cszj1VbioBjbNhm6DltHXlwhdkO8nyfKLZgL5hDdR2XfXSqUrl3Ows9CI5EYb60GAF9EH9NmLIN5jCXDCa6PlybmRzEiDdlbEAYA6g=s4800-w800-h600" alt="霧ヶ峰からの眺望" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">11:30</p>
+      <h4 class="tl-place">蓼科湖</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">FOREST LAKE</span></div>
+      <p class="tl-desc">標高1,250mの静かな森の湖。約30分で一周できる散歩道があり、森林浴にぴったり。周辺にカフェやそば屋があるのでランチもここで。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNHAj7p0gsrjSBuZ2Vn0ToOq4GcwkMubSZjAruNALTUaxxp_0JNIDBDKZJoBllvW0T8kybpxHWb7tqsx8sdcT6Ipd2xEhDxlLPlonTXyqmoOrFr0MD2M4nR_UFQt6edzppV9mDGgcv9v1qtyEg=s4800-w800-h600" alt="蓼科湖" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNHixJSkKmpXXSm0yzlcIrJlfkzsloqbgWTOg1Tc1MPLRfbBGcvvCgWUJmzrgYfXS_qFdr3DYjTDAFH9G3jwcN4smA5ajSmMlppEvmKe86rmLOxMwO3q7WYto_YmK6yfsUaQutdR-xpzHlYm-w=s4800-w800-h600" alt="蓼科湖散歩道" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">12:30</p>
+      <h4 class="tl-place">御射鹿池（みしゃかいけ）</h4>
+      <div class="tl-tags"><span class="tl-tag t-nature">SECRET SPOT</span></div>
+      <p class="tl-desc">東山魁夷の絵のモデルになった神秘的な池。青い水面に映り込む周囲の木々が息をのむ美しさ。3月は凍結していることもあり、幻想的な姿が見られるかも。</p>
+      <div class="spot-photos cols2">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNF5zA8mt40MA2aaxN8OeIK0qsbXdXz7CzuLwxNdF4N3IrHhH6Tk_rmNEZw6rWzKu19Msgw9XR_WMyiEIZ32imfk6eeJVOQ48bGoFXw4Rs6LrJiIaOqudv5qW2X5wM87mGuSnu9I_kKpCk6hIw=s4800-w800-h600" alt="御射鹿池" loading="lazy">
+        <img src="https://lh3.googleusercontent.com/place-photos/AL8-SNFzgiLZlRrNGT0oZGFvsnm8-sTNcYlDszCCgMwIeIT1qo5IXUtZuZweuYSQixcR_1ZB4_nHsMwQSusJxY43BPIN-38xMy165s8dcPD4enB6x3brWxbc6WwHhpxP-mZ7ay6DMvOjGLLuHYEykGI=s4800-w800-h600" alt="御射鹿池の反射" loading="lazy">
+      </div>
+    </div>
+
+    <div class="tl-i rv">
+      <p class="tl-time">13:00</p>
+      <h4 class="tl-place">帰路 → 岩塚</h4>
+      <div class="tl-tags"><span class="tl-tag t-drive">DRIVE HOME 2.5h</span></div>
+      <p class="tl-desc">蓼科方面から諏訪IC → 中央道で岩塚へ。駒ヶ岳SAや恵那峡SAで休憩しながらゆったりと。15:30頃に帰着の見込みです。</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- PACKING -->
+<section class="pack">
+  <div class="pack-in">
+    <p class="slabel rv">What to Bring</p>
+    <h3 class="rv d1">持ち物チェックリスト</h3>
+    <div class="pgrid">
+      <div class="pi rv d1"><p class="pi-ic">&#129509;</p><p class="pi-nm">ダウンジャケット</p><p class="pi-rs">高原は氷点下近く</p></div>
+      <div class="pi rv d2"><p class="pi-ic">&#129508;</p><p class="pi-nm">手袋・帽子</p><p class="pi-rs">風が冷たい高原対策</p></div>
+      <div class="pi rv d3"><p class="pi-ic">&#128374;&#65039;</p><p class="pi-nm">サングラス</p><p class="pi-rs">雪の反射がまぶしい</p></div>
+      <div class="pi rv d1"><p class="pi-ic">&#128095;</p><p class="pi-nm">歩きやすい靴</p><p class="pi-rs">滑りにくいものを</p></div>
+      <div class="pi rv d2"><p class="pi-ic">&#9939;&#65039;</p><p class="pi-nm">タイヤチェーン</p><p class="pi-rs">念のため車に積んで</p></div>
+      <div class="pi rv d3"><p class="pi-ic">&#128267;</p><p class="pi-nm">モバイルバッテリー</p><p class="pi-rs">寒さでバッテリー減る</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPS -->
+<section class="tips">
+  <p class="slabel rv" style="text-align:center">Tips</p>
+  <h3 class="rv d1">旅のポイント</h3>
+  <div class="tc rv"><span class="tc-n">01</span><p class="tc-t"><strong>出発前にライブカメラをチェック。</strong><br>road.lcv.ne.jp でビーナスライン〜霧ヶ峰の路面状況を映像で確認できます。</p></div>
+  <div class="tc rv"><span class="tc-n">02</span><p class="tc-t"><strong>霧ヶ峰 富士見台で折り返し。</strong><br>ここから先は4/21まで冬期通行止め。富士見台で折り返します。</p></div>
+  <div class="tc rv"><span class="tc-n">03</span><p class="tc-t"><strong>高原エリアは標高1,600〜1,800m。</strong><br>市街地より10℃低い。車を降りたら一気に冷えるのでダウンを手元に。</p></div>
+  <div class="tc rv"><span class="tc-n">04</span><p class="tc-t"><strong>ホテルの温泉は夜のうちに。</strong><br>温泉利用停止 1:00-6:00 と 11:00-16:00。チェックイン後〜深夜がおすすめ。</p></div>
+  <div class="tc rv"><span class="tc-n">05</span><p class="tc-t"><strong>晴れた冬の高原は最高の眺望日和。</strong><br>空気が澄んでいるので八ヶ岳・富士山がくっきり。天気予報は晴れです。</p></div>
+</section>
+
+<!-- FOOTER -->
+<footer class="foot">
+  <div class="foot-img"></div>
+  <div class="foot-ov"></div>
+  <div class="foot-c">
+    <p class="foot-msg rv">湖と空と、雪の高原。<br>素敵な旅になりますように。</p>
+    <div class="foot-line rv d1"></div>
+    <p class="foot-sub rv d2">Suwa Lake × Venus Line — March 2026</p>
+  </div>
+</footer>
+
+<script>
+const io = new IntersectionObserver(es => {
+  es.forEach(e => { if(e.isIntersecting) e.target.classList.add('show') })
+}, { threshold:.1, rootMargin:'0px 0px -30px 0px' });
+document.querySelectorAll('.rv').forEach(e => io.observe(e));
+
+addEventListener('scroll', () => {
+  const y = scrollY;
+  document.querySelectorAll('[data-px]').forEach(s => {
+    const r = s.getBoundingClientRect();
+    const img = s.querySelector('.pbanner-img');
+    if(img && r.top < innerHeight && r.bottom > 0) {
+      img.style.transform = `translateY(${(r.top - innerHeight/2) * .25}px)`;
+    }
+  });
+}, { passive: true });
+</script>
+
+</body>
+</html>
