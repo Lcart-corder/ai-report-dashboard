@@ -1,0 +1,112 @@
+const ja = {
+  // Common
+  app_title: "生産日報",
+  loading: "読み込み中...",
+  save: "保存",
+  cancel: "キャンセル",
+  delete: "削除",
+  confirm: "確認",
+  back: "戻る",
+  close: "閉じる",
+  error: "エラーが発生しました",
+  success: "保存しました",
+  required: "必須",
+
+  // Login
+  login_title: "生産日報システム",
+  login_subtitle: "工場向け生産管理",
+  login_button: "Googleでログイン",
+  login_unauthorized: "このアカウントは登録されていません",
+  logout: "ログアウト",
+
+  // Home
+  home_title: "ホーム",
+  home_today_report: "今日の日報",
+  home_no_report: "日報がまだ作成されていません",
+  home_create_report: "日報を作成する",
+  home_continue_input: "続きを入力する",
+  home_view_summary: "サマリーを見る",
+  home_progress: "入力進捗",
+  home_slots_filled: "{filled}/{total} 時間帯入力済",
+  home_past_reports: "過去の日報",
+  home_pending_approvals: "承認待ち一覧",
+  home_no_pending: "承認待ちはありません",
+  home_machine_select: "号機を選択",
+
+  // Time Slot List
+  slot_list_title: "時間帯一覧",
+  slot_next_input: "次に入力",
+  slot_status_empty: "未入力",
+  slot_status_filled: "入力済",
+  slot_status_has_stop: "停止あり",
+  slot_input_button: "入力する",
+  slot_go_to_next: "次の未入力を入力する",
+
+  // Input Form
+  input_title: "時間帯入力",
+  input_case_no_start: "ケースNo開始",
+  input_case_no_end: "ケースNo終了",
+  input_product_name: "品名票",
+  input_has_stop: "停止有無",
+  input_has_stop_yes: "あり",
+  input_has_stop_no: "なし",
+  input_stop_code: "停止コード",
+  input_stop_time: "停止時間（分）",
+  input_abnormality: "異常内容",
+  input_discharge_count: "排出個数",
+  input_machine_discharge: "機械排出",
+  input_verification: "照合",
+  input_first_weight: "1ST重量",
+  input_judgment: "判定",
+  input_judgment_pass: "合",
+  input_judgment_fail: "否",
+  input_save_next: "保存して次へ",
+  input_save_next_with_time: "保存して次へ（{time}〜）",
+  input_save_complete: "保存してサマリーへ",
+  input_delete_confirm: "この入力データを削除しますか？",
+  input_select_stop_code: "停止コードを選択",
+
+  // Summary
+  summary_title: "日報サマリー",
+  summary_total_discharge: "総排出個数",
+  summary_total_machine_discharge: "総機械排出",
+  summary_stop_count: "停止件数",
+  summary_ng_count: "NG件数",
+  summary_total_stop_minutes: "総停止時間（分）",
+  summary_time_slot_table: "時間帯別一覧",
+  summary_submit: "承認を申請する",
+  summary_submit_confirm: "承認を申請しますか？申請後は修正できなくなります。",
+  summary_already_submitted: "承認申請済み",
+  summary_not_complete: "全時間帯の入力が完了していません",
+
+  // Approval
+  approval_title: "承認",
+  approval_status: "承認状況",
+  approval_approve: "承認する",
+  approval_reject: "差戻し",
+  approval_comment: "コメント",
+  approval_comment_required: "差戻し時はコメントが必須です",
+  approval_approve_confirm: "承認しますか？",
+  approval_reject_confirm: "差戻ししますか？",
+  approval_pending: "承認待ち",
+  approval_approved: "承認済",
+  approval_rejected: "差戻し",
+  approval_step_kakarichou: "係長",
+  approval_step_hinshitsu: "品証課",
+  approval_step_buchou: "部長",
+
+  // Status
+  status_draft: "下書き",
+  status_submitted: "申請中",
+  status_approved_kakarichou: "係長承認済",
+  status_approved_hinshitsu: "品証課承認済",
+  status_approved_buchou: "確定",
+  status_rejected: "差戻し",
+  status_resubmitted: "再申請中",
+
+  // Machine
+  machine_m06: "6号機",
+  machine_m07: "7号機",
+} as const;
+
+export default ja;

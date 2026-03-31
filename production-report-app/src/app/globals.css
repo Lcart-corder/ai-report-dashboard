@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --color-filled: #22c55e;
+  --color-has-stop: #ef4444;
+  --color-empty: #d1d5db;
+  --color-pending: #fb923c;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+}
+
+html {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    "Noto Sans", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* iPad optimized touch targets */
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
