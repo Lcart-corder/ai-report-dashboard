@@ -24,7 +24,8 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 // DEV_MODE: ダミーユーザーで認証バイパス（本番ではsession版に戻すこと）
-const DEV_MODE = !process.env.NEXT_PUBLIC_GAS_URL;
+// Google OAuth未設定の間はtrue。OAuth設定後にfalseに変更
+const DEV_MODE = true;
 
 const DEV_USER: AuthUser = {
   email: "staff1@lcart-official.co.jp",
