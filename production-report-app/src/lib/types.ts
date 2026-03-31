@@ -28,9 +28,9 @@ export type ReportStatus =
   | "resubmitted";
 
 export interface DailyReport {
-  report_id: string; // YYYYMMDD_Mxx
-  report_date: string; // YYYY-MM-DD
-  machine_no: string; // M06 or M07
+  report_id: string;
+  report_date: string; // YYYY/MM/DD
+  machine_no: string;
   status: ReportStatus;
   total_slots: number;
   filled_slots: number;
@@ -45,13 +45,13 @@ export interface DailyReport {
 export type SlotStatus = "empty" | "filled" | "has_stop";
 
 export interface TimeSlot {
-  slot_id: string; // YYYYMMDD_Mxx_HHMM
-  report_id: string;
-  start_time: string; // HH:MM
-  end_time: string; // HH:MM
+  slot_id: string;
+  report_id?: string;
+  start_time: string; // HH:00
+  end_time: string; // HH:59
   status: SlotStatus;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ===== Production Input =====
@@ -59,7 +59,7 @@ export type Verification = "○" | "×";
 export type Judgment = "合" | "否";
 
 export interface ProductionInput {
-  input_id: string; // YYYYMMDD_Mxx_HHMM_01
+  input_id: string;
   slot_id: string;
   report_id: string;
   case_no_start: number;
@@ -99,15 +99,11 @@ export interface ProductionInputForm {
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface Approval {
-  approval_id: string; // YYYYMMDD_Mxx_role
-  report_id: string;
   role: UserRole;
   status: ApprovalStatus;
   approver_email: string;
   comment: string;
   acted_at: string;
-  created_at: string;
-  updated_at: string;
 }
 
 // ===== Stop Code =====
@@ -126,30 +122,66 @@ export interface StopCode {
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
-  error?: string;
+  error?: { code: string; message: string } | null;
 }
 
+/** saveProductionInput のレスポンス */
 export interface SaveInputResponse {
-  input: ProductionInput;
-  next_unfilled_slot: TimeSlot | null;
+  input_id: string;
+  saved: boolean;
+  next_empty_slot: {
+    slot_id: string;
+    start_time: string;
+    end_time: string;
+  } | null;
   report_progress: {
-    total_slots: number;
     filled_slots: number;
-    is_complete: boolean;
+    total_slots: number;
+    all_filled: boolean;
   };
 }
 
+/** createReport のレスポンス */
+export interface CreateReportResponse {
+  report_id: string;
+  status: string;
+  total_slots: number;
+  filled_slots: number;
+  time_slots: { slot_id: string; start_time: string; end_time: string; status: string }[];
+}
+
+/** getDailySummary のレスポンス (API仕様04準拠) */
 export interface DailySummary {
   report: DailyReport;
-  slots: TimeSlot[];
-  inputs: ProductionInput[];
+  slots: SummarySlot[];
   approvals: Approval[];
-  totals: {
+  summary_stats: {
     total_discharge: number;
     total_machine_discharge: number;
     stop_count: number;
-    ng_count: number;
     total_stop_minutes: number;
+    ng_count: number;
+  };
+}
+
+export interface SummarySlot {
+  slot_id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  input?: {
+    case_no_start: number;
+    case_no_end: number;
+    product_name: string;
+    has_stop: boolean;
+    stop_code?: string;
+    stop_time_minutes?: number;
+    abnormality?: string;
+    discharge_count: number;
+    machine_discharge: number;
+    verification: string;
+    first_weight: number;
+    judgment: string;
   };
 }
 

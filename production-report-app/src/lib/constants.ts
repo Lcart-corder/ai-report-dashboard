@@ -1,21 +1,23 @@
 import type { ReportStatus, SlotStatus, UserRole } from "./types";
 
-// Time slots: 7:00 start, 24 hourly slots
-export const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
-  const hour = (7 + i) % 24;
-  const nextHour = (8 + i) % 24;
-  return {
-    start: `${String(hour).padStart(2, "0")}:00`,
-    end: `${String(nextHour).padStart(2, "0")}:00`,
-    label: `${String(hour).padStart(2, "0")}:00〜${String(nextHour).padStart(2, "0")}:00`,
-  };
-});
+// 時間帯: 7:00開始、24本。終了時刻はHH:59形式
+export const TIME_SLOTS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6].map(
+  (hour) => {
+    const hh = String(hour).padStart(2, "0");
+    return {
+      start: `${hh}:00`,
+      end: `${hh}:59`,
+      label: `${hh}:00〜${hh}:59`,
+      hhmm: `${hh}00`,
+    };
+  }
+);
 
 export const MACHINES = ["M06", "M07"] as const;
 
-export const MACHINE_LABELS: Record<string, string> = {
-  M06: "6号機",
-  M07: "7号機",
+export const MACHINE_LABELS: Record<string, { ja: string; vi: string }> = {
+  M06: { ja: "6号機", vi: "Máy số 6" },
+  M07: { ja: "7号機", vi: "Máy số 7" },
 };
 
 export const STATUS_COLORS: Record<SlotStatus, string> = {
@@ -41,14 +43,18 @@ export const APPROVAL_ORDER: UserRole[] = [
 ];
 
 export const ROLE_LABELS: Record<UserRole, { ja: string; vi: string }> = {
-  staff: { ja: "現場スタッフ", vi: "Nhân viên" },
-  kakarichou: { ja: "係長", vi: "Trưởng nhóm" },
-  hinshitsu: { ja: "品証課", vi: "QA" },
+  staff: { ja: "現場スタッフ", vi: "Nhân viên sản xuất" },
+  kakarichou: { ja: "係長", vi: "Trưởng ca" },
+  hinshitsu: { ja: "品証課", vi: "Bộ phận QC" },
   buchou: { ja: "部長", vi: "Trưởng phòng" },
   admin: { ja: "管理者", vi: "Quản trị viên" },
 };
 
-// Report date: 7:00 start, ends next day 6:59
+/**
+ * 営業日ルール: 7:00開始 → 翌6:59終了 = 1日分
+ * 7:00前のアクセス → 前日の日報に紐づく
+ * 日付形式: YYYY/MM/DD
+ */
 export function getReportDate(now: Date = new Date()): string {
   const adjusted = new Date(now);
   if (adjusted.getHours() < 7) {
@@ -57,15 +63,16 @@ export function getReportDate(now: Date = new Date()): string {
   const y = adjusted.getFullYear();
   const m = String(adjusted.getMonth() + 1).padStart(2, "0");
   const d = String(adjusted.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return `${y}/${m}/${d}`;
 }
 
 export function formatReportDate(date: string): string {
-  return date.replace(/-/g, "/");
+  // YYYY/MM/DD はそのまま表示可能
+  return date;
 }
 
 export function buildReportId(date: string, machineNo: string): string {
-  return `${date.replace(/-/g, "")}_${machineNo}`;
+  return `${date.replace(/[\/-]/g, "")}_${machineNo}`;
 }
 
 export function buildSlotId(
@@ -77,4 +84,8 @@ export function buildSlotId(
 
 export function buildInputId(slotId: string): string {
   return `${slotId}_01`;
+}
+
+export function getMachineLabel(machineNo: string, lang: "ja" | "vi"): string {
+  return MACHINE_LABELS[machineNo]?.[lang] || machineNo;
 }

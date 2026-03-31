@@ -24,13 +24,13 @@ export function useApproveReport() {
   return useMutation({
     mutationFn: ({
       reportId,
-      role,
-      email,
+      approverEmail,
+      comment,
     }: {
       reportId: string;
-      role: string;
-      email: string;
-    }) => api.approveReport(reportId, role, email),
+      approverEmail: string;
+      comment?: string;
+    }) => api.approveReport(reportId, approverEmail, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
       queryClient.invalidateQueries({ queryKey: ["dailySummary"] });
@@ -44,15 +44,13 @@ export function useRejectReport() {
   return useMutation({
     mutationFn: ({
       reportId,
-      role,
-      email,
+      approverEmail,
       comment,
     }: {
       reportId: string;
-      role: string;
-      email: string;
+      approverEmail: string;
       comment: string;
-    }) => api.rejectReport(reportId, role, email, comment),
+    }) => api.rejectReport(reportId, approverEmail, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pendingApprovals"] });
       queryClient.invalidateQueries({ queryKey: ["dailySummary"] });
@@ -65,6 +63,6 @@ export function useStopCodes() {
   return useQuery({
     queryKey: ["stopCodes"],
     queryFn: () => api.getStopCodes(),
-    staleTime: 5 * 60 * 1000, // cache 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }

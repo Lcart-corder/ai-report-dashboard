@@ -1,10 +1,12 @@
 "use client";
 
 import { useMachine } from "@/contexts/MachineContext";
-import { MACHINES, MACHINE_LABELS } from "@/lib/constants";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { MACHINES, getMachineLabel } from "@/lib/constants";
 
 export function MachineSelector() {
   const { machineNo, setMachineNo } = useMachine();
+  const { lang } = useLanguage();
 
   return (
     <div className="flex rounded-lg overflow-hidden border border-gray-300">
@@ -18,7 +20,7 @@ export function MachineSelector() {
               : "bg-white text-gray-600 hover:bg-gray-50"
           }`}
         >
-          {MACHINE_LABELS[m]}
+          {getMachineLabel(m, lang)}
         </button>
       ))}
     </div>

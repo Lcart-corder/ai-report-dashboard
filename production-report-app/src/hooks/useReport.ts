@@ -33,12 +33,12 @@ export function useCreateReport() {
     mutationFn: ({
       reportDate,
       machineNo,
-      email,
+      createdBy,
     }: {
       reportDate: string;
       machineNo: string;
-      email: string;
-    }) => api.createReport(reportDate, machineNo, email),
+      createdBy: string;
+    }) => api.createReport(reportDate, machineNo, createdBy),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reportsByDate"] });
       queryClient.invalidateQueries({ queryKey: ["myReports"] });
@@ -49,8 +49,14 @@ export function useCreateReport() {
 export function useSubmitForApproval() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (reportId: string) => api.submitForApproval(reportId),
-    onSuccess: (_, reportId) => {
+    mutationFn: ({
+      reportId,
+      submittedBy,
+    }: {
+      reportId: string;
+      submittedBy: string;
+    }) => api.submitForApproval(reportId, submittedBy),
+    onSuccess: (_, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: ["report", reportId] });
       queryClient.invalidateQueries({ queryKey: ["dailySummary", reportId] });
     },

@@ -1,5 +1,6 @@
 import type {
   ApiResponse,
+  CreateReportResponse,
   DailyReport,
   DailySummary,
   PendingApproval,
@@ -12,7 +13,7 @@ import type {
 
 const GAS_URL = process.env.NEXT_PUBLIC_GAS_URL || "";
 
-async function fetchGAS<T>(
+async function gasGet<T>(
   action: string,
   params?: Record<string, string>
 ): Promise<T> {
@@ -23,96 +24,93 @@ async function fetchGAS<T>(
   }
   const res = await fetch(url.toString(), { cache: "no-store" });
   const json: ApiResponse<T> = await res.json();
-  if (!json.success) throw new Error(json.error || "API error");
+  if (!json.success) throw new Error(json.error?.message || "API error");
   return json.data as T;
 }
 
-async function postGAS<T>(
+async function gasPost<T>(
   action: string,
-  body: Record<string, unknown>
+  params: Record<string, unknown>
 ): Promise<T> {
   const res = await fetch(GAS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...body }),
+    body: JSON.stringify({ action, params }),
   });
   const json: ApiResponse<T> = await res.json();
-  if (!json.success) throw new Error(json.error || "API error");
+  if (!json.success) throw new Error(json.error?.message || "API error");
   return json.data as T;
 }
 
 // GET APIs
 export const api = {
   getCurrentUser: (email: string) =>
-    fetchGAS<User>("getCurrentUser", { email }),
+    gasGet<User>("getCurrentUser", { email }),
 
   getReport: (reportId: string) =>
-    fetchGAS<DailyReport>("getReport", { report_id: reportId }),
+    gasGet<DailyReport>("getReport", { report_id: reportId }),
 
   getReportsByDate: (date: string) =>
-    fetchGAS<DailyReport[]>("getReportsByDate", { date }),
+    gasGet<DailyReport[]>("getReportsByDate", { date }),
 
   getTimeSlots: (reportId: string) =>
-    fetchGAS<TimeSlot[]>("getTimeSlots", { report_id: reportId }),
+    gasGet<TimeSlot[]>("getTimeSlots", { report_id: reportId }),
 
   getProductionInput: (slotId: string) =>
-    fetchGAS<ProductionInput | null>("getProductionInput", {
+    gasGet<ProductionInput | null>("getProductionInput", {
       slot_id: slotId,
     }),
 
   getDailySummary: (reportId: string) =>
-    fetchGAS<DailySummary>("getDailySummary", { report_id: reportId }),
+    gasGet<DailySummary>("getDailySummary", { report_id: reportId }),
 
-  getStopCodes: () => fetchGAS<StopCode[]>("getStopCodes"),
+  getStopCodes: () => gasGet<StopCode[]>("getStopCodes"),
 
-  getUsers: () => fetchGAS<User[]>("getUsers"),
+  getUsers: () => gasGet<User[]>("getUsers"),
 
   getMyReports: (email: string, limit = 30) =>
-    fetchGAS<DailyReport[]>("getMyReports", {
+    gasGet<DailyReport[]>("getMyReports", {
       email,
       limit: String(limit),
     }),
 
   getPendingApprovals: (role: string) =>
-    fetchGAS<PendingApproval[]>("getPendingApprovals", { role }),
+    gasGet<PendingApproval[]>("getPendingApprovals", { role }),
 
   // POST APIs
-  createReport: (reportDate: string, machineNo: string, email: string) =>
-    postGAS<DailyReport>("createReport", {
+  createReport: (reportDate: string, machineNo: string, createdBy: string) =>
+    gasPost<CreateReportResponse>("createReport", {
       report_date: reportDate,
       machine_no: machineNo,
-      email,
+      created_by: createdBy,
     }),
 
   saveProductionInput: (data: Record<string, unknown>) =>
-    postGAS<SaveInputResponse>("saveProductionInput", data),
+    gasPost<SaveInputResponse>("saveProductionInput", data),
 
   deleteProductionInput: (slotId: string, reportId: string) =>
-    postGAS<{ deleted: boolean }>("deleteProductionInput", {
+    gasPost<{ deleted: boolean }>("deleteProductionInput", {
       slot_id: slotId,
       report_id: reportId,
     }),
 
-  submitForApproval: (reportId: string) =>
-    postGAS<DailyReport>("submitForApproval", { report_id: reportId }),
-
-  approveReport: (reportId: string, role: string, email: string) =>
-    postGAS<unknown>("approveReport", {
+  submitForApproval: (reportId: string, submittedBy: string) =>
+    gasPost<DailyReport>("submitForApproval", {
       report_id: reportId,
-      role,
-      email,
+      submitted_by: submittedBy,
     }),
 
-  rejectReport: (
-    reportId: string,
-    role: string,
-    email: string,
-    comment: string
-  ) =>
-    postGAS<unknown>("rejectReport", {
+  approveReport: (reportId: string, approverEmail: string, comment?: string) =>
+    gasPost<unknown>("approveReport", {
       report_id: reportId,
-      role,
-      email,
+      approver_email: approverEmail,
+      comment: comment || "",
+    }),
+
+  rejectReport: (reportId: string, approverEmail: string, comment: string) =>
+    gasPost<unknown>("rejectReport", {
+      report_id: reportId,
+      approver_email: approverEmail,
       comment,
     }),
 };

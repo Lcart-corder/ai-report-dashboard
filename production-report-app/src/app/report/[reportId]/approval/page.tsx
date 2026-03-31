@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/i18n";
-import { formatReportDate, MACHINE_LABELS, APPROVAL_ORDER } from "@/lib/constants";
+import { formatReportDate, getMachineLabel, APPROVAL_ORDER } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Loading } from "@/components/common/Loading";
 import { ReportStatusBadge } from "@/components/common/StatusBadge";
@@ -36,30 +36,25 @@ export default function ApprovalPage() {
   if (isLoading) return <Loading />;
   if (!summary || !user) return null;
 
-  const { report, totals, approvals } = summary;
+  const { report, summary_stats, approvals } = summary;
 
-  // Determine if current user can act
-  const canApprove =
-    user.isApprover &&
-    (user.role === "admin" ||
-      APPROVAL_ORDER.includes(user.role as (typeof APPROVAL_ORDER)[number]));
-
-  // Check which step we're at
+  // 現在の承認ステップを特定
   const currentApprovalRole = APPROVAL_ORDER.find((role) => {
     const approval = approvals.find((a) => a.role === role);
     return approval?.status === "pending";
   });
 
-  const isMyTurn = currentApprovalRole === user.role || user.role === "admin";
+  const isMyTurn =
+    user.isApprover &&
+    (currentApprovalRole === user.role || user.role === "admin");
 
   const handleApprove = async () => {
     setShowApproveConfirm(false);
-    const role = user.role === "admin" ? currentApprovalRole! : user.role;
     try {
       await approveReport.mutateAsync({
         reportId,
-        role,
-        email: user.email,
+        approverEmail: user.email,
+        comment: comment || undefined,
       });
       setToast({ message: t(lang, "success"), type: "success" });
       setTimeout(() => router.push("/"), 1000);
@@ -81,12 +76,10 @@ export default function ApprovalPage() {
       return;
     }
     setShowRejectConfirm(false);
-    const role = user.role === "admin" ? currentApprovalRole! : user.role;
     try {
       await rejectReport.mutateAsync({
         reportId,
-        role,
-        email: user.email,
+        approverEmail: user.email,
         comment,
       });
       setToast({ message: t(lang, "success"), type: "success" });
@@ -109,11 +102,7 @@ export default function ApprovalPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
       {showApproveConfirm && (
         <ConfirmDialog
@@ -135,57 +124,41 @@ export default function ApprovalPage() {
           onClick={() => router.push(`/report/${reportId}/summary`)}
           className="text-blue-600 text-sm mb-2 hover:underline"
         >
-          {t(lang, "back")}
+          ← {t(lang, "summary_title")}
         </button>
 
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              {t(lang, "approval_title")}
+              {getMachineLabel(report.machine_no, lang)} {formatReportDate(report.report_date)} {t(lang, "approval_title")}
             </h1>
-            <p className="text-gray-500">
-              {formatReportDate(report.report_date)} -{" "}
-              {MACHINE_LABELS[report.machine_no] || report.machine_no}
-            </p>
           </div>
           <ReportStatusBadge status={report.status} />
         </div>
 
-        {/* Summary Stats */}
+        {/* サマリー概要 */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-white rounded-xl border p-4 text-center">
-            <p className="text-xs text-gray-500">
-              {t(lang, "summary_total_discharge")}
-            </p>
-            <p className="text-xl font-bold">{totals.total_discharge}</p>
+            <p className="text-xs text-gray-500">{t(lang, "summary_total_discharge")}</p>
+            <p className="text-xl font-bold">{summary_stats.total_discharge.toLocaleString()}</p>
           </div>
           <div className="bg-white rounded-xl border p-4 text-center">
-            <p className="text-xs text-gray-500">
-              {t(lang, "summary_stop_count")}
-            </p>
-            <p
-              className={`text-xl font-bold ${totals.stop_count > 0 ? "text-red-600" : ""}`}
-            >
-              {totals.stop_count}
+            <p className="text-xs text-gray-500">{t(lang, "summary_stop_count")}</p>
+            <p className={`text-xl font-bold ${summary_stats.stop_count > 0 ? "text-red-600" : ""}`}>
+              {summary_stats.stop_count}
             </p>
           </div>
           <div className="bg-white rounded-xl border p-4 text-center">
-            <p className="text-xs text-gray-500">
-              {t(lang, "summary_ng_count")}
-            </p>
-            <p
-              className={`text-xl font-bold ${totals.ng_count > 0 ? "text-red-600" : ""}`}
-            >
-              {totals.ng_count}
+            <p className="text-xs text-gray-500">{t(lang, "summary_ng_count")}</p>
+            <p className={`text-xl font-bold ${summary_stats.ng_count > 0 ? "text-red-600" : ""}`}>
+              {summary_stats.ng_count}
             </p>
           </div>
         </div>
 
-        {/* Approval Steps */}
+        {/* 承認ステップ */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-          <h2 className="font-bold text-gray-800 mb-3">
-            {t(lang, "approval_status")}
-          </h2>
+          <h2 className="font-bold text-gray-800 mb-3">{t(lang, "approval_status")}</h2>
           <div className="space-y-2">
             {APPROVAL_ORDER.map((role) => {
               const approval = approvals.find((a) => a.role === role);
@@ -204,14 +177,10 @@ export default function ApprovalPage() {
                           : "bg-gray-50 border border-gray-200"
                   }`}
                 >
-                  <span className="font-medium">
-                    {t(lang, approvalStepKeys[role])}
-                  </span>
+                  <span className="font-medium">{t(lang, approvalStepKeys[role])}</span>
                   <div className="flex items-center gap-2">
                     {approval?.approver_email && (
-                      <span className="text-xs text-gray-500">
-                        {approval.approver_email}
-                      </span>
+                      <span className="text-xs text-gray-500">{approval.approver_email}</span>
                     )}
                     <span
                       className={`text-sm font-medium ${
@@ -219,14 +188,18 @@ export default function ApprovalPage() {
                           ? "text-green-600"
                           : status === "rejected"
                             ? "text-red-600"
-                            : "text-gray-400"
+                            : isCurrent
+                              ? "text-orange-600"
+                              : "text-gray-400"
                       }`}
                     >
                       {status === "approved"
                         ? t(lang, "approval_approved")
                         : status === "rejected"
                           ? t(lang, "approval_rejected")
-                          : t(lang, "approval_pending")}
+                          : isCurrent
+                            ? t(lang, "approval_pending")
+                            : "—"}
                     </span>
                   </div>
                 </div>
@@ -234,24 +207,29 @@ export default function ApprovalPage() {
             })}
           </div>
 
-          {/* Rejection comment if any */}
-          {approvals.some(
-            (a) => a.status === "rejected" && a.comment
-          ) && (
+          {/* 差戻しコメント表示 */}
+          {approvals.some((a) => a.status === "rejected" && a.comment) && (
             <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-sm text-red-700">
+              <p className="text-sm text-red-700 font-medium">
+                {lang === "ja" ? "差戻し理由:" : "Lý do trả lại:"}
+              </p>
+              <p className="text-sm text-red-600">
                 {approvals.find((a) => a.status === "rejected")?.comment}
               </p>
             </div>
           )}
         </div>
 
-        {/* Approval Actions */}
-        {canApprove && isMyTurn && (
-          <div className="space-y-4 pb-8">
-            <div>
+        {/* 承認アクション */}
+        {isMyTurn && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
+            <h2 className="font-bold text-gray-800 mb-3">
+              {lang === "ja" ? "承認アクション" : "Hành động phê duyệt"}
+            </h2>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t(lang, "approval_comment")}
+                {lang === "ja" ? "（任意）" : " (tùy chọn)"}
               </label>
               <textarea
                 value={comment}
@@ -268,7 +246,7 @@ export default function ApprovalPage() {
                 disabled={rejectReport.isPending}
                 className="flex-1 py-4 rounded-xl border-2 border-red-300 text-red-600 font-bold text-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
-                {t(lang, "approval_reject")}
+                ↩ {t(lang, "approval_reject")}
               </button>
               <button
                 onClick={() => setShowApproveConfirm(true)}
