@@ -96,6 +96,7 @@ const ChatGPTSettingsPage = lazy(() => import("./pages/admin/integrations/ChatGP
 const AdminDashboard = lazy(() => import("./pages/admin/index"));
 const PlanSettingsPage = lazy(() => import("./pages/admin/billing/PlanSettings"));
 const StaffManagement = lazy(() => import("./pages/admin/StaffManagement"));
+const GoldfishDemo = lazy(() => import("./pages/GoldfishDemo"));
 
 // Loading fallback
 function PageLoader() {
@@ -229,6 +230,9 @@ function App() {
             <Route path="/admin/static-pages" component={StaticPageListPage} />
             <Route path="/admin/static-pages/new" component={StaticPageEditPage} />
             <Route path="/admin/static-pages/:id" component={StaticPageEditPage} />
+
+            {/* Goldfish Demo */}
+            <Route path="/goldfish-demo" component={GoldfishDemo} />
 
             {/* Public Pages */}
             <Route path="/s/:slug" component={PublicPageViewer} />
