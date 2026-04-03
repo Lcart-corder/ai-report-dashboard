@@ -63,9 +63,8 @@ const COLUMN_KEYS = [
 
 // ===== ステータス定数 =====
 const STATUS = {
-  UPLOADED:             'uploaded',
-  ANALYSIS_PROCESSING:  'analysis_processing',
-  ANALYSIS_COMPLETED:   'analysis_completed',
+  PENDING:              'pending',
+  ANALYZING:            'analyzing',
   VR_READY:             'vr_ready',
   ERROR:                'error',
 };

@@ -12,7 +12,7 @@ export async function fetchArtworks(): Promise<Artwork[]> {
     return getDemoArtworks();
   }
 
-  const res = await fetch(`${GAS_API_URL}?action=list`, {
+  const res = await fetch(`${GAS_API_URL}?action=artworks`, {
     next: { revalidate: 60 },
   });
 
@@ -41,7 +41,7 @@ export async function fetchArtwork(id: string): Promise<Artwork> {
     return found;
   }
 
-  const res = await fetch(`${GAS_API_URL}?action=get&id=${encodeURIComponent(id)}`, {
+  const res = await fetch(`${GAS_API_URL}?action=artwork&id=${encodeURIComponent(id)}`, {
     next: { revalidate: 60 },
   });
 

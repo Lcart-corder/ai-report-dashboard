@@ -201,7 +201,7 @@ function handleUpload_(postData) {
 function triggerAnalysis_(artworkId, fileId) {
   // ステータスを「解析中」に更新
   updateArtwork(artworkId, {
-    status: STATUS.ANALYSIS_PROCESSING,
+    status: STATUS.ANALYZING,
   });
 
   try {
@@ -209,16 +209,29 @@ function triggerAnalysis_(artworkId, fileId) {
     var result = analyzeGoldfishImage(fileId);
 
     // 解析結果をシートに保存
+    // primaryColors は HEX配列 → カンマ区切り文字列に変換
+    // fish_params_json は swimProfile から {speed, pattern} のみ保存
+    var colorsStr = Array.isArray(result.primaryColors)
+      ? result.primaryColors.join(',')
+      : '';
+    var moodStr = Array.isArray(result.moodTags)
+      ? result.moodTags.join(',')
+      : '';
+    var fishParamsJson = JSON.stringify({
+      speed: result.swimProfile ? result.swimProfile.speed : 'normal',
+      pattern: result.swimProfile ? result.swimProfile.pattern : 'calm',
+    });
+
     updateArtwork(artworkId, {
-      status: STATUS.ANALYSIS_COMPLETED,
+      status: STATUS.VR_READY,
       analyzed_at: new Date().toISOString(),
-      primary_colors: result.primaryColors,
+      primary_colors: colorsStr,
       body_shape: result.bodyShape,
       fin_size: result.finSize,
       tail_shape: result.tailShape,
-      mood_tags: result.moodTags,
+      mood_tags: moodStr,
       confidence: result.confidence,
-      fish_params_json: result,
+      fish_params_json: fishParamsJson,
       vr_status: VR_STATUS.READY,
       error_message: '',
     });

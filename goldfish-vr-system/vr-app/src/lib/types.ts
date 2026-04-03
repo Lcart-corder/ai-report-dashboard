@@ -6,11 +6,11 @@ export interface Artwork {
   child_name: string;
   title: string;
   image_url: string;
-  status: "pending" | "analyzing" | "vr_ready" | "error";
+  status: "pending" | "analyzing" | "vr_ready" | "error" | string;
   primary_colors: string;
-  body_shape: "round" | "slim" | "normal";
-  fin_size: "small" | "medium" | "large";
-  tail_shape: "fan" | "long" | "short";
+  body_shape: "round" | "slim" | "normal" | string;
+  fin_size: "small" | "medium" | "large" | string;
+  tail_shape: "fan" | "long" | "short" | string;
   mood_tags: string;
   confidence: string;
   fish_params_json: string;

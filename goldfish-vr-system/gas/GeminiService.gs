@@ -100,13 +100,13 @@ function buildAnalysisPrompt() {
 この画像は子どもが描いた金魚の絵です。以下の特徴を分析してJSON形式で返してください。
 
 分析項目:
-1. primaryColors: 金魚の主要な色（配列、最大5色、色名を英語で）
-   例: ["red", "orange", "gold"]
+1. primaryColors: 金魚の主要な色（配列、最大5色、HEXカラーコードで）
+   例: ["#FF6B6B", "#FFA500", "#FFD700"]
 
 2. bodyShape: 体の形状（以下のいずれか1つ）
    - "round": 丸い体
    - "slim": スリムな体
-   - "standard": 標準的な体
+   - "normal": 標準的な体
 
 3. finSize: ヒレのサイズ（以下のいずれか1つ）
    - "small": 小さいヒレ
@@ -116,8 +116,7 @@ function buildAnalysisPrompt() {
 4. tailShape: 尾びれの形状（以下のいずれか1つ）
    - "fan": 扇形
    - "long": 長い
-   - "split": 二股に分かれた
-   - "round": 丸い
+   - "short": 短い・丸い
 
 5. moodTags: この金魚の印象を表す言葉（配列、3〜5個、日本語で）
    例: ["元気", "かわいい", "キラキラ"]
@@ -126,20 +125,20 @@ function buildAnalysisPrompt() {
    子どもの絵の場合は0.5〜0.8程度が妥当です
 
 7. swimProfile: VRでの泳ぎ方パラメータ
-   - speed: "slow" | "medium" | "fast"
-   - pattern: "calm" | "active" | "playful"
+   - speed: "slow" | "normal" | "fast"
+   - pattern: "calm" | "playful" | "elegant"
 
 以下の形式で正確にJSONを返してください（他のテキストは含めないでください）:
 {
-  "primaryColors": ["色1", "色2"],
-  "bodyShape": "round|slim|standard",
+  "primaryColors": ["#FF6B6B", "#FFA500"],
+  "bodyShape": "round|slim|normal",
   "finSize": "small|medium|large",
-  "tailShape": "fan|long|split|round",
+  "tailShape": "fan|long|short",
   "moodTags": ["タグ1", "タグ2", "タグ3"],
   "confidence": 0.7,
   "swimProfile": {
-    "speed": "slow|medium|fast",
-    "pattern": "calm|active|playful"
+    "speed": "slow|normal|fast",
+    "pattern": "calm|playful|elegant"
   }
 }
 
@@ -203,7 +202,7 @@ function validateAndNormalize_(result) {
       ? result.primaryColors.slice(0, 5)
       : defaults.primaryColors,
 
-    bodyShape: ['round', 'slim', 'standard'].includes(result.bodyShape)
+    bodyShape: ['round', 'slim', 'normal'].includes(result.bodyShape)
       ? result.bodyShape
       : defaults.bodyShape,
 
@@ -211,7 +210,7 @@ function validateAndNormalize_(result) {
       ? result.finSize
       : defaults.finSize,
 
-    tailShape: ['fan', 'long', 'split', 'round'].includes(result.tailShape)
+    tailShape: ['fan', 'long', 'short'].includes(result.tailShape)
       ? result.tailShape
       : defaults.tailShape,
 
@@ -225,10 +224,10 @@ function validateAndNormalize_(result) {
 
     swimProfile: result.swimProfile && typeof result.swimProfile === 'object'
       ? {
-          speed: ['slow', 'medium', 'fast'].includes(result.swimProfile.speed)
+          speed: ['slow', 'normal', 'fast'].includes(result.swimProfile.speed)
             ? result.swimProfile.speed
             : defaults.swimProfile.speed,
-          pattern: ['calm', 'active', 'playful'].includes(result.swimProfile.pattern)
+          pattern: ['calm', 'playful', 'elegant'].includes(result.swimProfile.pattern)
             ? result.swimProfile.pattern
             : defaults.swimProfile.pattern,
         }
@@ -242,14 +241,14 @@ function validateAndNormalize_(result) {
  */
 function getDefaultAnalysisResult_() {
   return {
-    primaryColors: ['red', 'orange'],
-    bodyShape: 'standard',
+    primaryColors: ['#FF6B6B', '#FFA500'],
+    bodyShape: 'normal',
     finSize: 'medium',
     tailShape: 'fan',
     moodTags: ['かわいい', '元気'],
     confidence: 0.3,
     swimProfile: {
-      speed: 'medium',
+      speed: 'normal',
       pattern: 'calm',
     },
   };

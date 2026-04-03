@@ -257,7 +257,7 @@ function renderArtworkTable(artworks) {
     html += '<td class="actions">';
     html += '<button class="btn btn--reanalyze btn--small" onclick="reanalyzeArtwork(\''
       + escapeHtml(artwork.artwork_id) + '\')" title="再解析">&#x1F504; 再解析</button>';
-    if (artwork.status === 'analysis_completed' || artwork.status === 'vr_ready') {
+    if (artwork.status === 'vr_ready') {
       html += ' <a class="btn btn--secondary btn--small" href="javascript:void(0)" '
         + 'onclick="showDetail(\'' + escapeHtml(artwork.artwork_id) + '\')" title="詳細">&#x1F50D;</a>';
     }
@@ -275,7 +275,7 @@ function renderArtworkTable(artworks) {
 function updateStats(artworks) {
   var total = artworks.length;
   var analyzed = artworks.filter(function(a) {
-    return a.status === 'analysis_completed' || a.status === 'vr_ready';
+    return a.status === 'vr_ready';
   }).length;
   var errors = artworks.filter(function(a) { return a.status === 'error'; }).length;
   var vrReady = artworks.filter(function(a) { return a.status === 'vr_ready'; }).length;
@@ -414,9 +414,8 @@ function escapeHtml(str) {
  */
 function getStatusLabel(status) {
   var labels = {
-    'uploaded': 'アップロード済',
-    'analysis_processing': '解析中',
-    'analysis_completed': '解析完了',
+    'pending': 'アップロード済',
+    'analyzing': '解析中',
     'vr_ready': 'VR準備完了',
     'error': 'エラー',
   };

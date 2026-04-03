@@ -61,7 +61,7 @@ function addArtwork(artworkData) {
       artworkData.original_file_name || '',   // D: original_file_name
       artworkData.drive_file_id || '',        // E: drive_file_id
       artworkData.image_url || '',            // F: image_url
-      STATUS.UPLOADED,                        // G: status
+      STATUS.PENDING,                         // G: status
       now,                                    // H: uploaded_at
       '',                                     // I: analyzed_at
       '',                                     // J: primary_colors
@@ -150,16 +150,9 @@ function rowToObject_(rowValues) {
     if (COLUMN_KEYS[i]) {
       let value = rowValues[i - 1]; // COLUMN_KEYSは1始まり
 
-      // JSON文字列のフィールドをパースする
-      if (['primary_colors', 'mood_tags', 'fish_params_json'].includes(COLUMN_KEYS[i])) {
-        if (typeof value === 'string' && value.trim()) {
-          try {
-            value = JSON.parse(value);
-          } catch (e) {
-            // パース失敗時はそのまま文字列として返す
-          }
-        }
-      }
+      // primary_colors, mood_tags はカンマ区切り文字列のまま返す（VRアプリ側で split する）
+      // fish_params_json のみJSON文字列のまま返す（VRアプリ側で parse する）
+      // → どちらも文字列のまま保持
 
       // confidence を数値に変換
       if (COLUMN_KEYS[i] === 'confidence' && value !== '' && value !== null) {
