@@ -1,0 +1,500 @@
+<script>
+/**
+ * おえかき金魚VR体験システム - 共通JavaScript
+ */
+
+// ======== 状態管理 ========
+var AppState = {
+  isUploading: false,
+  isLoading: false,
+  autoRefreshEnabled: false,
+  autoRefreshInterval: null,
+  AUTO_REFRESH_MS: 10000, // 10秒
+};
+
+// ======== 画像プレビュー ========
+
+/**
+ * ファイル選択時に画像プレビューを表示する
+ * @param {HTMLInputElement} input - ファイル入力要素
+ */
+function handleFileSelect(input) {
+  var previewArea = document.getElementById('preview-area');
+  var previewImg = document.getElementById('preview-image');
+  var fileName = document.getElementById('file-name');
+
+  if (!input.files || !input.files[0]) {
+    previewArea.classList.remove('active');
+    return;
+  }
+
+  var file = input.files[0];
+
+  // ファイルサイズチェック (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showMessage('error', 'ファイルサイズが大きすぎます（最大10MB）');
+    input.value = '';
+    previewArea.classList.remove('active');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    previewImg.src = e.target.result;
+    if (fileName) fileName.textContent = file.name;
+    previewArea.classList.add('active');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ======== 画像アップロード ========
+
+/**
+ * 画像をアップロードする
+ */
+function uploadImage() {
+  if (AppState.isUploading) return;
+
+  var childName = document.getElementById('child-name').value.trim();
+  var title = document.getElementById('title').value.trim();
+  var fileInput = document.getElementById('image-file');
+
+  // バリデーション
+  if (!childName) {
+    showMessage('error', 'お名前を入力してください');
+    document.getElementById('child-name').focus();
+    return;
+  }
+  if (!title) {
+    showMessage('error', 'タイトルを入力してください');
+    document.getElementById('title').focus();
+    return;
+  }
+  if (!fileInput.files || !fileInput.files[0]) {
+    showMessage('error', '金魚のえをえらんでください');
+    return;
+  }
+
+  var file = fileInput.files[0];
+
+  // ローディング状態開始
+  setUploadLoading(true);
+  hideMessage();
+
+  // ファイルをBase64に変換
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var base64Data = e.target.result;
+
+    var formData = {
+      action: 'upload',
+      child_name: childName,
+      title: title,
+      image_data: base64Data,
+      file_name: file.name,
+      mime_type: file.type || 'image/png',
+    };
+
+    // google.script.run でサーバー側関数を呼び出す
+    google.script.run
+      .withSuccessHandler(function(result) {
+        setUploadLoading(false);
+        if (result && result.success) {
+          showMessage('success', 'アップロードできました！金魚を読み取っています...');
+          // フォームをリセット
+          resetUploadForm();
+        } else {
+          var errMsg = (result && result.error && result.error.message)
+            ? result.error.message
+            : 'アップロードに失敗しました';
+          showMessage('error', errMsg);
+        }
+      })
+      .withFailureHandler(function(error) {
+        setUploadLoading(false);
+        showMessage('error', 'エラーが発生しました: ' + error.message);
+      })
+      .uploadFromClient(formData);
+  };
+
+  reader.onerror = function() {
+    setUploadLoading(false);
+    showMessage('error', 'ファイルの読み込みに失敗しました');
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/**
+ * アップロードフォームをリセット
+ */
+function resetUploadForm() {
+  var form = document.getElementById('upload-form');
+  if (form) {
+    document.getElementById('child-name').value = '';
+    document.getElementById('title').value = '';
+    document.getElementById('image-file').value = '';
+    var previewArea = document.getElementById('preview-area');
+    if (previewArea) previewArea.classList.remove('active');
+  }
+}
+
+/**
+ * アップロードのローディング状態を切り替える
+ * @param {boolean} loading - ローディング中かどうか
+ */
+function setUploadLoading(loading) {
+  AppState.isUploading = loading;
+  var btn = document.getElementById('upload-btn');
+  if (!btn) return;
+
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> おくっています...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = '&#x1F41F; アップロード！';
+  }
+}
+
+// ======== メッセージ表示 ========
+
+/**
+ * メッセージを表示する
+ * @param {string} type - 'success' または 'error'
+ * @param {string} text - メッセージテキスト
+ */
+function showMessage(type, text) {
+  var msgEl = document.getElementById('message');
+  if (!msgEl) return;
+
+  msgEl.className = 'message active message--' + type;
+  msgEl.textContent = text;
+
+  // 成功メッセージは5秒後に自動で消す
+  if (type === 'success') {
+    setTimeout(function() {
+      msgEl.classList.remove('active');
+    }, 5000);
+  }
+}
+
+/**
+ * メッセージを非表示にする
+ */
+function hideMessage() {
+  var msgEl = document.getElementById('message');
+  if (msgEl) {
+    msgEl.classList.remove('active');
+  }
+}
+
+// ======== 管理画面: 作品一覧 ========
+
+/**
+ * 作品一覧を取得して表示する
+ * @param {string} [statusFilter] - フィルタするステータス
+ */
+function fetchArtworks(statusFilter) {
+  if (AppState.isLoading) return;
+  AppState.isLoading = true;
+
+  var tableBody = document.getElementById('artworks-tbody');
+  if (!tableBody) {
+    AppState.isLoading = false;
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(artworks) {
+      AppState.isLoading = false;
+      renderArtworkTable(artworks || []);
+      updateStats(artworks || []);
+    })
+    .withFailureHandler(function(error) {
+      AppState.isLoading = false;
+      console.error('作品取得エラー:', error);
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#c62828;padding:20px;">'
+          + 'データの取得に失敗しました: ' + error.message + '</td></tr>';
+      }
+    })
+    .getArtworksFromClient(statusFilter || '');
+}
+
+/**
+ * 作品テーブルをレンダリングする
+ * @param {Array<Object>} artworks - 作品オブジェクトの配列
+ */
+function renderArtworkTable(artworks) {
+  var tableBody = document.getElementById('artworks-tbody');
+  if (!tableBody) return;
+
+  if (artworks.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="7">'
+      + '<div class="empty-state"><div class="empty-icon">&#x1F3A8;</div>'
+      + '<p>まだ作品がありません</p></div></td></tr>';
+    return;
+  }
+
+  var html = '';
+  artworks.forEach(function(artwork) {
+    var statusClass = 'badge--' + (artwork.status || 'uploaded');
+    var statusLabel = getStatusLabel(artwork.status);
+    var thumbnailUrl = artwork.image_url || '';
+    var thumbnailHtml = thumbnailUrl
+      ? '<img src="' + escapeHtml(thumbnailUrl) + '" class="thumbnail" alt="サムネイル" loading="lazy">'
+      : '<span style="color:#ccc;">-</span>';
+
+    html += '<tr>';
+    html += '<td title="' + escapeHtml(artwork.artwork_id || '') + '">'
+      + escapeHtml((artwork.artwork_id || '').substring(0, 12)) + '</td>';
+    html += '<td>' + escapeHtml(artwork.child_name || '') + '</td>';
+    html += '<td>' + escapeHtml(artwork.title || '') + '</td>';
+    html += '<td><span class="badge ' + statusClass + '">' + escapeHtml(statusLabel) + '</span></td>';
+    html += '<td>' + thumbnailHtml + '</td>';
+    html += '<td>' + formatDate(artwork.uploaded_at) + '</td>';
+    html += '<td class="actions">';
+    html += '<button class="btn btn--reanalyze btn--small" onclick="reanalyzeArtwork(\''
+      + escapeHtml(artwork.artwork_id) + '\')" title="再解析">&#x1F504; 再解析</button>';
+    if (artwork.status === 'analysis_completed' || artwork.status === 'vr_ready') {
+      html += ' <a class="btn btn--secondary btn--small" href="javascript:void(0)" '
+        + 'onclick="showDetail(\'' + escapeHtml(artwork.artwork_id) + '\')" title="詳細">&#x1F50D;</a>';
+    }
+    html += '</td>';
+    html += '</tr>';
+  });
+
+  tableBody.innerHTML = html;
+}
+
+/**
+ * 統計情報を更新する
+ * @param {Array<Object>} artworks - 作品オブジェクトの配列
+ */
+function updateStats(artworks) {
+  var total = artworks.length;
+  var analyzed = artworks.filter(function(a) {
+    return a.status === 'analysis_completed' || a.status === 'vr_ready';
+  }).length;
+  var errors = artworks.filter(function(a) { return a.status === 'error'; }).length;
+  var vrReady = artworks.filter(function(a) { return a.status === 'vr_ready'; }).length;
+
+  setStatValue('stat-total', total);
+  setStatValue('stat-analyzed', analyzed);
+  setStatValue('stat-vr-ready', vrReady);
+  setStatValue('stat-errors', errors);
+}
+
+function setStatValue(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+// ======== 管理画面: 再解析 ========
+
+/**
+ * 作品を再解析する
+ * @param {string} artworkId - 作品ID
+ */
+function reanalyzeArtwork(artworkId) {
+  if (!confirm('この作品を再解析しますか？\nID: ' + artworkId)) return;
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success) {
+        showAdminMessage('success', '再解析が完了しました');
+        // テーブルを更新
+        var filter = document.getElementById('status-filter');
+        fetchArtworks(filter ? filter.value : '');
+      } else {
+        var msg = (result && result.error) ? result.error.message : '再解析に失敗しました';
+        showAdminMessage('error', msg);
+      }
+    })
+    .withFailureHandler(function(error) {
+      showAdminMessage('error', '再解析エラー: ' + error.message);
+    })
+    .reanalyzeFromClient(artworkId);
+}
+
+/**
+ * 作品の詳細を表示する
+ * @param {string} artworkId - 作品ID
+ */
+function showDetail(artworkId) {
+  google.script.run
+    .withSuccessHandler(function(artwork) {
+      if (!artwork) {
+        alert('作品が見つかりません');
+        return;
+      }
+      var detail = '=== 作品詳細 ===\n';
+      detail += 'ID: ' + artwork.artwork_id + '\n';
+      detail += '名前: ' + artwork.child_name + '\n';
+      detail += 'タイトル: ' + artwork.title + '\n';
+      detail += 'ステータス: ' + artwork.status + '\n';
+      detail += '体型: ' + (artwork.body_shape || '-') + '\n';
+      detail += 'ヒレ: ' + (artwork.fin_size || '-') + '\n';
+      detail += '尾びれ: ' + (artwork.tail_shape || '-') + '\n';
+      detail += '色: ' + formatJsonField(artwork.primary_colors) + '\n';
+      detail += '印象: ' + formatJsonField(artwork.mood_tags) + '\n';
+      detail += '信頼度: ' + (artwork.confidence || '-') + '\n';
+      if (artwork.fish_params_json) {
+        detail += '\nVRパラメータ:\n' + JSON.stringify(artwork.fish_params_json, null, 2);
+      }
+      alert(detail);
+    })
+    .withFailureHandler(function(error) {
+      alert('詳細取得エラー: ' + error.message);
+    })
+    .getArtworkById(artworkId);
+}
+
+// ======== 管理画面: 自動更新 ========
+
+/**
+ * 自動更新のトグル
+ * @param {boolean} enabled - 有効にするかどうか
+ */
+function toggleAutoRefresh(enabled) {
+  AppState.autoRefreshEnabled = enabled;
+
+  if (enabled) {
+    AppState.autoRefreshInterval = setInterval(function() {
+      var filter = document.getElementById('status-filter');
+      fetchArtworks(filter ? filter.value : '');
+    }, AppState.AUTO_REFRESH_MS);
+  } else {
+    if (AppState.autoRefreshInterval) {
+      clearInterval(AppState.autoRefreshInterval);
+      AppState.autoRefreshInterval = null;
+    }
+  }
+}
+
+/**
+ * ステータスフィルタ変更時のハンドラ
+ */
+function onStatusFilterChange() {
+  var filter = document.getElementById('status-filter');
+  fetchArtworks(filter ? filter.value : '');
+}
+
+// ======== 管理画面メッセージ ========
+
+function showAdminMessage(type, text) {
+  var msgEl = document.getElementById('admin-message');
+  if (!msgEl) return;
+  msgEl.className = 'message active message--' + type;
+  msgEl.textContent = text;
+  setTimeout(function() {
+    msgEl.classList.remove('active');
+  }, 4000);
+}
+
+// ======== ユーティリティ ========
+
+/**
+ * HTMLエスケープ
+ * @param {string} str - エスケープする文字列
+ * @returns {string} エスケープ済み文字列
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/**
+ * ステータスの日本語ラベルを取得
+ * @param {string} status - ステータスコード
+ * @returns {string} 日本語ラベル
+ */
+function getStatusLabel(status) {
+  var labels = {
+    'uploaded': 'アップロード済',
+    'analysis_processing': '解析中',
+    'analysis_completed': '解析完了',
+    'vr_ready': 'VR準備完了',
+    'error': 'エラー',
+  };
+  return labels[status] || status || '-';
+}
+
+/**
+ * 日付を表示用にフォーマット
+ * @param {string} dateStr - ISO形式の日付文字列
+ * @returns {string} フォーマット済み日付
+ */
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  try {
+    var d = new Date(dateStr);
+    return d.toLocaleDateString('ja-JP', {
+      month: 'numeric', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+/**
+ * JSONフィールドを表示用にフォーマット
+ * @param {*} value - 値（配列、文字列、など）
+ * @returns {string} 表示用文字列
+ */
+function formatJsonField(value) {
+  if (!value) return '-';
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'string') {
+    try {
+      var parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.join(', ');
+      return value;
+    } catch (e) {
+      return value;
+    }
+  }
+  return String(value);
+}
+
+// ======== ドラッグ＆ドロップ ========
+
+/**
+ * ドラッグ＆ドロップを初期化する
+ */
+function initDragDrop() {
+  var wrapper = document.querySelector('.file-input-wrapper');
+  if (!wrapper) return;
+
+  ['dragenter', 'dragover'].forEach(function(event) {
+    wrapper.addEventListener(event, function(e) {
+      e.preventDefault();
+      wrapper.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(function(event) {
+    wrapper.addEventListener(event, function(e) {
+      e.preventDefault();
+      wrapper.classList.remove('dragover');
+    });
+  });
+
+  wrapper.addEventListener('drop', function(e) {
+    var fileInput = document.getElementById('image-file');
+    if (e.dataTransfer.files.length > 0 && fileInput) {
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelect(fileInput);
+    }
+  });
+}
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+  initDragDrop();
+});
+</script>

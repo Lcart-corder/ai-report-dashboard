@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>おえかき金魚VR体験 - おえかきアップロード</title>
+  <?!= include('styles') ?>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ヘッダー -->
+    <div class="header">
+      <h1>&#x1F41F; おえかき金魚VR体験 &#x1F41F;</h1>
+      <p>きんぎょのえをかいて、VRの世界でおよがせよう！</p>
+    </div>
+
+    <!-- アップロードフォーム -->
+    <div class="card">
+      <h2>&#x1F3A8; きんぎょのえをアップロード</h2>
+
+      <div id="upload-form">
+        <!-- お名前 -->
+        <div class="form-group">
+          <label for="child-name">&#x2728; おなまえ</label>
+          <input type="text" id="child-name" placeholder="おなまえをいれてね" maxlength="50" autocomplete="off">
+        </div>
+
+        <!-- タイトル -->
+        <div class="form-group">
+          <label for="title">&#x1F3B5; きんぎょのなまえ（タイトル）</label>
+          <input type="text" id="title" placeholder="きんぎょにすてきななまえをつけてね" maxlength="100" autocomplete="off">
+        </div>
+
+        <!-- ファイル選択 -->
+        <div class="form-group">
+          <label>&#x1F5BC;&#xFE0F; きんぎょのえ</label>
+          <div class="file-input-wrapper">
+            <input type="file" id="image-file" accept="image/*" onchange="handleFileSelect(this)">
+            <div class="file-icon">&#x1F4F7;</div>
+            <p>ここをタップして、えをえらんでね<br><small>PNG, JPEG, GIF, WebP（10MBまで）</small></p>
+          </div>
+        </div>
+
+        <!-- プレビュー -->
+        <div id="preview-area" class="preview-area">
+          <img id="preview-image" src="" alt="プレビュー">
+          <p class="file-name" id="file-name"></p>
+        </div>
+
+        <!-- アップロードボタン -->
+        <div class="form-group" style="margin-top: 24px;">
+          <button id="upload-btn" class="btn btn--primary btn--full" onclick="uploadImage()">
+            &#x1F41F; アップロード！
+          </button>
+        </div>
+
+        <!-- メッセージ -->
+        <div id="message" class="message"></div>
+      </div>
+    </div>
+
+    <!-- 使い方ガイド -->
+    <div class="card">
+      <h2>&#x1F4D6; つかいかた</h2>
+      <ol style="padding-left: 20px; line-height: 2;">
+        <li>かみにきんぎょのえをかこう &#x1F3A8;</li>
+        <li>スマホやカメラでえのしゃしんをとろう &#x1F4F8;</li>
+        <li>おなまえときんぎょのなまえをいれよう &#x270D;&#xFE0F;</li>
+        <li>えのしゃしんをえらんでアップロード！ &#x1F680;</li>
+        <li>VRのせかいできんぎょがおよぎだすよ &#x1F30A;</li>
+      </ol>
+    </div>
+
+    <!-- フッター -->
+    <div style="text-align: center; margin-top: 16px; color: #aaa; font-size: 0.8em;">
+      <p>おえかき金魚VR体験システム</p>
+    </div>
+
+  </div>
+
+  <?!= include('scripts') ?>
+</body>
+</html>

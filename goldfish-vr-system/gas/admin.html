@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>おえかき金魚VR - 管理画面</title>
+  <?!= include('styles') ?>
+</head>
+<body>
+  <div class="container container--wide">
+
+    <!-- ヘッダー -->
+    <div class="header header--admin">
+      <h1>&#x1F3DB;&#xFE0F; おえかき金魚VR - 管理画面</h1>
+      <p>作品の管理・解析状況の確認</p>
+    </div>
+
+    <!-- 統計バー -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="stat-total">-</div>
+        <div class="stat-label">総作品数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-analyzed">-</div>
+        <div class="stat-label">解析済み</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-vr-ready">-</div>
+        <div class="stat-label">VR準備完了</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-errors">-</div>
+        <div class="stat-label">エラー</div>
+      </div>
+    </div>
+
+    <!-- メッセージ -->
+    <div id="admin-message" class="message"></div>
+
+    <!-- ツールバー -->
+    <div class="card">
+      <div class="toolbar">
+        <div class="filter-group">
+          <label for="status-filter" style="font-weight:600; font-size:0.9em;">ステータス:</label>
+          <select id="status-filter" onchange="onStatusFilterChange()">
+            <option value="">すべて</option>
+            <option value="uploaded">アップロード済</option>
+            <option value="analysis_processing">解析中</option>
+            <option value="analysis_completed">解析完了</option>
+            <option value="vr_ready">VR準備完了</option>
+            <option value="error">エラー</option>
+          </select>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="auto-refresh-toggle">
+          <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh(this.checked)">
+          <label for="auto-refresh">自動更新（10秒）</label>
+        </div>
+
+        <button class="btn btn--secondary btn--small" onclick="refreshTable()">
+          &#x1F504; 更新
+        </button>
+
+        <a class="btn btn--secondary btn--small" href="<?= getWebAppUrl() ?>" target="_blank">
+          &#x1F3A8; アップロードページ
+        </a>
+      </div>
+
+      <!-- 作品テーブル -->
+      <div class="table-wrapper">
+        <table class="artwork-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名前</th>
+              <th>タイトル</th>
+              <th>ステータス</th>
+              <th>サムネイル</th>
+              <th>アップロード日時</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="artworks-tbody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 40px; color: #aaa;">
+                <div class="spinner spinner--dark"></div>
+                <p style="margin-top: 12px;">読み込み中...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VR連携セクション -->
+    <div class="card">
+      <h2 style="color: #4a90d9;">&#x1F3AE; VRアプリ連携</h2>
+      <p style="margin-bottom: 12px; color: #666; font-size: 0.9em;">
+        外部VRアプリは以下のJSON APIからデータを取得できます。
+      </p>
+      <div style="background: #f5f5f5; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 0.85em; word-break: break-all;">
+        <strong>全作品:</strong> <?= getWebAppUrl() ?>?action=artworks<br>
+        <strong>個別作品:</strong> <?= getWebAppUrl() ?>?action=artwork&amp;id={artwork_id}<br>
+        <strong>VR準備済のみ:</strong> <?= getWebAppUrl() ?>?action=artworks&amp;status=vr_ready
+      </div>
+      <div style="margin-top: 12px;">
+        <a class="btn btn--reanalyze btn--small" href="<?= getVrAppUrl() ?>" target="_blank">
+          &#x1F30A; VRアプリを開く
+        </a>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <div style="text-align: center; margin-top: 16px; color: #aaa; font-size: 0.8em;">
+      <p>おえかき金魚VR体験システム - 管理画面</p>
+    </div>
+
+  </div>
+
+  <?!= include('scripts') ?>
+
+  <script>
+    // 管理画面の初期化
+    function refreshTable() {
+      var filter = document.getElementById('status-filter');
+      fetchArtworks(filter ? filter.value : '');
+    }
+
+    // ページ読み込み時にデータを取得
+    document.addEventListener('DOMContentLoaded', function() {
+      fetchArtworks();
+    });
+  </script>
+</body>
+</html>
