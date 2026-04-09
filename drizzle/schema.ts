@@ -458,3 +458,190 @@ export const staffPermissions = mysqlTable("staff_permissions", {
 
 export type StaffPermission = typeof staffPermissions.$inferSelect;
 export type InsertStaffPermission = typeof staffPermissions.$inferInsert;
+
+// ============================================================
+// Manufacturing AI Troubleshooting System
+// ============================================================
+
+// 製造業向けユーザー（若手オペレーター、先輩エキスパート、管理者）
+export const manufacturingUsers = mysqlTable("manufacturing_users", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"), // Link to main users table
+  name: varchar("name", { length: 128 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  role: mysqlEnum("role", ["operator", "expert", "admin"]).notNull(),
+  department: varchar("department", { length: 128 }), // 所属部署
+  expertise: json("expertise"), // 専門分野 ["溶接", "組立", "検査"]
+  lineUserId: varchar("lineUserId", { length: 128 }), // LINE通知用
+  notificationPreference: mysqlEnum("notificationPreference", ["dashboard", "line", "both"]).default("dashboard").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ManufacturingUser = typeof manufacturingUsers.$inferSelect;
+export type InsertManufacturingUser = typeof manufacturingUsers.$inferInsert;
+
+// ナレッジベースドキュメント（マニュアル、手順書など）
+export const knowledgeDocuments = mysqlTable("knowledge_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  category: varchar("category", { length: 128 }).notNull(), // "マニュアル", "トラブル対応", "手順書"
+  content: text("content").notNull(), // ドキュメント内容
+  tags: json("tags"), // 検索タグ
+  fileUrl: text("fileUrl"), // アップロードファイルURL
+  fileType: varchar("fileType", { length: 32 }), // pdf, docx, etc
+  uploadedBy: int("uploadedBy").notNull(), // manufacturingUsers.id
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type KnowledgeDocument = typeof knowledgeDocuments.$inferSelect;
+export type InsertKnowledgeDocument = typeof knowledgeDocuments.$inferInsert;
+
+// 過去のトラブル対応履歴
+export const troubleshootingHistory = mysqlTable("troubleshooting_history", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  problemDescription: text("problemDescription").notNull(), // 問題の説明
+  rootCause: text("rootCause"), // 根本原因
+  solution: text("solution").notNull(), // 解決策
+  preventiveMeasures: text("preventiveMeasures"), // 再発防止策
+  equipmentType: varchar("equipmentType", { length: 128 }), // 設備タイプ
+  errorCode: varchar("errorCode", { length: 64 }), // エラーコード
+  tags: json("tags"), // 検索タグ
+  resolvedBy: int("resolvedBy").notNull(), // 解決した先輩のID
+  resolutionTime: int("resolutionTime"), // 解決時間（分）
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TroubleshootingHistory = typeof troubleshootingHistory.$inferSelect;
+export type InsertTroubleshootingHistory = typeof troubleshootingHistory.$inferInsert;
+
+// トラブルシューティングセッション
+export const troubleshootingSessions = mysqlTable("troubleshooting_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull().unique(), // UUID
+  operatorId: int("operatorId").notNull(), // 質問者（若手）
+  title: varchar("title", { length: 256 }), // セッションタイトル
+  equipmentType: varchar("equipmentType", { length: 128 }), // 設備タイプ
+  errorCode: varchar("errorCode", { length: 64 }), // エラーコード
+  status: mysqlEnum("status", ["active", "resolved", "escalated", "closed"]).default("active").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TroubleshootingSession = typeof troubleshootingSessions.$inferSelect;
+export type InsertTroubleshootingSession = typeof troubleshootingSessions.$inferInsert;
+
+// トラブルシューティングメッセージ
+export const troubleshootingMessages = mysqlTable("troubleshooting_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(), // troubleshootingSessions.id
+  senderType: mysqlEnum("senderType", ["operator", "ai", "expert"]).notNull(),
+  senderId: int("senderId"), // manufacturingUsers.id (null for AI)
+  content: text("content").notNull(),
+  messageType: mysqlEnum("messageType", ["text", "image", "file"]).default("text").notNull(),
+  fileUrl: text("fileUrl"),
+  confidence: int("confidence"), // AI回答の信頼度 (0-100)
+  sourceReferences: json("sourceReferences"), // AIが参照したナレッジのID
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TroubleshootingMessage = typeof troubleshootingMessages.$inferSelect;
+export type InsertTroubleshootingMessage = typeof troubleshootingMessages.$inferInsert;
+
+// フローチャートノード（問題解決フロー）
+export const flowNodes = mysqlTable("flow_nodes", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(), // troubleshootingSessions.id
+  nodeType: mysqlEnum("nodeType", ["start", "problem", "check", "action", "solution", "escalation"]).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["pending", "current", "completed", "failed"]).default("pending").notNull(),
+  parentNodeId: int("parentNodeId"), // 親ノード
+  position: json("position"), // { x, y } for rendering
+  metadata: json("metadata"), // 追加情報
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FlowNode = typeof flowNodes.$inferSelect;
+export type InsertFlowNode = typeof flowNodes.$inferInsert;
+
+// タイムラインイベント
+export const timelineEvents = mysqlTable("timeline_events", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  eventType: mysqlEnum("eventType", ["session_start", "message", "ai_response", "escalation", "expert_join", "solution_found", "session_close"]).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  actorId: int("actorId"), // 誰がアクションしたか
+  actorType: mysqlEnum("actorType", ["operator", "ai", "expert", "system"]),
+  relatedMessageId: int("relatedMessageId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TimelineEvent = typeof timelineEvents.$inferSelect;
+export type InsertTimelineEvent = typeof timelineEvents.$inferInsert;
+
+// エスカレーション
+export const escalations = mysqlTable("escalations", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  requestedBy: int("requestedBy").notNull(), // AIまたはオペレーター
+  assignedTo: int("assignedTo"), // 担当する先輩
+  reason: text("reason").notNull(), // エスカレーション理由
+  status: mysqlEnum("status", ["pending", "assigned", "in_progress", "resolved", "cancelled"]).default("pending").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  notificationMethod: mysqlEnum("notificationMethod", ["dashboard", "line", "both"]).default("dashboard").notNull(),
+  notifiedAt: timestamp("notifiedAt"),
+  respondedAt: timestamp("respondedAt"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Escalation = typeof escalations.$inferSelect;
+export type InsertEscalation = typeof escalations.$inferInsert;
+
+// 通知
+export const manufacturingNotifications = mysqlTable("manufacturing_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // manufacturingUsers.id
+  type: mysqlEnum("type", ["escalation", "message", "resolution", "system"]).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  relatedSessionId: int("relatedSessionId"),
+  relatedEscalationId: int("relatedEscalationId"),
+  isRead: boolean("isRead").default(false).notNull(),
+  notificationMethod: mysqlEnum("notificationMethod", ["dashboard", "line", "both"]).default("dashboard").notNull(),
+  lineSentAt: timestamp("lineSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ManufacturingNotification = typeof manufacturingNotifications.$inferSelect;
+export type InsertManufacturingNotification = typeof manufacturingNotifications.$inferInsert;
+
+// AI学習データ（先輩の回答蓄積）
+export const aiLearningData = mysqlTable("ai_learning_data", {
+  id: int("id").autoincrement().primaryKey(),
+  question: text("question").notNull(), // 元の質問
+  answer: text("answer").notNull(), // 先輩の回答
+  category: varchar("category", { length: 128 }),
+  tags: json("tags"),
+  expertId: int("expertId").notNull(), // 回答した先輩
+  sessionId: int("sessionId"), // 関連セッション
+  qualityScore: int("qualityScore"), // 回答の品質スコア (1-5)
+  usageCount: int("usageCount").default(0).notNull(), // 参照回数
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AiLearningData = typeof aiLearningData.$inferSelect;
+export type InsertAiLearningData = typeof aiLearningData.$inferInsert;

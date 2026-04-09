@@ -45,7 +45,10 @@ import {
   Truck,
   Package,
   Bell,
-  QrCode
+  QrCode,
+  Wrench,
+  AlertTriangle,
+  Database
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -69,6 +72,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
     "/rakuten": true,
     "/analysis": true,
     "/ai": true,
+    "/manufacturing": true,
     "/integrations": true,
     "/admin": true,
     "/orders": true
@@ -182,9 +186,9 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "サイト計測設定", href: "/analysis/site", icon: Globe }
       ]
     },
-    { 
-      icon: Bot, 
-      label: "AI", 
+    {
+      icon: Bot,
+      label: "AI",
       href: "/ai",
       subItems: [
         { label: "分析レポート", href: "/ai/reports", icon: FileBarChart },
@@ -192,8 +196,20 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         { label: "モデル設定", href: "/ai/settings", icon: Sliders }
       ]
     },
-    { 
-      icon: LinkIcon, 
+    {
+      icon: Wrench,
+      label: "製造AI",
+      href: "/manufacturing",
+      subItems: [
+        { label: "ダッシュボード", href: "/manufacturing", icon: LayoutDashboard },
+        { label: "AIトラブルシュート", href: "/manufacturing/chat", icon: MessageSquare },
+        { label: "ナレッジベース", href: "/manufacturing/knowledge", icon: Database },
+        { label: "エスカレーション", href: "/manufacturing/escalations", icon: AlertTriangle },
+        { label: "設定", href: "/manufacturing/settings", icon: Settings }
+      ]
+    },
+    {
+      icon: LinkIcon,
       label: "連携", 
       href: "/admin/integrations",
       subItems: [
