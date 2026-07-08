@@ -1124,12 +1124,24 @@ export async function getNotificationLogs(limit = 200) {
   return db.select().from(notificationLogs).orderBy(desc(notificationLogs.createdAt)).limit(limit);
 }
 
-/** リマインド対象を自動抽出(未ログイン/期限接近/テスト未受験/期限切れ)。 */
-export async function detectReminderTargets(companyId?: number) {
+/**
+ * リマインド対象を自動抽出(未ログイン/期限接近/テスト未受験/期限切れ)。
+ * @param companyId 単一企業に絞る場合
+ * @param scopeCompanyIds アクセス制御スコープ。null=無制限, []=対象なし
+ */
+export async function detectReminderTargets(companyId?: number, scopeCompanyIds?: number[] | null) {
   const db = await getDb();
   if (!db) return [] as Array<{ enrollmentId: number; learnerId: number; learnerName: string; courseId: number; reason: string; reasonLabel: string; dueDate: string | null }>;
+  if (scopeCompanyIds !== null && scopeCompanyIds !== undefined && scopeCompanyIds.length === 0 && companyId == null) return [];
 
-  const learnerRows = companyId ? await db.select().from(learners).where(eq(learners.companyId, companyId)) : await db.select().from(learners);
+  let learnerRows;
+  if (companyId != null) {
+    learnerRows = await db.select().from(learners).where(eq(learners.companyId, companyId));
+  } else if (scopeCompanyIds && scopeCompanyIds.length > 0) {
+    learnerRows = await db.select().from(learners).where(inArray(learners.companyId, scopeCompanyIds));
+  } else {
+    learnerRows = await db.select().from(learners);
+  }
   const learnerMap = new Map(learnerRows.map(l => [l.id, l]));
   const learnerIds = learnerRows.map(l => l.id);
   if (learnerIds.length === 0) return [];
@@ -1583,4 +1595,23 @@ export async function canAccessCompanyIdentity(id: LmsIdentity | null, companyId
   const ids = await accessibleCompanyIdsForIdentity(id);
   if (ids === null) return true;
   return ids.includes(companyId);
+}
+
+/** identity が指定受講者(learner)にアクセスできるか(受講者の所属企業で判定)。 */
+export async function canAccessLearnerIdentity(id: LmsIdentity | null, learnerId: number): Promise<boolean> {
+  const learner = await getLearnerById(learnerId);
+  if (!learner) return false;
+  return canAccessCompanyIdentity(id, learner.companyId);
+}
+
+/** identity が指定受講割当(enrollment)にアクセスできるか。 */
+export async function canAccessEnrollmentIdentity(id: LmsIdentity | null, enrollmentId: number): Promise<boolean> {
+  const enrollment = await getEnrollmentById(enrollmentId);
+  if (!enrollment) return false;
+  return canAccessLearnerIdentity(id, enrollment.learnerId);
+}
+
+/** 受講者・受講割当の管理(登録/割当/リマインド)が可能なロールか。 */
+export function canManageLearners(role: LmsRole): boolean {
+  return role === "operator_admin" || role === "project_manager" || role === "company_rep";
 }

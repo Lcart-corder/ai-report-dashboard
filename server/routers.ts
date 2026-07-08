@@ -193,7 +193,13 @@ export const appRouter = router({
 
     // --- 協業先 (FR-17) ---
     partners: router({
-      list: protectedProcedure.query(async () => lms.getAllPartners()),
+      // 運営=全件、協業先管理者=自社のみ、他=空(ドロップダウン等で共有されるため例外にしない)
+      list: lmsProcedure.query(async ({ ctx }) => {
+        const all = await lms.getAllPartners();
+        if (ctx.lms.role === "operator_admin") return all;
+        if (ctx.lms.role === "partner_admin") return all.filter(p => p.id === ctx.lms.partnerId);
+        return [];
+      }),
       create: operatorProcedure.input(z.object({
         name: z.string().min(1),
         contactName: z.string().optional(),
@@ -209,7 +215,10 @@ export const appRouter = router({
         successFeeRate: z.number().int().min(0).max(100).optional(),
         isActive: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updatePartner(input.id, input)),
-      sales: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getPartnerSales(input.partnerId)),
+      sales: lmsProcedure.input(z.object({ partnerId: z.number() })).query(async ({ ctx, input }) => {
+        if (ctx.lms.role !== "operator_admin" && ctx.lms.partnerId !== input.partnerId) throw new TRPCError({ code: "FORBIDDEN", message: "この協業先にアクセスできません" });
+        return lms.getPartnerSales(input.partnerId);
+      }),
       recordSale: operatorProcedure.input(z.object({
         partnerId: z.number(),
         companyId: z.number().optional(),
@@ -219,8 +228,14 @@ export const appRouter = router({
       })).mutation(async ({ input }) => lms.recordPartnerSale(input)),
       // 成果報酬 = 研修売上 × 20% (助成金受給額には非連動 / FR-18)
       calcFee: operatorProcedure.input(z.object({ partnerSaleId: z.number() })).mutation(async ({ input }) => lms.calcSuccessFee(input.partnerSaleId)),
-      fees: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getSuccessFees(input.partnerId)),
-      monthlyReport: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getMonthlyPartnerReport(input.partnerId)),
+      fees: lmsProcedure.input(z.object({ partnerId: z.number() })).query(async ({ ctx, input }) => {
+        if (ctx.lms.role !== "operator_admin" && ctx.lms.partnerId !== input.partnerId) throw new TRPCError({ code: "FORBIDDEN", message: "この協業先にアクセスできません" });
+        return lms.getSuccessFees(input.partnerId);
+      }),
+      monthlyReport: lmsProcedure.input(z.object({ partnerId: z.number() })).query(async ({ ctx, input }) => {
+        if (ctx.lms.role !== "operator_admin" && ctx.lms.partnerId !== input.partnerId) throw new TRPCError({ code: "FORBIDDEN", message: "この協業先にアクセスできません" });
+        return lms.getMonthlyPartnerReport(input.partnerId);
+      }),
     }),
 
     // --- 導入企業 / 事業所 (FR-03) ---
@@ -269,7 +284,10 @@ export const appRouter = router({
 
     // --- マスターキー (FR-02) ---
     masterKeys: router({
-      list: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getMasterKeysByCompany(input.companyId)),
+      list: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.getMasterKeysByCompany(input.companyId);
+      }),
       issue: operatorProcedure.input(z.object({
         companyId: z.number(),
         expiresAt: z.string().nullable().optional(),
@@ -285,8 +303,13 @@ export const appRouter = router({
         if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業の受講者にアクセスできません" });
         return lms.getLearnersByCompany(input.companyId);
       }),
-      getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getLearnerById(input.id)),
-      create: protectedProcedure.input(z.object({
+      getById: lmsProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+        // 本人(会社員)は自分を、管理系は担当企業の受講者を閲覧可
+        if (ctx.lms.role === "employee" && ctx.lms.learnerId === input.id) return lms.getLearnerById(input.id);
+        if (!(await lms.canAccessLearnerIdentity(ctx.lms, input.id))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講者にアクセスできません" });
+        return lms.getLearnerById(input.id);
+      }),
+      create: lmsProcedure.input(z.object({
         companyId: z.number(),
         branchId: z.number().optional(),
         name: z.string().min(1),
@@ -295,8 +318,12 @@ export const appRouter = router({
         preferredChannel: z.enum(["email", "line", "app"]).optional(),
         employeeNumber: z.string().optional(),
         department: z.string().optional(),
-      })).mutation(async ({ input }) => lms.createLearner({ ...input, status: "invited" })),
-      bulkCreate: protectedProcedure.input(z.object({
+      })).mutation(async ({ ctx, input }) => {
+        if (!lms.canManageLearners(ctx.lms.role)) throw new TRPCError({ code: "FORBIDDEN", message: "受講者を登録する権限がありません" });
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業に受講者を登録できません" });
+        return lms.createLearner({ ...input, status: "invited" });
+      }),
+      bulkCreate: lmsProcedure.input(z.object({
         companyId: z.number(),
         rows: z.array(z.object({
           name: z.string().min(1),
@@ -304,8 +331,12 @@ export const appRouter = router({
           employeeNumber: z.string().optional(),
           department: z.string().optional(),
         })),
-      })).mutation(async ({ input }) => lms.bulkCreateLearners(input.companyId, input.rows)),
-      update: protectedProcedure.input(z.object({
+      })).mutation(async ({ ctx, input }) => {
+        if (!lms.canManageLearners(ctx.lms.role)) throw new TRPCError({ code: "FORBIDDEN", message: "受講者を登録する権限がありません" });
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業に受講者を登録できません" });
+        return lms.bulkCreateLearners(input.companyId, input.rows);
+      }),
+      update: lmsProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
         email: z.string().email().optional(),
@@ -313,7 +344,11 @@ export const appRouter = router({
         preferredChannel: z.enum(["email", "line", "app"]).optional(),
         department: z.string().optional(),
         status: z.enum(["invited", "active", "delayed", "completed", "expired", "suspended"]).optional(),
-      })).mutation(async ({ input }) => lms.updateLearner(input.id, input)),
+      })).mutation(async ({ ctx, input }) => {
+        if (!lms.canManageLearners(ctx.lms.role)) throw new TRPCError({ code: "FORBIDDEN", message: "受講者を編集する権限がありません" });
+        if (!(await lms.canAccessLearnerIdentity(ctx.lms, input.id))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講者を編集できません" });
+        return lms.updateLearner(input.id, input);
+      }),
     }),
 
     // --- コース / レッスン (FR-05, FR-06) ---
@@ -373,11 +408,15 @@ export const appRouter = router({
       byCourse: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getEnrollmentsByCourse(input.courseId)),
       byLearner: protectedProcedure.input(z.object({ learnerId: z.number() })).query(async ({ input }) => lms.getEnrollmentsByLearner(input.learnerId)),
       getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getEnrollmentById(input.id)),
-      assign: protectedProcedure.input(z.object({
+      assign: lmsProcedure.input(z.object({
         learnerId: z.number(),
         courseId: z.number(),
         dueDate: z.string().nullable().optional(),
-      })).mutation(async ({ input }) => lms.assignEnrollment(input.learnerId, input.courseId, input.dueDate)),
+      })).mutation(async ({ ctx, input }) => {
+        if (!lms.canManageLearners(ctx.lms.role)) throw new TRPCError({ code: "FORBIDDEN", message: "コース割当の権限がありません" });
+        if (!(await lms.canAccessLearnerIdentity(ctx.lms, input.learnerId))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講者にコースを割り当てできません" });
+        return lms.assignEnrollment(input.learnerId, input.courseId, input.dueDate);
+      }),
       recalc: protectedProcedure.input(z.object({ enrollmentId: z.number() })).mutation(async ({ input }) => lms.recalcEnrollment(input.enrollmentId)),
       progressLogs: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getProgressLogs(input.enrollmentId)),
       checks: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getChecks(input.enrollmentId)),
@@ -446,38 +485,57 @@ export const appRouter = router({
         howToApply: z.string().optional(),
         submit: z.boolean().default(false),
       })).mutation(async ({ input }) => lms.upsertLearningReport(input)),
-      review: protectedProcedure.input(z.object({
+      review: lmsProcedure.input(z.object({
         reportId: z.number(),
         action: z.enum(["approve", "return"]),
         comment: z.string().optional(),
-      })).mutation(async ({ input }) => lms.reviewLearningReport(input.reportId, input.action, input.comment)),
+      })).mutation(async ({ ctx, input }) => {
+        const ok = ctx.lms.role === "operator_admin" || ctx.lms.role === "advisor" || ctx.lms.role === "project_manager" || ctx.lms.role === "company_rep";
+        if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "レポートを差戻し・承認する権限がありません" });
+        return lms.reviewLearningReport(input.reportId, input.action, input.comment);
+      }),
     }),
 
     // --- 修了証 (FR-12) ---
     certificates: router({
-      issue: protectedProcedure.input(z.object({ enrollmentId: z.number(), issuer: z.string().optional() })).mutation(async ({ input }) => lms.issueCertificate(input.enrollmentId, input.issuer)),
+      issue: lmsProcedure.input(z.object({ enrollmentId: z.number(), issuer: z.string().optional() })).mutation(async ({ ctx, input }) => {
+        const canSelf = ctx.lms.role === "employee";
+        if (!canSelf && !(await lms.canAccessEnrollmentIdentity(ctx.lms, input.enrollmentId))) throw new TRPCError({ code: "FORBIDDEN", message: "この修了証を発行できません" });
+        return lms.issueCertificate(input.enrollmentId, input.issuer);
+      }),
       getByEnrollment: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getCertificateByEnrollment(input.enrollmentId)),
-      byCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getCertificatesByCompany(input.companyId)),
+      byCompany: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.getCertificatesByCompany(input.companyId);
+      }),
       byCourse: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getCertificatesByCourse(input.courseId)),
       recordDownload: protectedProcedure.input(z.object({ id: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => lms.recordCertificateDownload(input.id, input.actor)),
     }),
 
     // --- 申請準備チェックリスト (FR-16) ---
     checklist: router({
-      compute: protectedProcedure.input(z.object({ companyId: z.number(), courseId: z.number() })).query(async ({ input }) => lms.computeApplicationChecklist(input.companyId, input.courseId)),
-      setAdvisorReview: protectedProcedure.input(z.object({
+      compute: lmsProcedure.input(z.object({ companyId: z.number(), courseId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.computeApplicationChecklist(input.companyId, input.courseId);
+      }),
+      setAdvisorReview: lmsProcedure.input(z.object({
         companyId: z.number(),
         courseId: z.number(),
         reviewed: z.boolean(),
         comment: z.string().optional(),
-      })).mutation(async ({ input }) => lms.setAdvisorReview(input.companyId, input.courseId, input.reviewed, input.comment)),
+      })).mutation(async ({ ctx, input }) => {
+        const ok = ctx.lms.role === "operator_admin" || ctx.lms.role === "advisor" || ctx.lms.role === "project_manager";
+        if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "社労士確認を更新する権限がありません" });
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.setAdvisorReview(input.companyId, input.courseId, input.reviewed, input.comment);
+      }),
     }),
 
     // --- 証跡出力CSV (FR-15) ---
     exports: router({
-      courseProgressCsv: protectedProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => ({ csv: await lms.exportCourseProgressCsv(input.courseId, input.actor) })),
-      tenHourCompletersCsv: protectedProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportTenHourCompletersCsv(input?.actor) })),
-      priceJustificationCsv: protectedProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportPriceJustificationCsv(input?.actor) })),
+      courseProgressCsv: operatorProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => ({ csv: await lms.exportCourseProgressCsv(input.courseId, input.actor) })),
+      tenHourCompletersCsv: operatorProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportTenHourCompletersCsv(input?.actor) })),
+      priceJustificationCsv: operatorProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportPriceJustificationCsv(input?.actor) })),
     }),
 
     // --- 通知・リマインド (FR-14) ---
@@ -498,14 +556,24 @@ export const appRouter = router({
       })).mutation(async ({ input }) => lms.updateNotification(input.id, input)),
       delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteNotification(input.id)),
       logs: protectedProcedure.input(z.object({ limit: z.number().int().positive().max(1000).optional() }).optional()).query(async ({ input }) => lms.getNotificationLogs(input?.limit)),
-      reminderTargets: protectedProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ input }) => lms.detectReminderTargets(input?.companyId)),
-      send: protectedProcedure.input(z.object({
+      reminderTargets: lmsProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        if (input?.companyId != null && scope !== null && !scope.includes(input.companyId)) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.detectReminderTargets(input?.companyId, scope);
+      }),
+      send: lmsProcedure.input(z.object({
         learnerIds: z.array(z.number()),
         channel: z.string().default("email"), // "email" | "line" | "app" | "auto"(受講者の希望チャネル)
         notificationId: z.number().optional(),
         subject: z.string().optional(),
         body: z.string().optional(),
-      })).mutation(async ({ input }) => lms.sendReminders(input)),
+      })).mutation(async ({ ctx, input }) => {
+        if (!lms.canManageLearners(ctx.lms.role)) throw new TRPCError({ code: "FORBIDDEN", message: "リマインド送信の権限がありません" });
+        for (const lid of input.learnerIds) {
+          if (!(await lms.canAccessLearnerIdentity(ctx.lms, lid))) throw new TRPCError({ code: "FORBIDDEN", message: "アクセス権のない受講者が含まれています" });
+        }
+        return lms.sendReminders(input);
+      }),
     }),
 
     // --- プロジェクト(案件単位の管理) ---
@@ -572,9 +640,21 @@ export const appRouter = router({
 
     // --- 社労士・申請確認者(証跡確認) ---
     advisor: router({
-      companyOverview: protectedProcedure.query(async () => lms.getAdvisorCompanyOverview()),
-      learnerEvidence: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getLearnerEvidence(input.enrollmentId)),
-      certificatesByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getCertificatesByCompany(input.companyId)),
+      companyOverview: lmsProcedure.query(async ({ ctx }) => {
+        const all = await lms.getAdvisorCompanyOverview();
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        if (scope === null) return all;
+        const set = new Set(scope);
+        return all.filter(c => set.has(c.id));
+      }),
+      learnerEvidence: lmsProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessEnrollmentIdentity(ctx.lms, input.enrollmentId))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講証跡にアクセスできません" });
+        return lms.getLearnerEvidence(input.enrollmentId);
+      }),
+      certificatesByCompany: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.getCertificatesByCompany(input.companyId);
+      }),
     }),
 
     // --- 監査ログ (FR-19) ---
