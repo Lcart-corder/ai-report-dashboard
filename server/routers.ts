@@ -2,9 +2,34 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import * as lms from "./lms";
+
+// ============================================================
+// LMS 認証統合: ログイン中ユーザーのロール/スコープを解決する procedure 群
+// ============================================================
+
+/** LMSアクセス権を要求し、ctx.lms に identity(role/scope) を載せる。 */
+const lmsProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const identity = await lms.resolveLmsIdentity(ctx.user);
+  if (!identity) throw new TRPCError({ code: "FORBIDDEN", message: "LMSへのアクセス権がありません" });
+  return next({ ctx: { ...ctx, lms: identity } });
+});
+
+/** 運営管理者(operator_admin)のみ。企業/協業先/権限/マスターキー等の管理操作に使用。 */
+const operatorProcedure = lmsProcedure.use(async ({ ctx, next }) => {
+  if (ctx.lms.role !== "operator_admin") throw new TRPCError({ code: "FORBIDDEN", message: "運営管理者のみ実行できます" });
+  return next();
+});
+
+/** コンテンツ管理権限(運営 / 講師 / プロジェクト管理者)。コース・教材・テストの編集に使用。 */
+const contentProcedure = lmsProcedure.use(async ({ ctx, next }) => {
+  const ok = ctx.lms.role === "operator_admin" || ctx.lms.role === "instructor" || ctx.lms.role === "project_manager";
+  if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "コンテンツ管理権限がありません" });
+  return next();
+});
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -151,22 +176,32 @@ export const appRouter = router({
   // 助成金対応リスキリング動画学習システム (LMS)
   // ============================================================
   lms: router({
-    // --- ダッシュボード (FR-13) ---
-    dashboard: protectedProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ input }) => {
-      return lms.getDashboardStats(input?.companyId);
+    // --- 現在ユーザーのロール/スコープ (認証統合) ---
+    me: protectedProcedure.query(async ({ ctx }) => {
+      return lms.resolveLmsIdentity(ctx.user);
+    }),
+
+    // --- ダッシュボード (FR-13) — アクセス可能企業に自動スコープ ---
+    dashboard: lmsProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
+      const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+      // 単一企業指定時はアクセス可否を検証
+      if (input?.companyId != null && scope !== null && !scope.includes(input.companyId)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "この企業のデータにアクセスできません" });
+      }
+      return lms.getDashboardStats(input?.companyId, scope);
     }),
 
     // --- 協業先 (FR-17) ---
     partners: router({
       list: protectedProcedure.query(async () => lms.getAllPartners()),
-      create: protectedProcedure.input(z.object({
+      create: operatorProcedure.input(z.object({
         name: z.string().min(1),
         contactName: z.string().optional(),
         contactEmail: z.string().email().optional(),
         successFeeRate: z.number().int().min(0).max(100).default(20),
         contractNote: z.string().optional(),
       })).mutation(async ({ input }) => lms.createPartner(input)),
-      update: protectedProcedure.input(z.object({
+      update: operatorProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
         contactName: z.string().optional(),
@@ -175,7 +210,7 @@ export const appRouter = router({
         isActive: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updatePartner(input.id, input)),
       sales: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getPartnerSales(input.partnerId)),
-      recordSale: protectedProcedure.input(z.object({
+      recordSale: operatorProcedure.input(z.object({
         partnerId: z.number(),
         companyId: z.number().optional(),
         yearMonth: z.string().regex(/^\d{4}-\d{2}$/),
@@ -183,16 +218,27 @@ export const appRouter = router({
         note: z.string().optional(),
       })).mutation(async ({ input }) => lms.recordPartnerSale(input)),
       // 成果報酬 = 研修売上 × 20% (助成金受給額には非連動 / FR-18)
-      calcFee: protectedProcedure.input(z.object({ partnerSaleId: z.number() })).mutation(async ({ input }) => lms.calcSuccessFee(input.partnerSaleId)),
+      calcFee: operatorProcedure.input(z.object({ partnerSaleId: z.number() })).mutation(async ({ input }) => lms.calcSuccessFee(input.partnerSaleId)),
       fees: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getSuccessFees(input.partnerId)),
       monthlyReport: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getMonthlyPartnerReport(input.partnerId)),
     }),
 
     // --- 導入企業 / 事業所 (FR-03) ---
     companies: router({
-      list: protectedProcedure.query(async () => lms.getAllCompanies()),
-      getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getCompanyById(input.id)),
-      create: protectedProcedure.input(z.object({
+      // アクセス可能企業のみ返す(operator=全件)
+      list: lmsProcedure.query(async ({ ctx }) => {
+        const all = await lms.getAllCompanies();
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        if (scope === null) return all;
+        const set = new Set(scope);
+        return all.filter(c => set.has(c.id));
+      }),
+      getById: lmsProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        if (scope !== null && !scope.includes(input.id)) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.getCompanyById(input.id);
+      }),
+      create: operatorProcedure.input(z.object({
         partnerId: z.number().optional(),
         name: z.string().min(1),
         corporateNumber: z.string().optional(),
@@ -202,15 +248,18 @@ export const appRouter = router({
         contractStartDate: z.string().optional(),
         contractEndDate: z.string().optional(),
       })).mutation(async ({ input }) => lms.createCompany(input)),
-      update: protectedProcedure.input(z.object({
+      update: operatorProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
         address: z.string().optional(),
         contactName: z.string().optional(),
         isActive: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updateCompany(input.id, input)),
-      branches: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getBranchesByCompany(input.companyId)),
-      createBranch: protectedProcedure.input(z.object({
+      branches: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+        return lms.getBranchesByCompany(input.companyId);
+      }),
+      createBranch: operatorProcedure.input(z.object({
         companyId: z.number(),
         name: z.string().min(1),
         insuranceOfficeNumber: z.string().optional(),
@@ -221,18 +270,21 @@ export const appRouter = router({
     // --- マスターキー (FR-02) ---
     masterKeys: router({
       list: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getMasterKeysByCompany(input.companyId)),
-      issue: protectedProcedure.input(z.object({
+      issue: operatorProcedure.input(z.object({
         companyId: z.number(),
         expiresAt: z.string().nullable().optional(),
         maxUses: z.number().int().positive().nullable().optional(),
       })).mutation(async ({ input }) => lms.issueMasterKey(input.companyId, { expiresAt: input.expiresAt, maxUses: input.maxUses })),
-      deactivate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deactivateMasterKey(input.id)),
+      deactivate: operatorProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deactivateMasterKey(input.id)),
       validate: publicProcedure.input(z.object({ keyCode: z.string() })).query(async ({ input }) => lms.validateMasterKey(input.keyCode)),
     }),
 
     // --- 受講者 (FR-04) ---
     learners: router({
-      listByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getLearnersByCompany(input.companyId)),
+      listByCompany: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+        if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業の受講者にアクセスできません" });
+        return lms.getLearnersByCompany(input.companyId);
+      }),
       getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getLearnerById(input.id)),
       create: protectedProcedure.input(z.object({
         companyId: z.number(),
@@ -269,7 +321,7 @@ export const appRouter = router({
       list: protectedProcedure.query(async () => lms.getAllCourses()),
       getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getCourseById(input.id)),
       duration: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getCourseDuration(input.id)),
-      create: protectedProcedure.input(z.object({
+      create: contentProcedure.input(z.object({
         name: z.string().min(1),
         description: z.string().optional(),
         standardMinutes: z.number().int().min(0).default(0),
@@ -284,7 +336,7 @@ export const appRouter = router({
         supportFee: z.number().int().min(0).default(0),
         visibility: z.enum(["public", "private", "company_limited"]).default("private"),
       })).mutation(async ({ input }) => lms.createCourse(input)),
-      update: protectedProcedure.input(z.object({
+      update: contentProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
         description: z.string().optional(),
@@ -295,7 +347,7 @@ export const appRouter = router({
         visibility: z.enum(["public", "private", "company_limited"]).optional(),
       })).mutation(async ({ input }) => lms.updateCourse(input.id, input)),
       lessons: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getLessonsByCourse(input.courseId)),
-      createLesson: protectedProcedure.input(z.object({
+      createLesson: contentProcedure.input(z.object({
         courseId: z.number(),
         title: z.string().min(1),
         chapter: z.string().optional(),
@@ -305,7 +357,7 @@ export const appRouter = router({
         requireSequential: z.boolean().default(false),
         isRequired: z.boolean().default(true),
       })).mutation(async ({ input }) => lms.createLesson(input)),
-      updateLesson: protectedProcedure.input(z.object({
+      updateLesson: contentProcedure.input(z.object({
         id: z.number(),
         title: z.string().optional(),
         videoUrl: z.string().optional(),
@@ -313,7 +365,7 @@ export const appRouter = router({
         sortOrder: z.number().int().optional(),
         isRequired: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updateLesson(input.id, input)),
-      deleteLesson: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteLesson(input.id)),
+      deleteLesson: contentProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteLesson(input.id)),
     }),
 
     // --- 受講割当 / 進捗 (FR-11) ---
@@ -350,7 +402,7 @@ export const appRouter = router({
     quizzes: router({
       byCourse: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getQuizzesByCourse(input.courseId)),
       getWithQuestions: protectedProcedure.input(z.object({ quizId: z.number() })).query(async ({ input }) => lms.getQuizWithQuestions(input.quizId)),
-      create: protectedProcedure.input(z.object({
+      create: contentProcedure.input(z.object({
         courseId: z.number(),
         title: z.string().min(1),
         passingScore: z.number().int().min(0).max(100).default(80),
@@ -358,7 +410,7 @@ export const appRouter = router({
         timeLimitMinutes: z.number().int().positive().nullable().optional(),
         shuffleQuestions: z.boolean().default(false),
       })).mutation(async ({ input }) => lms.createQuiz(input)),
-      addQuestion: protectedProcedure.input(z.object({
+      addQuestion: contentProcedure.input(z.object({
         quizId: z.number(),
         questionText: z.string().min(1),
         questionType: z.enum(["single", "multiple", "text"]).default("single"),
@@ -459,51 +511,48 @@ export const appRouter = router({
     // --- プロジェクト(案件単位の管理) ---
     projects: router({
       list: protectedProcedure.query(async () => lms.getProjects()),
-      create: protectedProcedure.input(z.object({
+      create: operatorProcedure.input(z.object({
         name: z.string().min(1),
         partnerId: z.number().optional(),
         description: z.string().optional(),
       })).mutation(async ({ input }) => lms.createProject(input)),
-      update: protectedProcedure.input(z.object({
+      update: operatorProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
         description: z.string().optional(),
         status: z.enum(["active", "closed"]).optional(),
       })).mutation(async ({ input }) => lms.updateProject(input.id, input)),
       companies: protectedProcedure.input(z.object({ projectId: z.number() })).query(async ({ input }) => lms.getCompaniesByProject(input.projectId)),
-      assignCompany: protectedProcedure.input(z.object({ companyId: z.number(), projectId: z.number().nullable() })).mutation(async ({ input }) => lms.assignCompanyToProject(input.companyId, input.projectId)),
+      assignCompany: operatorProcedure.input(z.object({ companyId: z.number(), projectId: z.number().nullable() })).mutation(async ({ input }) => lms.assignCompanyToProject(input.companyId, input.projectId)),
     }),
 
     // --- メンバー(ロール付き管理アカウント) ---
     members: router({
-      list: protectedProcedure.query(async () => lms.getMembers()),
-      create: protectedProcedure.input(z.object({
+      list: operatorProcedure.query(async () => lms.getMembers()),
+      create: operatorProcedure.input(z.object({
         email: z.string().email(),
         name: z.string().min(1),
-        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]),
+        role: z.enum(["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor"]),
         projectId: z.number().optional(),
         companyId: z.number().optional(),
-      })).mutation(async ({ input }) => lms.createMember({ ...input, projectId: input.projectId ?? null, companyId: input.companyId ?? null })),
-      update: protectedProcedure.input(z.object({
+        partnerId: z.number().optional(),
+      })).mutation(async ({ input }) => lms.createMember({ ...input, projectId: input.projectId ?? null, companyId: input.companyId ?? null, partnerId: input.partnerId ?? null })),
+      update: operatorProcedure.input(z.object({
         id: z.number(),
         name: z.string().optional(),
-        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]).optional(),
+        role: z.enum(["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor"]).optional(),
         projectId: z.number().nullable().optional(),
         companyId: z.number().nullable().optional(),
+        partnerId: z.number().nullable().optional(),
         isActive: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updateMember(input.id, input)),
-      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteMember(input.id)),
-      accessibleCompanies: protectedProcedure.input(z.object({
-        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]),
-        projectId: z.number().nullable().optional(),
-        companyId: z.number().nullable().optional(),
-      })).query(async ({ input }) => lms.getAccessibleCompanyIds({ role: input.role, projectId: input.projectId ?? null, companyId: input.companyId ?? null })),
+      delete: operatorProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteMember(input.id)),
     }),
 
     // --- 内部通知Webhook(協業先・企業管理者・運営向け / 無料) ---
     webhooks: router({
       list: protectedProcedure.query(async () => lms.getInternalWebhooks()),
-      create: protectedProcedure.input(z.object({
+      create: operatorProcedure.input(z.object({
         targetType: z.enum(["operator", "partner", "company"]).default("operator"),
         targetId: z.number().optional(),
         channel: z.enum(["slack", "googlechat", "chatwork"]),
@@ -512,8 +561,8 @@ export const appRouter = router({
         apiToken: z.string().optional(),
         roomId: z.string().optional(),
       })).mutation(async ({ input }) => lms.createInternalWebhook({ ...input, targetId: input.targetId ?? null })),
-      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteInternalWebhook(input.id)),
-      test: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.testInternalWebhook(input.id)),
+      delete: operatorProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteInternalWebhook(input.id)),
+      test: operatorProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.testInternalWebhook(input.id)),
       notify: protectedProcedure.input(z.object({
         text: z.string().min(1),
         partnerId: z.number().optional(),
@@ -532,7 +581,7 @@ export const appRouter = router({
     auditLogs: protectedProcedure.input(z.object({ limit: z.number().int().positive().max(1000).optional() }).optional()).query(async ({ input }) => lms.getAuditLogs(input?.limit)),
 
     // --- デモデータ投入 ---
-    seedDemo: protectedProcedure.mutation(async () => lms.seedDemoData()),
+    seedDemo: operatorProcedure.mutation(async () => lms.seedDemoData()),
   }),
 });
 

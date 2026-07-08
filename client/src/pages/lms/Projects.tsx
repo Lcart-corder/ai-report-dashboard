@@ -126,20 +126,24 @@ function MembersSection() {
   const members = trpc.lms.members.list.useQuery();
   const projects = trpc.lms.projects.list.useQuery();
   const companies = trpc.lms.companies.list.useQuery();
+  const partners = trpc.lms.partners.list.useQuery();
 
-  const [m, setM] = useState({ email: "", name: "", role: "company_rep" as MemberRole, projectId: "", companyId: "" });
+  const [m, setM] = useState({ email: "", name: "", role: "company_rep" as MemberRole, projectId: "", companyId: "", partnerId: "" });
   const create = trpc.lms.members.create.useMutation({
-    onSuccess: () => { toast.success("メンバーを追加しました"); utils.lms.members.list.invalidate(); setM({ email: "", name: "", role: "company_rep", projectId: "", companyId: "" }); },
+    onSuccess: () => { toast.success("メンバーを追加しました"); utils.lms.members.list.invalidate(); setM({ email: "", name: "", role: "company_rep", projectId: "", companyId: "", partnerId: "" }); },
     onError: e => toast.error(e.message),
   });
   const del = trpc.lms.members.delete.useMutation({ onSuccess: () => { toast.success("削除しました"); utils.lms.members.list.invalidate(); } });
 
   const needsProject = m.role === "project_manager" || m.role === "advisor";
   const needsCompany = m.role === "company_rep";
-  const ROLE_OPTIONS: MemberRole[] = ["operator_admin", "project_manager", "company_rep", "advisor"];
+  const needsPartner = m.role === "partner_admin";
+  const ROLE_OPTIONS: MemberRole[] = ["operator_admin", "project_manager", "partner_admin", "instructor", "company_rep", "advisor"];
 
-  const scopeLabel = (role: string, projectId: number | null, companyId: number | null) => {
+  const scopeLabel = (role: string, projectId: number | null, companyId: number | null, partnerId: number | null) => {
     if (role === "operator_admin") return "全体";
+    if (role === "instructor") return "コンテンツのみ";
+    if (role === "partner_admin") return partnerId != null ? `協業先:${partners.data?.find(p => p.id === partnerId)?.name ?? partnerId}` : "未設定";
     if (role === "project_manager" || role === "advisor") return projectId != null ? `PJ:${projects.data?.find(p => p.id === projectId)?.name ?? projectId}` : (companyId != null ? `企業:${companies.data?.find(c => c.id === companyId)?.name ?? companyId}` : "未設定");
     if (role === "company_rep") return companyId != null ? `企業:${companies.data?.find(c => c.id === companyId)?.name ?? companyId}` : "未設定";
     return "-";
@@ -152,7 +156,7 @@ function MembersSection() {
         <div className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_160px_1fr_auto]">
           <Input placeholder="氏名 *" value={m.name} onChange={e => setM({ ...m, name: e.target.value })} />
           <Input placeholder="メール *" value={m.email} onChange={e => setM({ ...m, email: e.target.value })} />
-          <Select value={m.role} onValueChange={(v: MemberRole) => setM({ ...m, role: v, projectId: "", companyId: "" })}>
+          <Select value={m.role} onValueChange={(v: MemberRole) => setM({ ...m, role: v, projectId: "", companyId: "", partnerId: "" })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{ROLE_OPTIONS.map(r => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent>
           </Select>
@@ -166,12 +170,17 @@ function MembersSection() {
               <SelectTrigger><SelectValue placeholder="担当企業" /></SelectTrigger>
               <SelectContent>{companies.data?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
+          ) : needsPartner ? (
+            <Select value={m.partnerId} onValueChange={v => setM({ ...m, partnerId: v })}>
+              <SelectTrigger><SelectValue placeholder="担当協業先" /></SelectTrigger>
+              <SelectContent>{partners.data?.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+            </Select>
           ) : (
-            <div className="flex items-center px-2 text-xs text-slate-400">スコープ: 全体</div>
+            <div className="flex items-center px-2 text-xs text-slate-400">{m.role === "instructor" ? "コンテンツのみ" : "スコープ: 全体"}</div>
           )}
           <Button
-            disabled={create.isPending || !m.name || !m.email || (needsProject && !m.projectId) || (needsCompany && !m.companyId)}
-            onClick={() => create.mutate({ email: m.email, name: m.name, role: m.role, projectId: m.projectId ? Number(m.projectId) : undefined, companyId: m.companyId ? Number(m.companyId) : undefined })}
+            disabled={create.isPending || !m.name || !m.email || (needsProject && !m.projectId) || (needsCompany && !m.companyId) || (needsPartner && !m.partnerId)}
+            onClick={() => create.mutate({ email: m.email, name: m.name, role: m.role, projectId: m.projectId ? Number(m.projectId) : undefined, companyId: m.companyId ? Number(m.companyId) : undefined, partnerId: m.partnerId ? Number(m.partnerId) : undefined })}
           >追加</Button>
         </div>
 
@@ -184,7 +193,7 @@ function MembersSection() {
                 <TableCell className="font-medium">{mm.name}</TableCell>
                 <TableCell className="text-sm text-slate-500">{mm.email}</TableCell>
                 <TableCell><Badge variant="secondary">{ROLE_LABEL[mm.role as RoleCode] ?? mm.role}</Badge></TableCell>
-                <TableCell className="text-sm text-slate-500">{scopeLabel(mm.role, mm.projectId, mm.companyId)}</TableCell>
+                <TableCell className="text-sm text-slate-500">{scopeLabel(mm.role, mm.projectId, mm.companyId, mm.partnerId)}</TableCell>
                 <TableCell>{mm.isActive ? <Badge className="bg-emerald-600">有効</Badge> : <Badge variant="secondary">停止</Badge>}</TableCell>
                 <TableCell><Button size="sm" variant="ghost" onClick={() => del.mutate({ id: mm.id })}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
               </TableRow>

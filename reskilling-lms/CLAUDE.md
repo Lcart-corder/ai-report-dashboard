@@ -51,6 +51,27 @@ application_checklists, exports, partner_sales, success_fees, audit_logs
   LINE/Chatwork/Slack通知、価格疎明用データ管理
 - Phase 3: 協業先管理、案件管理、協業先売上管理、成果報酬20%計算、請求予定額管理、月次レポート
 
+## ロール・認証（アクセス制御）
+4グループ／7ロール。スコープ階層: プロジェクト（案件）→ 導入企業 → 事業所 → 会社員。
+- `operator_admin`（提供会社の管理者）: 全体
+- `project_manager`（プロジェクト管理者）: 担当プロジェクト配下の全企業
+- `partner_admin`（協業先管理者）: 自協業先の全案件・企業・売上
+- `instructor`（講師・研修担当）: コンテンツのみ（企業/個人情報・請求は不可）
+- `company_rep`（お客様の代表）: 自社のみ
+- `employee`（会社員=`learners`）: 自分の受講のみ
+- `advisor`（社労士）: 担当プロジェクト/企業の証跡確認・差戻し
+
+実装:
+- ログイン管理アカウント= `lms_members`（role + project/company/partner スコープ）、受講者= `learners`。
+- 認証統合: `resolveLmsIdentity(ctx.user)` が users 行(email/role) から LMS ロールを解決。
+  優先順位 = lms_members 一致 → users.role=admin（運営扱い）→ learners 一致 → メンバー0件時は運営(bootstrap)。
+- スコープ解決: `accessibleCompanyIdsForIdentity` / `canAccessCompanyIdentity`（null=無制限）。
+- tRPC procedure: `lmsProcedure`(要ログイン+identity付与) / `operatorProcedure`(運営のみ) / `contentProcedure`(運営・講師・PJ管理者)。
+  機微な操作(企業/協業先/権限/マスターキー/Webhook/seed)は operator、コース/教材/テスト編集は content に限定。
+  company スコープの read(dashboard/companies/learners等)は identity のアクセス可能企業に自動フィルタ。
+- 画面 `/lms/roles`(見える化) と `/lms/projects`(プロジェクト・メンバー割当)。ナビはロールで自動絞り込み。
+- ※DB未接続・メンバー0件でも既存UIは壊れない(運営にフォールバック)。
+
 ## 通知チャネル戦略（多社セグメント配信）
 たくさんの導入企業が絡む前提のため、受講者への到達は **メール（Amazon SES）を主軸 + LINE任意** とする。
 - **メール主軸**: CSV登録で全社員のアドレスを保有 → 会社/部署/個人でセグメント配信可能。SESは1,000通≈$0.10と最安・線形スケール。

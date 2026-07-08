@@ -762,20 +762,26 @@ export async function recordCertificateDownload(id: number, actor?: string) {
 // ダッシュボード集計(FR-13)
 // ============================================================
 
-export async function getDashboardStats(companyId?: number) {
+/**
+ * ダッシュボード集計。
+ * @param companyId 単一企業に絞る場合
+ * @param scopeCompanyIds アクセス制御スコープ。null=無制限, []=対象なし, [ids]=その企業のみ集計
+ */
+export async function getDashboardStats(companyId?: number, scopeCompanyIds?: number[] | null) {
   const db = await getDb();
-  if (!db) {
-    return {
-      learners: 0,
-      avgProgress: 0,
-      completed: 0,
-      incomplete: 0,
-      neverLoggedIn: 0,
-      quizPending: 0,
-      expiringSoon: 0,
-    };
+  const empty = { learners: 0, avgProgress: 0, completed: 0, incomplete: 0, neverLoggedIn: 0, quizPending: 0, expiringSoon: 0 };
+  if (!db) return empty;
+  // スコープが空配列 = アクセス可能企業なし
+  if (scopeCompanyIds !== null && scopeCompanyIds !== undefined && scopeCompanyIds.length === 0 && companyId == null) return empty;
+
+  let learnerRows: Array<typeof learners.$inferSelect>;
+  if (companyId != null) {
+    learnerRows = await db.select().from(learners).where(eq(learners.companyId, companyId));
+  } else if (scopeCompanyIds && scopeCompanyIds.length > 0) {
+    learnerRows = await db.select().from(learners).where(inArray(learners.companyId, scopeCompanyIds));
+  } else {
+    learnerRows = await db.select().from(learners);
   }
-  const learnerRows = companyId ? await db.select().from(learners).where(eq(learners.companyId, companyId)) : await db.select().from(learners);
   const learnerIds = learnerRows.map(l => l.id);
 
   let enrollmentRows: Array<typeof enrollments.$inferSelect> = [];
@@ -1442,17 +1448,25 @@ export async function deleteMember(id: number) {
 // --- スコープ解決(アクセス制御の中核) ---
 
 /**
- * メンバーがアクセスできる企業ID一覧を返す。
- *  - operator_admin : 全企業(null=無制限を表す)
+ * メンバーがアクセスできる企業ID一覧を返す。null=無制限(operator_admin)。
+ *  - operator_admin : 全企業(null)
  *  - project_manager: projectId 配下の企業
  *  - advisor        : projectId 配下 or companyId 単体
+ *  - partner_admin  : partnerId に紐づく企業
  *  - company_rep    : companyId 単体
+ *  - instructor     : 企業データ非対象([])
  */
-export async function getAccessibleCompanyIds(member: Pick<LmsMember, "role" | "projectId" | "companyId">): Promise<number[] | null> {
+export async function getAccessibleCompanyIds(member: Pick<LmsMember, "role" | "projectId" | "companyId" | "partnerId">): Promise<number[] | null> {
   const db = await getDb();
   if (!db) return [];
   if (member.role === "operator_admin") return null; // 無制限
+  if (member.role === "instructor") return []; // コンテンツのみ。企業データ非対象
   if (member.role === "company_rep") return member.companyId != null ? [member.companyId] : [];
+  if (member.role === "partner_admin") {
+    if (member.partnerId == null) return [];
+    const rows = await db.select().from(companies).where(eq(companies.partnerId, member.partnerId));
+    return rows.map(c => c.id);
+  }
   if (member.role === "project_manager" || member.role === "advisor") {
     const ids: number[] = [];
     if (member.projectId != null) {
@@ -1466,8 +1480,107 @@ export async function getAccessibleCompanyIds(member: Pick<LmsMember, "role" | "
 }
 
 /** 指定企業へのアクセス可否。 */
-export async function canAccessCompany(member: Pick<LmsMember, "role" | "projectId" | "companyId">, companyId: number): Promise<boolean> {
+export async function canAccessCompany(member: Pick<LmsMember, "role" | "projectId" | "companyId" | "partnerId">, companyId: number): Promise<boolean> {
   const ids = await getAccessibleCompanyIds(member);
   if (ids === null) return true; // operator_admin
+  return ids.includes(companyId);
+}
+
+// ============================================================
+// ログイン連携: 現在ユーザーのLMS権限を解決(認証統合)
+// ============================================================
+
+export type LmsRole = "operator_admin" | "project_manager" | "partner_admin" | "company_rep" | "instructor" | "advisor" | "employee";
+
+export type LmsIdentity = {
+  kind: "member" | "operator" | "learner";
+  role: LmsRole;
+  name: string;
+  email: string;
+  memberId?: number;
+  learnerId?: number;
+  projectId: number | null;
+  companyId: number | null;
+  partnerId: number | null;
+};
+
+export async function getLearnerByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(learners).where(eq(learners.email, email)).limit(1);
+  return rows[0];
+}
+
+export async function countMembers(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const rows = await db.select().from(lmsMembers);
+  return rows.length;
+}
+
+/**
+ * ログイン中の users 行から LMS 上のロール・スコープを解決する。
+ * 優先順位: lms_members 一致 → プラットフォーム管理者(users.role=admin) → learners 一致
+ *          → メンバー未登録の初期状態(bootstrap)は operator 扱い。
+ * DB未接続やメンバー0件でも既存UIが壊れないようにする。
+ */
+export async function resolveLmsIdentity(user: { email?: string | null; name?: string | null; role?: string | null } | null | undefined): Promise<LmsIdentity | null> {
+  if (!user) return null;
+  const email = user.email ?? "";
+  const name = user.name ?? (email || "ユーザー");
+
+  if (email) {
+    const member = await getMemberByEmail(email);
+    if (member && member.isActive) {
+      return {
+        kind: member.role === "operator_admin" ? "operator" : "member",
+        role: member.role as LmsRole,
+        name: member.name,
+        email,
+        memberId: member.id,
+        projectId: member.projectId,
+        companyId: member.companyId,
+        partnerId: member.partnerId,
+      };
+    }
+  }
+
+  // プラットフォーム管理者は運営管理者として扱う
+  if (user.role === "admin") {
+    return { kind: "operator", role: "operator_admin", name, email, projectId: null, companyId: null, partnerId: null };
+  }
+
+  // 受講者(会社員)
+  if (email) {
+    const learner = await getLearnerByEmail(email);
+    if (learner) {
+      return { kind: "learner", role: "employee", name: learner.name, email, learnerId: learner.id, projectId: null, companyId: learner.companyId, partnerId: null };
+    }
+  }
+
+  // 初期状態(メンバー未登録)は運営管理者としてブートストラップ
+  if ((await countMembers()) === 0) {
+    return { kind: "operator", role: "operator_admin", name, email, projectId: null, companyId: null, partnerId: null };
+  }
+
+  return null;
+}
+
+export function isOperator(id: LmsIdentity | null | undefined): boolean {
+  return !!id && id.role === "operator_admin";
+}
+
+/** identity のアクセス可能企業ID(null=無制限)。 */
+export async function accessibleCompanyIdsForIdentity(id: LmsIdentity | null): Promise<number[] | null> {
+  if (!id) return [];
+  if (id.role === "operator_admin") return null;
+  if (id.role === "employee") return id.companyId != null ? [id.companyId] : [];
+  return getAccessibleCompanyIds({ role: id.role, projectId: id.projectId, companyId: id.companyId, partnerId: id.partnerId });
+}
+
+/** identity が指定企業にアクセスできるか。 */
+export async function canAccessCompanyIdentity(id: LmsIdentity | null, companyId: number): Promise<boolean> {
+  const ids = await accessibleCompanyIdsForIdentity(id);
+  if (ids === null) return true;
   return ids.includes(companyId);
 }

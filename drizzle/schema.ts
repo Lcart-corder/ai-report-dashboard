@@ -927,11 +927,13 @@ export const lmsMembers = mysqlTable("lms_members", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
-  role: mysqlEnum("role", ["operator_admin", "project_manager", "company_rep", "advisor"]).notNull(),
+  role: mysqlEnum("role", ["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor"]).notNull(),
   /** project_manager / advisor のスコープ */
   projectId: int("projectId"),
   /** company_rep / (企業限定の)advisor のスコープ */
   companyId: int("companyId"),
+  /** partner_admin のスコープ(担当協業先) */
+  partnerId: int("partnerId"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

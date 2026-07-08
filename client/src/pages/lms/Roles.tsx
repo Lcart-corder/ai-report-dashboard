@@ -11,7 +11,7 @@ const GROUP_STYLES: Record<string, { badge: string; ring: string; icon: React.Co
   amber: { badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200", ring: "border-amber-200 dark:border-amber-900", icon: FolderKanban },
 };
 
-const ROLE_ORDER: RoleCode[] = ["operator_admin", "project_manager", "company_rep", "employee", "advisor"];
+const ROLE_ORDER: RoleCode[] = ["operator_admin", "project_manager", "partner_admin", "instructor", "company_rep", "employee", "advisor"];
 
 function AccessMark({ v }: { v: Access }) {
   if (v === "yes") return <CheckCircle2 className="mx-auto h-4 w-4 text-emerald-600" />;
