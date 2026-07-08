@@ -6,6 +6,7 @@ import { GraduationCap } from "lucide-react";
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const CompanyRepHome = lazy(() => import("./CompanyRepHome"));
 const PartnerHome = lazy(() => import("./PartnerHome"));
+const InstructorHome = lazy(() => import("./InstructorHome"));
 
 function Splash({ text }: { text: string }) {
   return (
@@ -32,8 +33,7 @@ export default function LmsHome() {
   useEffect(() => {
     const id = me.data;
     if (!id) return;
-    if (id.role === "instructor") navigate("/lms/courses");
-    else if (id.role === "advisor") navigate("/lms/advisor");
+    if (id.role === "advisor") navigate("/lms/advisor");
     else if (id.role === "employee") navigate(id.learnerId ? `/lms/learn/${id.learnerId}` : "/lms/learn");
   }, [me.data, navigate]);
 
@@ -51,6 +51,9 @@ export default function LmsHome() {
   if (id.role === "partner_admin") {
     if (id.partnerId == null) return <Splash text="担当協業先が未設定です。運営にお問い合わせください。" />;
     return <Suspense fallback={<Splash text="読み込み中…" />}><PartnerHome partnerId={id.partnerId} /></Suspense>;
+  }
+  if (id.role === "instructor") {
+    return <Suspense fallback={<Splash text="読み込み中…" />}><InstructorHome /></Suspense>;
   }
   return <Splash text="リダイレクトしています…" />;
 }

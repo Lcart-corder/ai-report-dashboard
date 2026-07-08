@@ -584,6 +584,9 @@ export async function recalcEnrollment(enrollmentId: number) {
 // 視聴ログ(FR-07) — 管理者でも直接編集しない前提。学習者操作で追記。
 // ============================================================
 
+/** 視聴完了とみなす最低視聴率(%)。早送り・スキップで完了にしない。 */
+export const WATCH_COMPLETE_THRESHOLD = 95;
+
 export async function recordProgress(input: {
   enrollmentId: number;
   lessonId: number;
@@ -594,6 +597,9 @@ export async function recordProgress(input: {
 }) {
   const db = await getDb();
   if (!db) throw new Error(REQUIRE_DB);
+  // 視聴完了はサーバー側で厳密判定: 視聴率が閾値未満ならcompletedを無効化(証跡の信頼性担保)
+  const completed = input.completed && input.watchRate >= WATCH_COMPLETE_THRESHOLD;
+  input = { ...input, completed };
   const existing = await db
     .select()
     .from(progressLogs)
@@ -1747,4 +1753,25 @@ export async function getPartnerCompaniesOverview(partnerId: number) {
     out.push({ id: c.id, name: c.name, learners: cl.length, enrollments: enr.length, completed: enr.filter(e => e.status === "completed").length, avgProgress: avg });
   }
   return { partner, feeRate: partner?.successFeeRate ?? 20, companies: out, monthly, forecastTotal };
+}
+
+// ============================================================
+// 講師・研修担当(instructor)ホーム: 担当コースの受講状況サマリー
+// ============================================================
+
+export async function getCourseSummaries() {
+  const db = await getDb();
+  if (!db) return [] as Array<{ id: number; name: string; totalMinutes: number; meetsSubsidy: boolean; lessons: number; quizzes: number; enrollments: number; completed: number; avgProgress: number; visibility: string }>;
+  const courseRows = await db.select().from(courses).orderBy(desc(courses.createdAt));
+  const out = [];
+  for (const c of courseRows) {
+    const lessonRows = await db.select().from(lessons).where(eq(lessons.courseId, c.id));
+    const totalMinutes = lessonRows.reduce((s, l) => s + (l.durationMinutes ?? 0), 0);
+    const quizRows = await db.select().from(quizzes).where(eq(quizzes.courseId, c.id));
+    const enr = await db.select().from(enrollments).where(eq(enrollments.courseId, c.id));
+    const completed = enr.filter(e => e.status === "completed").length;
+    const avgProgress = enr.length === 0 ? 0 : Math.round(enr.reduce((s, e) => s + e.progressRate, 0) / enr.length);
+    out.push({ id: c.id, name: c.name, totalMinutes, meetsSubsidy: meetsSubsidyMinutes(totalMinutes), lessons: lessonRows.length, quizzes: quizRows.length, enrollments: enr.length, completed, avgProgress, visibility: c.visibility as string });
+  }
+  return out;
 }

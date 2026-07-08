@@ -213,6 +213,13 @@ export const appRouter = router({
       return lms.getPartnerCompaniesOverview(input.partnerId);
     }),
 
+    // --- 講師(instructor)ホーム: 担当コースの受講状況サマリー ---
+    instructorHome: lmsProcedure.query(async ({ ctx }) => {
+      const ok = ctx.lms.role === "instructor" || ctx.lms.role === "operator_admin" || ctx.lms.role === "project_manager";
+      if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "コンテンツ管理権限がありません" });
+      return lms.getCourseSummaries();
+    }),
+
     // --- ダッシュボード (FR-13) — アクセス可能企業に自動スコープ ---
     dashboard: lmsProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
