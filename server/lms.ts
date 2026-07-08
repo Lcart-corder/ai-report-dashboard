@@ -13,7 +13,7 @@
  */
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "./db";
-import { dispatchByChannel } from "./lms-notify";
+import { dispatchByChannel, dispatchWebhook } from "./lms-notify";
 import {
   applicationChecklists,
   auditLogs,
@@ -23,6 +23,7 @@ import {
   completionChecks,
   courses,
   enrollments,
+  internalWebhooks,
   learners,
   learningReports,
   lessons,
@@ -39,6 +40,7 @@ import {
   type InsertCompany,
   type InsertCompanyBranch,
   type InsertCourse,
+  type InsertInternalWebhook,
   type InsertLearner,
   type InsertLesson,
   type InsertNotification,
@@ -725,6 +727,14 @@ export async function issueCertificate(enrollmentId: number, issuer = "Lカー�
     issuer,
   });
   await writeAuditLog({ category: "completion", action: "certificate.issue", targetType: "certificate", targetId: insertedId(result), detail: { certificateNumber } });
+
+  // 内部通知(協業先・運営向け): 修了を検知したら無料Webhookで自動連絡(ベストエフォート)
+  const company = learner ? await getCompanyById(learner.companyId) : undefined;
+  void notifyInternal(
+    `✅ 修了通知: ${company?.name ?? ""} の ${learner?.name ?? ""} さんが「${course?.name ?? ""}」を修了しました（証明番号 ${certificateNumber} / 標準学習時間 ${(dur.totalMinutes / 60).toFixed(1)}時間）。`,
+    { partnerId: company?.partnerId ?? undefined, companyId: learner?.companyId },
+  ).catch(() => undefined);
+
   return { id: insertedId(result), certificateNumber };
 }
 
@@ -1280,4 +1290,66 @@ export async function getMonthlyPartnerReport(partnerId: number) {
     byMonth.set(f.yearMonth, cur);
   }
   return Array.from(byMonth.values()).sort((a, b) => (a.yearMonth < b.yearMonth ? 1 : -1));
+}
+
+// ============================================================
+// 内部通知Webhook(協業先・企業管理者・運営向け / 無料)
+// ============================================================
+
+export async function getInternalWebhooks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(internalWebhooks).orderBy(desc(internalWebhooks.createdAt));
+}
+
+export async function createInternalWebhook(input: InsertInternalWebhook) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const result = await db.insert(internalWebhooks).values(input);
+  await writeAuditLog({ category: "admin", action: "webhook.create", targetType: "internal_webhook", targetId: insertedId(result), detail: { channel: input.channel, targetType: input.targetType } });
+  return { id: insertedId(result) };
+}
+
+export async function deleteInternalWebhook(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.delete(internalWebhooks).where(eq(internalWebhooks.id, id));
+  await writeAuditLog({ category: "admin", action: "webhook.delete", targetType: "internal_webhook", targetId: id });
+  return { id };
+}
+
+/** Webhook単体テスト送信。 */
+export async function testInternalWebhook(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const rows = await db.select().from(internalWebhooks).where(eq(internalWebhooks.id, id)).limit(1);
+  const w = rows[0];
+  if (!w) throw new Error("webhook not found");
+  const status = await dispatchWebhook(w, "【テスト送信】助成金対応リスキリングLMSからの内部通知です。");
+  await writeAuditLog({ category: "admin", action: "webhook.test", targetType: "internal_webhook", targetId: id, detail: { status } });
+  return { status };
+}
+
+/**
+ * 内部通知の発火。対象スコープ(operator全体 + 該当partner/company)にマッチする
+ * 有効なWebhookすべてに送信し、送信件数を返す。ベストエフォート(失敗しても本処理は継続)。
+ */
+export async function notifyInternal(text: string, scope?: { partnerId?: number; companyId?: number }) {
+  const db = await getDb();
+  if (!db) return { sent: 0, failed: 0 };
+  const all = await db.select().from(internalWebhooks).where(eq(internalWebhooks.isActive, true));
+  const matched = all.filter(w => {
+    if (w.targetType === "operator") return true;
+    if (w.targetType === "partner") return scope?.partnerId != null && w.targetId === scope.partnerId;
+    if (w.targetType === "company") return scope?.companyId != null && w.targetId === scope.companyId;
+    return false;
+  });
+  let sent = 0;
+  let failed = 0;
+  for (const w of matched) {
+    const status = await dispatchWebhook(w, text);
+    if (status === "sent") sent += 1;
+    else if (status === "failed") failed += 1;
+  }
+  return { sent, failed };
 }

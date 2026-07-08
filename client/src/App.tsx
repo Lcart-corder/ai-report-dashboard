@@ -49,6 +49,7 @@ const LmsChecklist = lazy(() => import("@/pages/lms/Checklist"));
 const LmsAuditLog = lazy(() => import("@/pages/lms/AuditLog"));
 const LmsNotifications = lazy(() => import("@/pages/lms/Notifications"));
 const LmsAdvisor = lazy(() => import("@/pages/lms/Advisor"));
+const LmsIntegrations = lazy(() => import("@/pages/lms/Integrations"));
 const LmsExports = lazy(() => import("@/pages/lms/Exports"));
 const LmsCertificate = lazy(() => import("@/pages/lms/Certificate"));
 const LmsLearnHome = lazy(() => import("@/pages/lms/LearnHome"));
@@ -252,6 +253,7 @@ function App() {
             <Route path="/lms/partners" component={LmsPartners} />
             <Route path="/lms/checklist" component={LmsChecklist} />
             <Route path="/lms/advisor" component={LmsAdvisor} />
+            <Route path="/lms/integrations" component={LmsIntegrations} />
             <Route path="/lms/exports" component={LmsExports} />
             <Route path="/lms/audit" component={LmsAuditLog} />
             <Route path="/lms/certificate/:enrollmentId" component={LmsCertificate} />

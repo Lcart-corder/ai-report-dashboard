@@ -456,6 +456,27 @@ export const appRouter = router({
       })).mutation(async ({ input }) => lms.sendReminders(input)),
     }),
 
+    // --- 内部通知Webhook(協業先・企業管理者・運営向け / 無料) ---
+    webhooks: router({
+      list: protectedProcedure.query(async () => lms.getInternalWebhooks()),
+      create: protectedProcedure.input(z.object({
+        targetType: z.enum(["operator", "partner", "company"]).default("operator"),
+        targetId: z.number().optional(),
+        channel: z.enum(["slack", "googlechat", "chatwork"]),
+        label: z.string().optional(),
+        webhookUrl: z.string().optional(),
+        apiToken: z.string().optional(),
+        roomId: z.string().optional(),
+      })).mutation(async ({ input }) => lms.createInternalWebhook({ ...input, targetId: input.targetId ?? null })),
+      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteInternalWebhook(input.id)),
+      test: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.testInternalWebhook(input.id)),
+      notify: protectedProcedure.input(z.object({
+        text: z.string().min(1),
+        partnerId: z.number().optional(),
+        companyId: z.number().optional(),
+      })).mutation(async ({ input }) => lms.notifyInternal(input.text, { partnerId: input.partnerId, companyId: input.companyId })),
+    }),
+
     // --- 社労士・申請確認者(証跡確認) ---
     advisor: router({
       companyOverview: protectedProcedure.query(async () => lms.getAdvisorCompanyOverview()),

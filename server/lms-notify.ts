@@ -61,6 +61,50 @@ export async function dispatchLine(lineUserId: string | null | undefined, text: 
   }
 }
 
+/**
+ * 内部通知Webhook送信(協業先・企業管理者・運営向け)。いずれも無料。
+ * - slack / googlechat: Incoming Webhook URL に {text} をPOST
+ * - chatwork: API(トークン + ルームID)で body=message をPOST
+ */
+export async function dispatchWebhook(
+  cfg: { channel: string; webhookUrl?: string | null; apiToken?: string | null; roomId?: string | null },
+  text: string,
+): Promise<DispatchStatus> {
+  try {
+    if (cfg.channel === "slack") {
+      if (!cfg.webhookUrl) return "queued";
+      const res = await fetch(cfg.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      return res.ok ? "sent" : "failed";
+    }
+    if (cfg.channel === "googlechat") {
+      if (!cfg.webhookUrl) return "queued";
+      const res = await fetch(cfg.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify({ text }),
+      });
+      return res.ok ? "sent" : "failed";
+    }
+    if (cfg.channel === "chatwork") {
+      if (!cfg.apiToken || !cfg.roomId) return "queued";
+      const res = await fetch(`https://api.chatwork.com/v2/rooms/${cfg.roomId}/messages`, {
+        method: "POST",
+        headers: { "X-ChatWorkToken": cfg.apiToken, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ body: text }).toString(),
+      });
+      return res.ok ? "sent" : "failed";
+    }
+    return "queued";
+  } catch (e) {
+    console.warn("[LMS] internal webhook failed:", e);
+    return "failed";
+  }
+}
+
 /** チャネルに応じて配信し、結果ステータスを返す。 */
 export async function dispatchByChannel(
   channel: string,

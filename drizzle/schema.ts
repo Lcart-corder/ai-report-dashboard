@@ -862,3 +862,28 @@ export const auditLogs = mysqlTable("audit_logs", {
 });
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+/**
+ * 内部通知Webhook(FR-14拡張)。協業先・企業管理者・運営向けの無料内部通知。
+ * - slack / googlechat: Incoming Webhook URL に {text} をPOST(無料)
+ * - chatwork: API(トークン + ルームID)でメッセージ送信
+ * targetType=operator は運営全体、partner/company は対象IDに紐づく。
+ */
+export const internalWebhooks = mysqlTable("internal_webhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  targetType: mysqlEnum("targetType", ["operator", "partner", "company"]).default("operator").notNull(),
+  targetId: int("targetId"),
+  channel: mysqlEnum("channel", ["slack", "googlechat", "chatwork"]).notNull(),
+  label: varchar("label", { length: 255 }),
+  /** slack/googlechat の Incoming Webhook URL */
+  webhookUrl: text("webhookUrl"),
+  /** chatwork APIトークン */
+  apiToken: varchar("apiToken", { length: 128 }),
+  /** chatwork ルームID */
+  roomId: varchar("roomId", { length: 64 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InternalWebhook = typeof internalWebhooks.$inferSelect;
+export type InsertInternalWebhook = typeof internalWebhooks.$inferInsert;
