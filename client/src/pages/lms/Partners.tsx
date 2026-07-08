@@ -72,6 +72,7 @@ function PartnerDetail({ partnerId, partnerName, feeRate }: { partnerId: number;
   const utils = trpc.useUtils();
   const sales = trpc.lms.partners.sales.useQuery({ partnerId });
   const fees = trpc.lms.partners.fees.useQuery({ partnerId });
+  const monthly = trpc.lms.partners.monthlyReport.useQuery({ partnerId });
 
   const nowMonth = new Date().toISOString().slice(0, 7);
   const [ns, setNs] = useState({ yearMonth: nowMonth, trainingSales: 1000000 });
@@ -85,6 +86,7 @@ function PartnerDetail({ partnerId, partnerName, feeRate }: { partnerId: number;
   });
 
   const feeByStatus: Record<string, string> = { draft: "下書き", invoiced: "請求済", paid: "入金済" };
+  const totalForecast = (monthly.data ?? []).reduce((s, m) => s + m.feeAmount, 0);
 
   return (
     <div className="space-y-6">
@@ -133,6 +135,34 @@ function PartnerDetail({ partnerId, partnerName, feeRate }: { partnerId: number;
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">月次レポート・請求予定額</CardTitle>
+          <div className="text-right">
+            <div className="text-xs text-slate-500">請求予定額 合計</div>
+            <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{yen(totalForecast)}</div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader><TableRow><TableHead>対象月</TableHead><TableHead>研修売上</TableHead><TableHead>報酬率</TableHead><TableHead>請求予定額</TableHead><TableHead>状態</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {monthly.data?.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-slate-400">データがありません</TableCell></TableRow>}
+              {monthly.data?.map(m => (
+                <TableRow key={m.yearMonth}>
+                  <TableCell className="font-medium">{m.yearMonth}</TableCell>
+                  <TableCell>{yen(m.trainingSales)}</TableCell>
+                  <TableCell>{m.feeRate}%</TableCell>
+                  <TableCell className="font-bold text-emerald-700 dark:text-emerald-400">{yen(m.feeAmount)}</TableCell>
+                  <TableCell><Badge variant={m.status === "入金済" ? "default" : "secondary"} className={m.status === "入金済" ? "bg-emerald-600" : ""}>{m.status}</Badge></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <p className="mt-2 text-xs text-slate-400">※ 請求予定額は「協業先の研修売上 × 報酬率」。助成金受給額には連動しません（FR-18）。</p>
         </CardContent>
       </Card>
     </div>

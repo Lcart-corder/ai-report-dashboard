@@ -185,6 +185,7 @@ export const appRouter = router({
       // 成果報酬 = 研修売上 × 20% (助成金受給額には非連動 / FR-18)
       calcFee: protectedProcedure.input(z.object({ partnerSaleId: z.number() })).mutation(async ({ input }) => lms.calcSuccessFee(input.partnerSaleId)),
       fees: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getSuccessFees(input.partnerId)),
+      monthlyReport: protectedProcedure.input(z.object({ partnerId: z.number() })).query(async ({ input }) => lms.getMonthlyPartnerReport(input.partnerId)),
     }),
 
     // --- 導入企業 / 事業所 (FR-03) ---
@@ -400,6 +401,8 @@ export const appRouter = router({
     certificates: router({
       issue: protectedProcedure.input(z.object({ enrollmentId: z.number(), issuer: z.string().optional() })).mutation(async ({ input }) => lms.issueCertificate(input.enrollmentId, input.issuer)),
       getByEnrollment: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getCertificateByEnrollment(input.enrollmentId)),
+      byCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getCertificatesByCompany(input.companyId)),
+      byCourse: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getCertificatesByCourse(input.courseId)),
       recordDownload: protectedProcedure.input(z.object({ id: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => lms.recordCertificateDownload(input.id, input.actor)),
     }),
 
@@ -418,6 +421,40 @@ export const appRouter = router({
     exports: router({
       courseProgressCsv: protectedProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => ({ csv: await lms.exportCourseProgressCsv(input.courseId, input.actor) })),
       tenHourCompletersCsv: protectedProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportTenHourCompletersCsv(input?.actor) })),
+      priceJustificationCsv: protectedProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportPriceJustificationCsv(input?.actor) })),
+    }),
+
+    // --- 通知・リマインド (FR-14) ---
+    notifications: router({
+      list: protectedProcedure.query(async () => lms.getNotifications()),
+      create: protectedProcedure.input(z.object({
+        name: z.string().min(1),
+        trigger: z.string().min(1),
+        channel: z.string().default("email"),
+        template: z.string().optional(),
+      })).mutation(async ({ input }) => lms.createNotification(input)),
+      update: protectedProcedure.input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        channel: z.string().optional(),
+        template: z.string().optional(),
+        isActive: z.boolean().optional(),
+      })).mutation(async ({ input }) => lms.updateNotification(input.id, input)),
+      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteNotification(input.id)),
+      logs: protectedProcedure.input(z.object({ limit: z.number().int().positive().max(1000).optional() }).optional()).query(async ({ input }) => lms.getNotificationLogs(input?.limit)),
+      reminderTargets: protectedProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ input }) => lms.detectReminderTargets(input?.companyId)),
+      send: protectedProcedure.input(z.object({
+        learnerIds: z.array(z.number()),
+        channel: z.string().default("email"),
+        notificationId: z.number().optional(),
+      })).mutation(async ({ input }) => lms.sendReminders(input)),
+    }),
+
+    // --- 社労士・申請確認者(証跡確認) ---
+    advisor: router({
+      companyOverview: protectedProcedure.query(async () => lms.getAdvisorCompanyOverview()),
+      learnerEvidence: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getLearnerEvidence(input.enrollmentId)),
+      certificatesByCompany: protectedProcedure.input(z.object({ companyId: z.number() })).query(async ({ input }) => lms.getCertificatesByCompany(input.companyId)),
     }),
 
     // --- 監査ログ (FR-19) ---

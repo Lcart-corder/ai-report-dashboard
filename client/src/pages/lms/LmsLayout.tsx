@@ -1,14 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { GraduationCap, LayoutDashboard, Building2, BookOpen, Handshake, ClipboardCheck, ScrollText } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Building2, BookOpen, Handshake, ClipboardCheck, ScrollText, Bell, ShieldCheck, Download } from "lucide-react";
 import type { ReactNode } from "react";
 
 const NAV = [
   { href: "/lms", label: "ダッシュボード", icon: LayoutDashboard, exact: true },
   { href: "/lms/companies", label: "企業・受講者", icon: Building2 },
   { href: "/lms/courses", label: "コース・教材", icon: BookOpen },
+  { href: "/lms/notifications", label: "通知・リマインド", icon: Bell },
   { href: "/lms/partners", label: "協業先・成果報酬", icon: Handshake },
   { href: "/lms/checklist", label: "申請準備チェック", icon: ClipboardCheck },
+  { href: "/lms/advisor", label: "社労士確認", icon: ShieldCheck },
+  { href: "/lms/exports", label: "証跡出力", icon: Download },
   { href: "/lms/audit", label: "監査ログ", icon: ScrollText },
 ];
 

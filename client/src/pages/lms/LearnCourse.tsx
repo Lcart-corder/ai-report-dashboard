@@ -113,6 +113,9 @@ export default function LmsLearnCourse() {
                 <div className="mt-1 text-lg font-bold">{certificate.data.learnerName} 様</div>
                 <div className="text-sm">{certificate.data.courseName}（標準学習時間 {(certificate.data.standardMinutes / 60).toFixed(1)}時間）を修了</div>
                 <div className="mt-1 text-sm text-slate-500">修了日: {certificate.data.completionDate} ／ 発行: {certificate.data.issuer}</div>
+                <a href={`/lms/certificate/${enrollmentId}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700">
+                  <Award className="h-4 w-4" /> 修了証を開く（印刷 / PDF保存）
+                </a>
               </div>
             ) : (
               <div className="text-sm text-slate-500">

@@ -26,6 +26,8 @@ import {
   learningReports,
   lessons,
   masterKeys,
+  notificationLogs,
+  notifications,
   partnerSales,
   partners,
   progressLogs,
@@ -38,6 +40,7 @@ import {
   type InsertCourse,
   type InsertLearner,
   type InsertLesson,
+  type InsertNotification,
   type InsertPartner,
   type InsertQuiz,
   type InsertQuizQuestion,
@@ -1050,4 +1053,213 @@ export async function seedDemoData() {
   await assignEnrollment(learner.id, course.id, null);
 
   return { seeded: true, companyId: company.id, courseId: course.id, learnerId: learner.id, masterKey: key.keyCode };
+}
+
+// ============================================================
+// 通知・リマインド(FR-14)
+// ============================================================
+
+const REMINDER_LABELS: Record<string, string> = {
+  no_login: "初回未ログイン",
+  due_7d: "受講期限7日前",
+  due_3d: "受講期限3日前",
+  due_1d: "受講期限前日",
+  quiz_pending: "テスト未受験",
+  expired: "期限切れ",
+};
+
+export async function getNotifications() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notifications).orderBy(desc(notifications.createdAt));
+}
+
+export async function createNotification(input: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const result = await db.insert(notifications).values(input);
+  await writeAuditLog({ category: "admin", action: "notification.create", targetType: "notification", targetId: insertedId(result), detail: { trigger: input.trigger } });
+  return { id: insertedId(result) };
+}
+
+export async function updateNotification(id: number, input: Partial<InsertNotification>) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.update(notifications).set(input).where(eq(notifications.id, id));
+  return { id };
+}
+
+export async function deleteNotification(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.delete(notifications).where(eq(notifications.id, id));
+  return { id };
+}
+
+export async function getNotificationLogs(limit = 200) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notificationLogs).orderBy(desc(notificationLogs.createdAt)).limit(limit);
+}
+
+/** リマインド対象を自動抽出(未ログイン/期限接近/テスト未受験/期限切れ)。 */
+export async function detectReminderTargets(companyId?: number) {
+  const db = await getDb();
+  if (!db) return [] as Array<{ enrollmentId: number; learnerId: number; learnerName: string; courseId: number; reason: string; reasonLabel: string; dueDate: string | null }>;
+
+  const learnerRows = companyId ? await db.select().from(learners).where(eq(learners.companyId, companyId)) : await db.select().from(learners);
+  const learnerMap = new Map(learnerRows.map(l => [l.id, l]));
+  const learnerIds = learnerRows.map(l => l.id);
+  if (learnerIds.length === 0) return [];
+
+  const enrollmentRows = await db.select().from(enrollments).where(inArray(enrollments.learnerId, learnerIds));
+  const now = today();
+  const d = (days: number) => { const t = new Date(); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10); };
+
+  const targets: Array<{ enrollmentId: number; learnerId: number; learnerName: string; courseId: number; reason: string; reasonLabel: string; dueDate: string | null }> = [];
+  for (const e of enrollmentRows) {
+    const learner = learnerMap.get(e.learnerId);
+    if (!learner) continue;
+    const push = (reason: string) => targets.push({ enrollmentId: e.id, learnerId: e.learnerId, learnerName: learner.name, courseId: e.courseId, reason, reasonLabel: REMINDER_LABELS[reason] ?? reason, dueDate: e.dueDate });
+
+    if (e.status === "completed") continue;
+    if (e.dueDate && e.dueDate < now) { push("expired"); continue; }
+    if (!learner.firstLoginAt && (e.status === "not_started" || learner.status === "invited")) push("no_login");
+    if (e.dueDate) {
+      if (e.dueDate <= d(1) && e.dueDate >= now) push("due_1d");
+      else if (e.dueDate <= d(3) && e.dueDate >= now) push("due_3d");
+      else if (e.dueDate <= d(7) && e.dueDate >= now) push("due_7d");
+    }
+    const results = await db.select().from(quizResults).where(eq(quizResults.enrollmentId, e.id)).limit(1);
+    if (results.length === 0 && e.progressRate > 0) push("quiz_pending");
+  }
+  return targets;
+}
+
+/** リマインド送信(現状はログ記録=キュー投入。実配信は各Integrationで実装)。 */
+export async function sendReminders(input: { learnerIds: number[]; channel: string; notificationId?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  if (input.learnerIds.length === 0) return { queued: 0 };
+  await db.insert(notificationLogs).values(
+    input.learnerIds.map(learnerId => ({
+      notificationId: input.notificationId ?? null,
+      learnerId,
+      channel: input.channel,
+      status: "sent" as const,
+      sentAt: new Date(),
+    })),
+  );
+  await writeAuditLog({ category: "admin", action: "reminder.send", detail: { channel: input.channel, count: input.learnerIds.length } });
+  return { queued: input.learnerIds.length };
+}
+
+// ============================================================
+// 修了証 一覧(企業/コース単位)・価格疎明(FR-12, FR-15)
+// ============================================================
+
+export async function getCertificatesByCompany(companyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const companyLearners = await db.select().from(learners).where(eq(learners.companyId, companyId));
+  const ids = companyLearners.map(l => l.id);
+  if (ids.length === 0) return [];
+  return db.select().from(certificates).where(inArray(certificates.learnerId, ids)).orderBy(desc(certificates.issuedAt));
+}
+
+export async function getCertificatesByCourse(courseId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(certificates).where(eq(certificates.courseId, courseId)).orderBy(desc(certificates.issuedAt));
+}
+
+/** 価格疎明用データCSV(研修費/LMS利用料/運用支援費を分離、合計を明示)。 */
+export async function exportPriceJustificationCsv(actor?: string) {
+  const db = await getDb();
+  if (!db) return "﻿" + "コース名,標準学習時間(時間),研修費,LMS利用料,運用支援費,合計,助成金区分\r\n";
+  const rows = await db.select().from(courses);
+  const out: Array<Array<unknown>> = [];
+  for (const c of rows) {
+    const dur = await getCourseDuration(c.id);
+    const total = c.tuitionFee + c.lmsFee + c.supportFee;
+    out.push([c.name, (dur.totalMinutes / 60).toFixed(1), c.tuitionFee, c.lmsFee, c.supportFee, total, c.subsidyCategory ?? ""]);
+  }
+  await recordExport("price_justification", "csv", { actor });
+  const headers = ["コース名", "標準学習時間(時間)", "研修費", "LMS利用料", "運用支援費", "合計", "助成金区分"];
+  const lines = [headers.join(",")];
+  for (const r of out) lines.push(r.map(v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(","));
+  return "﻿" + lines.join("\r\n");
+}
+
+// ============================================================
+// 社労士・申請確認者向け(証跡確認)
+// ============================================================
+
+/** 企業ごとの修了状況サマリー(社労士画面の企業一覧)。 */
+export async function getAdvisorCompanyOverview() {
+  const db = await getDb();
+  if (!db) return [];
+  const companyRows = await db.select().from(companies);
+  const out: Array<{ id: number; name: string; learners: number; enrollments: number; completed: number; certificates: number }> = [];
+  for (const c of companyRows) {
+    const cl = await db.select().from(learners).where(eq(learners.companyId, c.id));
+    const ids = cl.map(l => l.id);
+    let enr: Array<typeof enrollments.$inferSelect> = [];
+    let certCount = 0;
+    if (ids.length > 0) {
+      enr = await db.select().from(enrollments).where(inArray(enrollments.learnerId, ids));
+      const certs = await db.select().from(certificates).where(inArray(certificates.learnerId, ids));
+      certCount = certs.length;
+    }
+    out.push({ id: c.id, name: c.name, learners: cl.length, enrollments: enr.length, completed: enr.filter(e => e.status === "completed").length, certificates: certCount });
+  }
+  return out;
+}
+
+/** 受講者(enrollment)単位の証跡バンドル(視聴ログ・チェック・テスト・レポート・修了証)。 */
+export async function getLearnerEvidence(enrollmentId: number) {
+  const enrollment = await getEnrollmentById(enrollmentId);
+  if (!enrollment) return undefined;
+  const [learner, course, logs, checks, quizResultsRows, report, cert] = await Promise.all([
+    getLearnerById(enrollment.learnerId),
+    getCourseById(enrollment.courseId),
+    getProgressLogs(enrollmentId),
+    getChecks(enrollmentId),
+    getQuizResults(enrollmentId),
+    getLearningReport(enrollmentId),
+    getCertificateByEnrollment(enrollmentId),
+  ]);
+  const recalc = await recalcEnrollment(enrollmentId).catch(() => null);
+  return { enrollment, learner, course, logs, checks, quizResults: quizResultsRows, report, certificate: cert, judgment: recalc };
+}
+
+// ============================================================
+// 協業先 月次レポート・請求予定額(Phase 3)
+// ============================================================
+
+/** 月次で研修売上・成果報酬・請求予定額を集計。 */
+export async function getMonthlyPartnerReport(partnerId: number) {
+  const db = await getDb();
+  if (!db) return [] as Array<{ yearMonth: string; trainingSales: number; feeAmount: number; feeRate: number; status: string }>;
+  const partnerRows = await db.select().from(partners).where(eq(partners.id, partnerId)).limit(1);
+  const feeRate = partnerRows[0]?.successFeeRate ?? 20;
+  const sales = await db.select().from(partnerSales).where(eq(partnerSales.partnerId, partnerId));
+  const fees = await db.select().from(successFees).where(eq(successFees.partnerId, partnerId));
+
+  const byMonth = new Map<string, { yearMonth: string; trainingSales: number; feeAmount: number; feeRate: number; status: string }>();
+  for (const s of sales) {
+    const cur = byMonth.get(s.yearMonth) ?? { yearMonth: s.yearMonth, trainingSales: 0, feeAmount: 0, feeRate, status: "予定" };
+    cur.trainingSales += s.trainingSales;
+    cur.feeAmount += Math.floor((s.trainingSales * feeRate) / 100);
+    byMonth.set(s.yearMonth, cur);
+  }
+  // 確定済み報酬があれば上書き
+  for (const f of fees) {
+    const cur = byMonth.get(f.yearMonth) ?? { yearMonth: f.yearMonth, trainingSales: f.baseSales, feeAmount: 0, feeRate: f.feeRate, status: "確定" };
+    cur.feeAmount = f.feeAmount;
+    cur.feeRate = f.feeRate;
+    cur.status = f.status === "paid" ? "入金済" : f.status === "invoiced" ? "請求済" : "確定";
+    byMonth.set(f.yearMonth, cur);
+  }
+  return Array.from(byMonth.values()).sort((a, b) => (a.yearMonth < b.yearMonth ? 1 : -1));
 }

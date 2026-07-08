@@ -47,6 +47,10 @@ const LmsCourses = lazy(() => import("@/pages/lms/Courses"));
 const LmsPartners = lazy(() => import("@/pages/lms/Partners"));
 const LmsChecklist = lazy(() => import("@/pages/lms/Checklist"));
 const LmsAuditLog = lazy(() => import("@/pages/lms/AuditLog"));
+const LmsNotifications = lazy(() => import("@/pages/lms/Notifications"));
+const LmsAdvisor = lazy(() => import("@/pages/lms/Advisor"));
+const LmsExports = lazy(() => import("@/pages/lms/Exports"));
+const LmsCertificate = lazy(() => import("@/pages/lms/Certificate"));
 const LmsLearnHome = lazy(() => import("@/pages/lms/LearnHome"));
 const LmsLearnCourse = lazy(() => import("@/pages/lms/LearnCourse"));
 
@@ -244,9 +248,13 @@ function App() {
             <Route path="/lms" component={LmsAdminDashboard} />
             <Route path="/lms/companies" component={LmsCompanies} />
             <Route path="/lms/courses" component={LmsCourses} />
+            <Route path="/lms/notifications" component={LmsNotifications} />
             <Route path="/lms/partners" component={LmsPartners} />
             <Route path="/lms/checklist" component={LmsChecklist} />
+            <Route path="/lms/advisor" component={LmsAdvisor} />
+            <Route path="/lms/exports" component={LmsExports} />
             <Route path="/lms/audit" component={LmsAuditLog} />
+            <Route path="/lms/certificate/:enrollmentId" component={LmsCertificate} />
             <Route path="/lms/learn/enrollment/:enrollmentId" component={LmsLearnCourse} />
             <Route path="/lms/learn/:learnerId" component={LmsLearnHome} />
 
