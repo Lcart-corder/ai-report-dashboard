@@ -1,4 +1,4 @@
-<title>やとみ放課後アカデミー｜収支計画シミュレーター</title>
+<title>やとみ放課後アカデミー｜収支シミュレーター</title>
 <style>
   :root{
     --paper:#f5f7f9;--card:#fff;--ink:#16212e;--muted:#64748b;--faint:#94a3b2;--line:#e2e8ef;--line2:#eef2f6;
@@ -23,10 +23,11 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:14.5px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 90px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 90px}
   h1,h2,h3,h4{text-wrap:balance;margin:0}
+
   .bar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .bar-in{max-width:1080px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bar-in{max-width:980px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .logo{font-weight:800;font-size:14px;color:var(--accent-ink);white-space:nowrap}
   .logo small{color:var(--faint);font-weight:600;margin-left:5px;font-size:11px}
   .presets{display:flex;gap:5px;flex-wrap:wrap}
@@ -36,81 +37,139 @@
   .bar .sp{margin-left:auto}
   .ib{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap}
   .ib:hover{border-color:var(--accent)}
-  header.hd{padding:24px 0 2px}
+
+  header.hd{padding:22px 0 2px}
   header.hd .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
-  header.hd h1{font-size:21px;margin-top:3px;line-height:1.35}
-  .verdict{margin:16px 0 6px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);font-size:14.5px;line-height:1.7}
-  .verdict b{font-variant-numeric:tabular-nums}.verdict .big{font-size:17px;font-weight:800}
-  .verdict .pos{color:var(--good)}.verdict .neg{color:var(--bad)}.verdict .hint{color:var(--muted);font-size:12.5px;margin-top:4px}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
-  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:460px){.wrap{padding:0 12px 60px}.bar-in{padding:9px 12px}}
-  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--shadow)}
-  .kpi .l{font-size:11.5px;color:var(--muted);font-weight:700}
-  .kpi .v{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .kpi .s{font-size:11px;color:var(--faint);margin-top:2px}
-  .kpi .v.pos{color:var(--good)}.kpi .v.neg{color:var(--bad)}
-  .quick{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px}
-  @media(max-width:720px){.quick{grid-template-columns:1fr}}
-  .q{display:flex;flex-direction:column;gap:5px}.q label{font-size:11.5px;font-weight:700;color:var(--muted)}
-  .q .rowv{display:flex;justify-content:space-between;align-items:baseline}.q .rowv b{font-variant-numeric:tabular-nums;font-size:14px}
+  header.hd h1{font-size:19px;margin-top:3px;line-height:1.4;font-weight:700}
+
+  /* ===== hero ===== */
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px 18px;margin:16px 0}
+  .heroLbl{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px}
+  .yearScroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .yCard{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;border:1.5px solid var(--line);
+    background:var(--card);border-radius:12px;padding:8px 16px;cursor:pointer;font-family:var(--sans)}
+  .yCard .yy{font-size:11px;color:var(--muted);font-weight:700}
+  .yCard .yn{font-size:17px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+  .yCard .yn small{font-size:10px;font-weight:600;color:var(--muted);margin-left:1px}
+  .yCard .yd{width:8px;height:8px;border-radius:50%;margin-top:1px}
+  .yCard .yd.pos{background:var(--good)}.yCard .yd.neg{background:var(--bad)}
+  .yCard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft) inset;background:var(--accent-soft)}
+  .yCard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .heroRow2{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .pSlide{flex:1 1 240px}
+  .pLabel{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
+  .pLabel b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
   input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+  .adoptWrap label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:fit-content}
-  .seg button{appearance:none;border:none;background:var(--card);color:var(--muted);font-family:var(--sans);font-size:12px;font-weight:700;padding:6px 11px;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button{appearance:none;border:none;background:var(--card);color:var(--muted);font-family:var(--sans);font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;border-right:1px solid var(--line)}
   .seg button:last-child{border-right:none}.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
-  .chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 12px;box-shadow:var(--shadow);margin-bottom:14px}
-  .chart h3{font-size:14px}.chart .ch-sub{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
+
+  .gaugeWrap{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .gaugeTitle{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
   svg{display:block;width:100%;height:auto;overflow:visible}
+  .heroFoot{margin:10px 2px 0;font-size:13.5px;color:var(--muted);line-height:1.7}
+  .heroFoot b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .heroFoot .pos{color:var(--good);font-weight:800}.heroFoot .neg{color:var(--bad);font-weight:800}
+  .heroFoot .warnline{display:block;margin-top:4px;color:var(--warn);font-weight:700}
+
+  /* ===== KPI ===== */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 14px}
+  @media(max-width:640px){.kpis{grid-template-columns:1fr 1fr}}
+  @media(max-width:460px){.wrap{padding:0 12px 60px}.bar-in{padding:9px 12px}}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);border-top:3px solid var(--line)}
+  .kpi.good{border-top-color:var(--good)}.kpi.bad{border-top-color:var(--bad)}
+  .kpi .l{font-size:11.5px;color:var(--muted);font-weight:700}
+  .kpi .v{font-size:20px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .s{font-size:10.5px;color:var(--faint);margin-top:2px}
+  .kpi .v.pos{color:var(--good)}.kpi .v.neg{color:var(--bad)}
+
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 12px;box-shadow:var(--shadow);margin-bottom:14px}
+  .chart h3{font-size:13.5px}.chart .ch-sub{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
   .grid{stroke:var(--line2);stroke-width:1}.ax{stroke:var(--line);stroke-width:1}
   .tick{fill:var(--faint);font-size:10px}.lbl{fill:var(--ink);font-size:11px;font-weight:700}
   .lgd{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:11.5px}
   .lgd span{display:flex;align-items:center;gap:5px;color:var(--muted)}.lgd i{width:11px;height:11px;border-radius:3px}.lgd b{color:var(--ink);font-variant-numeric:tabular-nums}
   .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--card);font-size:11.5px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;z-index:50;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:var(--shadow)}
-  .gtbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}
-  .gtbl th,.gtbl td{border-bottom:1px solid var(--line2);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
-  .gtbl th{color:var(--muted);font-weight:700;font-size:11px}
-  .gtbl td:first-child,.gtbl th:first-child{text-align:left}
-  .gtbl tr.sel td{background:var(--accent-soft)}
-  .gtbl tr{cursor:pointer}
-  .gtbl input{width:64px;font-family:var(--sans);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:6px;padding:3px 5px}
-  .gtbl input.yr{width:52px;text-align:left}
+
   .donuts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
   @media(max-width:640px){.donuts{grid-template-columns:1fr}}
+
+  /* ===== tabs ===== */
   .tabs{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
   .tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);font-family:var(--sans);font-size:12.5px;font-weight:700;cursor:pointer;padding:8px 13px;border-radius:9px;white-space:nowrap}
-  .tab .n{font-variant-numeric:tabular-nums;color:var(--accent-ink);margin-right:5px}
-  .tab:hover{background:var(--accent-soft)}.tab[aria-selected="true"]{background:var(--accent);color:#fff}.tab[aria-selected="true"] .n{color:#fff;opacity:.8}
+  .tab:hover{background:var(--accent-soft)}.tab[aria-selected="true"]{background:var(--accent);color:#fff}
   .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-top:10px}
   .panel[hidden]{display:none}.panel h2{font-size:15px;color:var(--accent-ink)}.panel .cap{color:var(--muted);font-size:12px;margin:3px 0 14px}
   .scroll{overflow-x:auto}
-  table.sheet{border-collapse:collapse;width:100%;font-size:12.5px;min-width:480px}
+
+  .subtoggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px}
+  .subtoggle button{appearance:none;border:none;background:var(--card);color:var(--muted);font-family:var(--sans);font-size:12px;font-weight:700;padding:7px 13px;cursor:pointer;border-right:1px solid var(--line)}
+  .subtoggle button:last-child{border-right:none}
+  .subtoggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+
+  /* ===== ranked bar list (cost breakdown) ===== */
+  .barRow{display:grid;grid-template-columns:150px 1fr 92px;align-items:center;gap:10px;margin:6px 0;font-size:12.5px}
+  .barLbl{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barTrack{background:var(--line2);border-radius:6px;height:13px;overflow:hidden}
+  .barFill{height:100%;border-radius:6px}
+  .barVal{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+  .legendMini{display:flex;flex-wrap:wrap;gap:10px 16px;margin:10px 0 2px;font-size:11.5px;color:var(--muted)}
+  .legendMini i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+
+  /* ===== budget tree (accounting statement, visual) ===== */
+  .btree .row{display:grid;grid-template-columns:1fr 84px 108px;align-items:center;gap:8px;padding:4px 2px;font-size:12.5px}
+  .btree .row.i1{padding-left:20px;color:var(--muted)}
+  .btree .row.grp{background:var(--accent-soft);font-weight:700;padding:7px 8px;border-radius:7px;margin:10px 0 4px;color:var(--accent-ink)}
+  .btree .row.grp .track,.btree .row.grp .val{visibility:hidden}
+  .btree .row.sub{font-weight:700;border-top:1px solid var(--line2);margin-top:2px;padding-top:6px}
+  .btree .row.total{background:var(--good-soft);font-weight:800;border-radius:7px;padding:6px 8px;margin-top:6px}
+  .btree .row.bal{background:var(--warn-soft);font-weight:800;border-radius:7px;padding:6px 8px;margin-top:6px}
+  .btree .track{background:var(--line2);border-radius:5px;height:9px;overflow:hidden}
+  .btree .fill{height:100%;border-radius:5px;background:var(--accent)}
+  .btree .row.total .fill{background:var(--good)}
+  .btree .row.bal .fill{background:var(--warn)}
+  .btree .val{text-align:right;font-variant-numeric:tabular-nums}
+  .btree .val.neg{color:var(--bad)}.btree .val.pos{color:var(--good)}
+
+  table.sheet{border-collapse:collapse;width:100%;font-size:12.5px;min-width:460px}
   table.sheet th,table.sheet td{border-bottom:1px solid var(--line2);padding:6px 10px;text-align:left;vertical-align:top}
   table.sheet thead th{color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--line);font-size:11.5px}
   table.sheet td.num,table.sheet th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  tr.grp td{background:var(--accent-soft);font-weight:700}
-  tr.sub td{font-weight:700;border-top:1px solid var(--line)}
   tr.total td{background:var(--good-soft);font-weight:800}
   tr.bal td{background:var(--warn-soft);font-weight:700}
-  td.ind{padding-left:24px!important;color:var(--ink)}
   .k{color:var(--muted);font-size:11.5px}.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+
+  details.rawtoggle{margin-top:16px}
+  details.rawtoggle summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent-ink);list-style:none;user-select:none}
+  details.rawtoggle summary::-webkit-details-marker{display:none}
+  details.rawtoggle summary::before{content:"▸ ";}
+  details.rawtoggle[open] summary::before{content:"▾ "}
+  details.rawtoggle .inner{margin-top:10px}
+
   .ed-grp{margin-bottom:18px}.ed-grp h4{font-size:12.5px;color:var(--accent-ink);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
   .ed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px 14px}
   .ef{display:flex;flex-direction:column;gap:2px}.ef label{font-size:11px;color:var(--muted);font-weight:600}
   .ef input{font-family:var(--sans);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:7px;padding:5px 8px}
   .ef input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+
+  .helpList{display:grid;gap:10px}
+  .helpItem{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6}
+  .helpItem .ico{font-size:16px;flex:0 0 auto}
   footer{color:var(--faint);font-size:11.5px;margin-top:24px;text-align:center}
-  @media print{.bar,.quick,.tabs,.ib,.toggle{display:none!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
+  @media print{.bar,.tabs,.ib,.toggle,.yearScroll,input[type=range],.seg,.subtoggle{display:none!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
 </style>
 
 <div class="tip" id="tip"></div>
 
 <div class="bar"><div class="bar-in">
-  <span class="logo">収支計画シミュレーター<small>やとみ放課後アカデミー R9</small></span>
+  <span class="logo">収支シミュレーター<small>やとみ放課後アカデミー R9</small></span>
   <div class="presets" id="presets">
-    <button class="pchip" data-k="標準" aria-pressed="true">標準(C案)</button>
-    <button class="pchip" data-k="国庫">国庫申請(A案)</button>
-    <button class="pchip" data-k="協賛">協賛で±0</button>
+    <button class="pchip" data-k="標準" aria-pressed="true">標準</button>
+    <button class="pchip" data-k="国庫">国庫申請</button>
+    <button class="pchip" data-k="協賛">協賛で黒字化</button>
     <button class="pchip" data-k="平年">平年(12ヶ月)</button>
   </div>
   <span class="sp"></span>
@@ -122,68 +181,131 @@
 
 <div class="wrap">
   <header class="hd">
-    <div class="eyebrow">収支予算書（会計要項準拠）· 成長カーブ · 資料①〜④</div>
-    <h1>年度別の成長カーブを描き、会計要項の収支予算書で全体像を掴む</h1>
+    <div class="eyebrow">やとみ放課後アカデミー・弥富市 資料①〜④準拠</div>
+    <h1>年度を選んで参加者数を動かすと、収支がどう変わるかひと目でわかります</h1>
   </header>
 
-  <div class="verdict" id="verdict"></div>
+  <!-- ===== HERO：年度カード＋スライダー＋収支ゲージ ===== -->
+  <div class="hero">
+    <div class="heroLbl">① 年度をタップして選ぶ</div>
+    <div class="yearScroll" id="yearCards"></div>
+
+    <div class="heroRow2">
+      <div class="pSlide">
+        <div class="pLabel">② 参加者数を動かす　<b id="v_p">200</b>人</div>
+        <input type="range" id="c_p" min="0" max="400" step="10" value="200">
+      </div>
+      <div class="adoptWrap">
+        <label>指導員への謝金（実際の支払い水準）</label>
+        <div class="seg" id="c_adopt"><button data-v="A">安い(A)</button><button data-v="B">中間(B)</button><button data-v="C" aria-pressed="true">実勢(C)</button></div>
+      </div>
+    </div>
+
+    <div class="gaugeWrap">
+      <div class="gaugeTitle">③ 収支のバランス（左＝赤字／右＝黒字）</div>
+      <div id="gauge"></div>
+      <p class="heroFoot" id="heroFoot"></p>
+    </div>
+  </div>
+
   <div class="kpis" id="kpis"></div>
 
-  <div class="quick">
-    <div class="q"><div class="rowv"><label>対象年度の参加者数（成長カーブに反映）</label><b><span id="v_p">200</span> 人</b></div>
-      <input type="range" id="c_p" min="0" max="400" step="10" value="200"></div>
-    <div class="q"><label>採用謝金案（実支給）</label>
-      <div class="seg" id="c_adopt"><button data-v="A">A</button><button data-v="B">B</button><button data-v="C" aria-pressed="true">C</button></div></div>
-  </div>
-
-  <!-- editable growth curve -->
   <div class="chart">
-    <h3>参加者 成長カーブ（編集可能）</h3>
-    <p class="ch-sub">下の表の年度・参加者数を編集すると曲線が変わります。行をクリックで「対象年度」を選択（KPI・ドーナツ・収支予算書に反映）。</p>
+    <h3>参加者の増え方（成長カーブ）</h3>
+    <p class="ch-sub">選んだ年度が濃い点で表示されます。線の高さ＝参加者数の推移。</p>
     <div id="growthChart"></div>
-    <div class="scroll"><table class="gtbl" id="growthTbl"></table></div>
   </div>
 
-  <!-- donuts -->
   <div class="donuts">
-    <div class="chart"><h3>収入内訳（対象年度）</h3><div id="donutInc"></div><div class="lgd" id="lgdInc"></div></div>
-    <div class="chart"><h3>支出内訳（対象年度）</h3><div id="donutExp"></div><div class="lgd" id="lgdExp"></div></div>
+    <div class="chart"><h3>収入の内訳</h3><div id="donutInc"></div><div class="lgd" id="lgdInc"></div></div>
+    <div class="chart"><h3>支出の内訳</h3><div id="donutExp"></div><div class="lgd" id="lgdExp"></div></div>
   </div>
 
   <div class="tabs" role="tablist" id="tabs">
-    <button class="tab" role="tab" aria-selected="true" data-t="tBudget">収支予算書（会計要項）</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="tMid">中期収支計画(5年)</button>
+    <button class="tab" role="tab" aria-selected="true" data-t="tPlan">経営計画</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="tDetail">支出・収入の詳細</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="tGov">指導員・行政提出</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t3an">謝金3案の比較</button>
     <button class="tab" role="tab" aria-selected="false" data-t="tEdit">✎ 前提を編集</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t3an">謝金3案</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t01"><span class="n">01</span>収入</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t02"><span class="n">02</span>支出明細</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t04"><span class="n">04</span>指導員</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t13"><span class="n">13</span>別添1-2</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="tHelp">？</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="tHelp">？使い方</button>
   </div>
 
-  <section class="panel" id="tBudget" role="tabpanel"><h2>収支予算書（対象年度）</h2>
-    <p class="cap">会計要項に沿い【収入の部】【支出の部（事業費／管理費）】で区分し、当期収支差額を表示。返還見込は参考欄。</p>
-    <div class="scroll" id="tblBudget"></div></section>
-  <section class="panel" id="tMid" role="tabpanel" hidden><h2>中期収支計画（成長カーブ連動・年度横並び）</h2>
-    <p class="cap">成長カーブの各年度を会計要項の区分で一覧。前提（単価・費目・採用案）は全年度共通。年度別の参加者は成長カーブ表で編集。</p>
-    <div id="midChart"></div><div class="lgd" id="lgdMid"></div>
-    <div class="scroll" id="tblMid" style="margin-top:14px"></div></section>
-  <section class="panel" id="tEdit" role="tabpanel" hidden><h2>前提を編集</h2>
-    <p class="cap">全数値を実勢値に差し替え可能。変更は即、全体に反映。</p><div id="editor"></div>
-    <button class="ib" id="edReset" style="margin-top:6px">↺ 既定（資料値）に戻す</button></section>
-  <section class="panel" id="t3an" role="tabpanel" hidden><h2>指導員謝金 3案の比較</h2>
-    <p class="cap">提出＝A/B（補助基準）、実支給＝採用案。差額は委託料内配分/自主財源で説明（§1）。</p><div id="chart3"></div></section>
-  <section class="panel" id="t01" role="tabpanel" hidden><h2>01_収入シミュレーション</h2>
-    <p class="cap">参加者数別（対象年度の参加者に近い列を強調）。</p><div class="scroll" id="tbl01"></div></section>
-  <section class="panel" id="t02" role="tabpanel" hidden><h2>02_支出明細（費目別）</h2>
-    <p class="cap">直接/間接の費目。金額は「前提を編集」で変更可。</p><div class="scroll" id="tbl02"></div></section>
-  <section class="panel" id="t04" role="tabpanel" hidden><h2>04_指導員配置（全15種目）</h2>
-    <p class="cap">種目謝金＝時給×時間×回数×配置2名。</p><div class="scroll" id="tbl04"></div></section>
-  <section class="panel" id="t13" role="tabpanel" hidden><h2>13_別添1-2</h2>
-    <p class="cap">提出案(A/B)で切替。委託料照合付き。</p><div class="scroll" id="tbl13"></div></section>
-  <section class="panel" id="tHelp" role="tabpanel" hidden><h2>使い方</h2>
-    <p class="cap">① プリセットで代表シナリオ → ② 成長カーブ表で年度別参加者を編集・対象年度を選択 → ③ 収支予算書（会計要項）で確認 → ④ 前提を編集で費目・単価を実勢値に → ⑤ 共有/CSV/印刷。会計要項＝【収入の部】【支出の部：事業費・管理費】【当期収支差額】。数式はGAS setup_academy.gs と同一。</p></section>
+  <section class="panel" id="tPlan" role="tabpanel">
+    <h2>経営計画</h2>
+    <div class="subtoggle" data-group="plan">
+      <button data-show="year" aria-pressed="true">選んだ年度の予算書</button>
+      <button data-show="five">5年間の比較</button>
+    </div>
+    <div data-panel="plan" data-show="year">
+      <p class="cap">会計要項の【収入の部】【支出の部】に沿った予算書。棒の長さ＝収入(または支出)合計に対する割合。</p>
+      <div id="btree" class="btree"></div>
+    </div>
+    <div data-panel="plan" data-show="five" hidden>
+      <p class="cap">成長カーブの各年度を横に並べて比較。参加者が増えても「返還後」はほぼ一定です。</p>
+      <div id="midChart"></div><div class="lgd" id="lgdMid"></div>
+      <div class="scroll" id="tblMid" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tDetail" role="tabpanel" hidden>
+    <h2>支出・収入の詳細</h2>
+    <div class="subtoggle" data-group="detail">
+      <button data-show="exp" aria-pressed="true">支出の内訳（費目ランキング）</button>
+      <button data-show="inc">収入シナリオ（人数別）</button>
+    </div>
+    <div data-panel="detail" data-show="exp">
+      <p class="cap">金額の大きい費目から順に並べています。バーの色＝会計区分。</p>
+      <div id="expBars"></div>
+      <div class="legendMini" id="expLegend"></div>
+      <details class="rawtoggle"><summary>すべての費目を表で見る</summary><div class="inner scroll" id="tbl02"></div></details>
+    </div>
+    <div data-panel="detail" data-show="inc" hidden>
+      <p class="cap">参加者数を100〜300人で仮定した場合の収入項目別シミュレーション。選択中の年度に近い列を強調しています。</p>
+      <div class="scroll" id="tbl01"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tGov" role="tabpanel" hidden>
+    <h2>指導員・行政提出</h2>
+    <div class="subtoggle" data-group="gov">
+      <button data-show="staff" aria-pressed="true">指導員配置（全15種目）</button>
+      <button data-show="gov13">別添1-2（行政提出様式）</button>
+    </div>
+    <div data-panel="gov" data-show="staff">
+      <p class="cap">種目ごとの必要人数・配置人数・年間謝金。「必要」より「配置」が少ない種目は要注意です。</p>
+      <div class="scroll" id="tbl04"></div>
+    </div>
+    <div data-panel="gov" data-show="gov13" hidden>
+      <p class="cap">市・県への提出様式。提出案(A/B)で謝金額が切り替わり、実際の支払額(C案)との差額・市委託料との照合を表示します。</p>
+      <div class="scroll" id="tbl13"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="t3an" role="tabpanel" hidden>
+    <h2>指導員謝金 3案の比較</h2>
+    <p class="cap">資料により謝金の見積り方が3通りあります。濃い棒＝現在採用中の案。差額は委託料内での調整か自主財源で説明が必要です。</p>
+    <div id="chart3"></div>
+  </section>
+
+  <section class="panel" id="tEdit" role="tabpanel" hidden>
+    <h2>前提を編集</h2>
+    <p class="cap">すべての金額を実勢値に差し替えられます。変更は即、上のゲージ・グラフ・すべてのシートに反映されます。</p>
+    <div id="editor"></div>
+    <button class="ib" id="edReset" style="margin-top:6px">↺ 既定（資料値）に戻す</button>
+  </section>
+
+  <section class="panel" id="tHelp" role="tabpanel" hidden>
+    <h2>使い方</h2>
+    <div class="helpList">
+      <div class="helpItem"><span class="ico">1️⃣</span><span>上の<b>年度カード</b>をタップして、見たい年度を選びます。</span></div>
+      <div class="helpItem"><span class="ico">2️⃣</span><span><b>参加者スライダー</b>を動かすと、その年度の参加者数が変わり、下のゲージ・グラフが即座に再計算されます。</span></div>
+      <div class="helpItem"><span class="ico">3️⃣</span><span><b>収支ゲージ</b>が右（緑）なら黒字、左（赤）なら赤字。下の一文で「あといくら協賛があれば黒字化するか」がわかります。</span></div>
+      <div class="helpItem"><span class="ico">4️⃣</span><span>「経営計画」タブで正式な予算書（会計要項の形式）と5年間の比較を確認できます。</span></div>
+      <div class="helpItem"><span class="ico">5️⃣</span><span>「支出・収入の詳細」で費目別の金額ランキング、「指導員・行政提出」で種目別配置と提出様式を確認できます。</span></div>
+      <div class="helpItem"><span class="ico">6️⃣</span><span>「✎ 前提を編集」で単価・謝金・費目などすべての数字を実勢値に書き換えられます。</span></div>
+      <div class="helpItem"><span class="ico">🔗</span><span>「共有」で今の設定のままURLをコピーでき、「CSV」でExcel/スプレッドシートに貼り付けられます。「印刷」で理事会・市提出用のPDFになります。</span></div>
+    </div>
+  </section>
 
   <footer>数値は資料①〜④に一致（既定時：事業費20,851,480＝直接16,039,600＋諸経費4,811,880／管理費744,800／総21,596,280）</footer>
 </div>
@@ -206,6 +328,7 @@ function base(){return {
 let S=base();
 function partOf(s){return s.成長[s.対象]?s.成長[s.対象][1]:0;}
 
+/* ===== 計算（数値ロジックは既存版と同一。変更なし） ===== */
 function calc(s,pp){
   const 参加者=(pp==null)?partOf(s):pp;
   const 会費単=s.単価.利用会員入会金, 事業単=s.単価.参加費月額*s.月数+s.単価.保険+s.単価.アプリ;
@@ -227,53 +350,73 @@ function calc(s,pp){
   return {参加者,会費固,会費収入,事業収入,連動,固定,歳入,A,B,C,謝金,人件費,その他事業,非謝金直接,直接,間接,諸経費,事業費,管理費,総,収支,返還,返還後,必要協賛,提出謝金,提出合計,採用照合};
 }
 
-function verdict(r,s){
-  const cc=r.返還後>=0?'pos':'neg';
-  const tail=r.返還後>=0?`返還後も <b class="pos">黒字</b>を確保。`:`あと <b class="neg">${F(-r.返還後)}円</b> の協賛/寄付で返還後±0（必要協賛 ${F(r.必要協賛)}円）。`;
-  document.getElementById('verdict').innerHTML=
-   `対象年度 <b>${s.成長[s.対象][0]}</b>・参加者 <b>${r.参加者}人</b>・<b>${s.採用}案</b> のとき、`+
-   `収入計 <b>${F(r.歳入)}</b>／支出計 <b>${F(r.総)}</b>／`+
-   `当期収支差額 <span class="big ${r.収支>=0?'pos':'neg'}">${r.収支>=0?'+':''}${F(r.収支)}円</span>。`+
-   `<div class="hint">${tail} ／ 別添1-2(提出${s.提出}案)＝<b>${F(r.提出合計)}</b>、採用${s.採用}案の補助対象+諸経費＝<b>${F(r.採用照合)}</b>（委託料 ${F(s.委託料)} と${r.採用照合===s.委託料?'一致':'差 '+F(Math.abs(r.採用照合-s.委託料))}）。</div>`;
-}
-function kpis(r){
-  const t=[{l:'収入計',v:F(r.歳入),vc:'',s:'収入の部 合計'},{l:'支出計',v:F(r.総),vc:'',s:'事業費+管理費'},
-    {l:'当期収支差額',v:(r.収支>=0?'+':'')+F(r.収支),vc:r.収支>=0?'pos':'neg',s:'収入−支出'},
-    {l:'返還後 収支差額',v:(r.返還後>=0?'+':'')+F(r.返還後),vc:r.返還後>=0?'pos':'neg',s:'参加者相当分 返還後'}];
-  document.getElementById('kpis').innerHTML=t.map(x=>`<div class="kpi"><div class="l">${x.l}</div><div class="v ${x.vc}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
+/* ===== ①年度カード ===== */
+function yearCards(s){
+  const h=s.成長.map((g,i)=>{
+    const rr=calc(s,g[1]),on=i===s.対象,sign=rr.収支>=0?'pos':'neg';
+    return `<button class="yCard ${on?'on':''}" data-i="${i}" aria-pressed="${on}">`+
+      `<span class="yy">${g[0]}</span><span class="yn">${g[1]}<small>人</small></span><span class="yd ${sign}"></span></button>`;
+  }).join('');
+  document.getElementById('yearCards').innerHTML=h;
 }
 
-/* growth curve */
+/* ===== ③収支ゲージ（診断コメント込み） ===== */
+function gauge(r,s){
+  const W=680,H=54,mid=W/2,barH=22,y=(H-barH)/2;
+  const scaleMax=Math.max(300000,...s.成長.map(g=>Math.abs(calc(s,g[1]).収支)))*1.15;
+  const usable=mid-14;
+  const val=r.収支,pos=val>=0,w=Math.min(usable,Math.abs(val)/scaleMax*usable);
+  const col=pos?'var(--good)':'var(--bad)';
+  const x=pos?mid:mid-w;
+  const labelX=pos?Math.min(W-8,mid+w+8):Math.max(8,mid-w-8);
+  const anchor=pos?'start':'end';
+  document.getElementById('gauge').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="当期収支差額 ${F(val)}円">
+    <rect x="8" y="${y}" width="${W-16}" height="${barH}" rx="${barH/2}" fill="var(--line2)"/>
+    <rect x="${x.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH}" rx="${barH/2}" fill="${col}"/>
+    <line x1="${mid}" y1="4" x2="${mid}" y2="${H-4}" stroke="var(--faint)" stroke-width="2"/>
+    <text x="${labelX.toFixed(1)}" y="${(H/2+4).toFixed(1)}" text-anchor="${anchor}" font-size="13" font-weight="800" fill="${col}">${pos?'+':''}${F(val)}円</text>
+  </svg>`;
+  const tail=r.返還後>=0
+    ? `参加者相当分を市に返還しても <b class="pos">黒字</b>を維持できます。`
+    : `参加者相当分を市に返還すると <b class="neg">${F(r.返還後)}円</b> の赤字。あと <b>${F(r.必要協賛)}円</b> の協賛・寄付があれば±0になります。`;
+  document.getElementById('heroFoot').innerHTML=
+    `<b>${s.成長[s.対象][0]}</b>・参加者<b>${r.参加者}人</b>・謝金<b>${s.採用}案</b>のとき　収入計 <b>${F(r.歳入)}円</b> − 支出計 <b>${F(r.総)}円</b> ＝ ${pos?'<span class="pos">黒字</span>':'<span class="neg">赤字</span>'}。<br>${tail}`;
+}
+
+function kpis(r){
+  const t=[
+    {l:'収入計',v:F(r.歳入),cls:'',s:'会費+事業+補助金+協賛'},
+    {l:'支出計',v:F(r.総),cls:'',s:'事業費+管理費'},
+    {l:'当期収支差額',v:(r.収支>=0?'+':'')+F(r.収支),cls:r.収支>=0?'good':'bad',vc:r.収支>=0?'pos':'neg',s:'収入−支出'}
+  ];
+  document.getElementById('kpis').innerHTML=t.map(x=>`<div class="kpi ${x.cls||''}"><div class="l">${x.l}</div><div class="v ${x.vc||''}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
+}
+
+/* ===== 成長カーブ（折れ線のみ。表は年度カードに置換） ===== */
 function growthChart(s){
-  const W=760,H=250,mL=52,mR=16,mT=14,mB=30,pw=W-mL-mR,ph=H-mT-mB,n=s.成長.length;
+  const W=760,H=210,mL=48,mR=16,mT=14,mB=26,pw=W-mL-mR,ph=H-mT-mB,n=s.成長.length;
   const maxP=Math.max(100,...s.成長.map(g=>g[1]))*1.15;
   const X=i=>mL+(n>1?pw*i/(n-1):pw/2),Y=v=>mT+ph*(1-v/maxP);
-  let g='';for(let i=0;i<=4;i++){const v=maxP*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${Math.round(v)}</text>`;}
+  let g='';for(let i=0;i<=3;i++){const v=maxP*i/3,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${Math.round(v)}</text>`;}
   const path=s.成長.map((gg,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(gg[1]).toFixed(1)).join(' ');
   const area=`M${X(0).toFixed(1)} ${Y(0).toFixed(1)} `+s.成長.map((gg,i)=>'L'+X(i).toFixed(1)+' '+Y(gg[1]).toFixed(1)).join(' ')+` L${X(n-1).toFixed(1)} ${Y(0).toFixed(1)} Z`;
   let dots='',xl='';s.成長.forEach((gg,i)=>{const on=i===s.対象;
     dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(gg[1]).toFixed(1)}" r="${on?6:4.5}" fill="${on?'var(--accent)':'var(--rev)'}" stroke="var(--surface)" stroke-width="2"><title>${gg[0]}: ${gg[1]}人</title></circle>`+
       `<text class="lbl" x="${X(i).toFixed(1)}" y="${(Y(gg[1])-10).toFixed(1)}" text-anchor="middle">${gg[1]}</text>`;
-    xl+=`<text class="tick" x="${X(i).toFixed(1)}" y="${H-9}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${gg[0]}</text>`;});
+    xl+=`<text class="tick" x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${gg[0]}</text>`;});
   document.getElementById('growthChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="参加者成長カーブ">${g}
     <path d="${area}" fill="var(--rev)" opacity=".08"/><path d="${path}" fill="none" stroke="var(--rev)" stroke-width="2.5" stroke-linejoin="round"/>
     ${dots}<line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>${xl}</svg>`;
-  // editable + projection table
-  let h=`<thead><tr><th>年度</th><th>参加者</th><th>収入計</th><th>支出計</th><th>当期収支差額</th><th>返還後</th></tr></thead><tbody>`;
-  s.成長.forEach((gg,i)=>{const rr=calc(s,gg[1]);const on=i===s.対象;
-    h+=`<tr data-i="${i}" class="${on?'sel':''}"><td><input class="yr" data-gi="${i}" data-gk="0" value="${gg[0]}"></td>`+
-      `<td><input type="number" min="0" data-gi="${i}" data-gk="1" value="${gg[1]}"></td>`+
-      `<td>${F(rr.歳入)}</td><td>${F(rr.総)}</td><td class="${rr.収支>=0?'pos':'neg'}">${F(rr.収支)}</td><td class="${rr.返還後>=0?'pos':'neg'}">${F(rr.返還後)}</td></tr>`;});
-  h+=`</tbody>`;document.getElementById('growthTbl').innerHTML=h;
 }
 
-/* donut */
+/* ===== ドーナツ ===== */
 function donut(id,lgd,segs,center){
   const rad=52,C=2*Math.PI*rad,cx=70,cy=70,sw=22,tot=segs.reduce((a,b)=>a+b.v,0)||1;let off=0;
   const arcs=segs.filter(s=>s.v>0).map(s=>{const f=s.v/tot,len=Math.max(0,f*C-2);
     const c=`<circle cx="${cx}" cy="${cy}" r="${rad}" fill="none" stroke="${s.c}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off*C).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${s.n}: ${F(s.v)} (${(f*100).toFixed(1)}%)</title></circle>`;off+=f;return c;}).join('');
   document.getElementById(id).innerHTML=`<svg viewBox="0 0 140 140" role="img" style="max-width:190px;margin:2px auto">${arcs}<text x="70" y="65" text-anchor="middle" style="font-size:9px;fill:var(--muted)">${center.t}</text><text x="70" y="81" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--ink)">${center.v}</text></svg>`;
-  document.getElementById(lgd).innerHTML=segs.map(s=>`<span><i style="background:${s.c}"></i>${s.n} <b>${F(s.v)}</b></span>`).join('');
+  const tot2=segs.reduce((a,b)=>a+b.v,0)||1;
+  document.getElementById(lgd).innerHTML=segs.filter(s=>s.v>0).map(s=>`<span><i style="background:${s.c}"></i>${s.n} <b>${F(s.v)}</b>（${(s.v/tot2*100).toFixed(0)}%）</span>`).join('');
 }
 
 function chart3(r,s){
@@ -284,71 +427,91 @@ function chart3(r,s){
   document.getElementById('chart3').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${bars}</svg>`;
 }
 
-/* mid-term plan (multi-year) */
+/* ===== 中期(5年)比較：主要行のみに絞った簡潔テーブル ===== */
 function midChart(s){
   const yrs=s.成長.map(g=>({y:g[0],r:calc(s,g[1])}));
-  const W=760,H=250,mL=52,mR=14,mT=14,mB=42,pw=W-mL-mR,ph=H-mT-mB,n=yrs.length;
+  const W=760,H=230,mL=48,mR=14,mT=14,mB=38,pw=W-mL-mR,ph=H-mT-mB,n=yrs.length;
   const maxV=Math.max(1,...yrs.map(o=>Math.max(o.r.歳入,o.r.総)))*1.12,Y=v=>mT+ph*(1-v/maxV);
-  let g='';for(let i=0;i<=4;i++){const v=maxV*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
+  let g='';for(let i=0;i<=3;i++){const v=maxV*i/3,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
   const gw=pw/n,bw=Math.min(26,gw*0.3);
   let bars='';yrs.forEach((o,i)=>{const cx=mL+gw*(i+0.5),y1=Y(o.r.歳入),y2=Y(o.r.総),on=i===s.対象;
     bars+=`<rect x="${(cx-bw-2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw}" height="${(mT+ph-y1).toFixed(1)}" rx="3" fill="var(--rev)" opacity="${on?1:.8}"><title>${o.y} 収入計 ${F(o.r.歳入)}</title></rect>`+
       `<rect x="${(cx+2).toFixed(1)}" y="${y2.toFixed(1)}" width="${bw}" height="${(mT+ph-y2).toFixed(1)}" rx="3" fill="var(--exp4)" opacity="${on?1:.8}"><title>${o.y} 支出計 ${F(o.r.総)}</title></rect>`+
-      `<text class="tick" x="${cx.toFixed(1)}" y="${H-24}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${o.y}</text>`+
-      `<text class="tick" x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" style="fill:${o.r.返還後>=0?'var(--good)':'var(--bad)'}">返還後 ${F(o.r.返還後/1000)}k</text>`;});
+      `<text class="tick" x="${cx.toFixed(1)}" y="${H-22}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${o.y}</text>`+
+      `<text class="tick" x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" style="fill:${o.r.返還後>=0?'var(--good)':'var(--bad)'}">返還後${F(o.r.返還後/1000)}k</text>`;});
   document.getElementById('midChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="年度別 収入計と支出計">${g}<line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>${bars}</svg>`;
-  document.getElementById('lgdMid').innerHTML=`<span><i style="background:var(--rev)"></i>収入計</span><span><i style="background:var(--exp4)"></i>支出計</span><span>棒下＝返還後収支差額（横ばいに注目）</span>`;
+  document.getElementById('lgdMid').innerHTML=`<span><i style="background:var(--rev)"></i>収入計</span><span><i style="background:var(--exp4)"></i>支出計</span><span>数字＝返還後 収支差額（横ばいに注目）</span>`;
 }
 function tblMid(s){
   const yrs=s.成長.map(g=>({y:g[0],p:g[1],r:calc(s,g[1])}));
   let cum=0;
-  let h=`<table class="sheet" style="min-width:640px"><thead><tr><th>科目 ＼ 年度</th>`+yrs.map((o,i)=>`<th class="num"${i===s.対象?' style="color:var(--accent)"':''}>${o.y}</th>`).join('')+`</tr></thead><tbody>`;
+  let h=`<table class="sheet" style="min-width:600px"><thead><tr><th>科目 ＼ 年度</th>`+yrs.map((o,i)=>`<th class="num"${i===s.対象?' style="color:var(--accent)"':''}>${o.y}</th>`).join('')+`</tr></thead><tbody>`;
   const line=(name,fn,cls='')=>{h+=`<tr class="${cls}"><td>${name}</td>`+yrs.map(o=>{const v=fn(o);return `<td class="num ${(cls==='balc'&&v<0)?'neg':(cls==='balc'?'pos':'')}">${F(v)}</td>`;}).join('')+`</tr>`;};
   line('参加者数',o=>o.p);
   line('収入計',o=>o.r.歳入,'sub');
-  line('　事業費',o=>o.r.事業費);
-  line('　管理費',o=>o.r.管理費);
   line('支出計',o=>o.r.総,'sub');
   line('当期収支差額',o=>o.r.収支,'balc');
-  line('返還見込',o=>o.r.返還);
   line('返還後 収支差額',o=>o.r.返還後,'balc');
-  line('必要協賛金',o=>o.r.必要協賛);
-  // 累計 返還後
   h+=`<tr class="total"><td>返還後 累計</td>`+yrs.map(o=>{cum+=o.r.返還後;return `<td class="num ${cum<0?'neg':'pos'}">${F(cum)}</td>`;}).join('')+`</tr>`;
-  h+=`</tbody></table><p class="cap" style="margin-top:8px">※前提は全年度共通。参加者だけ成長カーブで変えた場合、返還後は各年ほぼ一定＝「参加者増では手残りは増えない」。改善は協賛金・単価・費目の見直しで。</p>`;
+  h+=`</tbody></table><p class="cap" style="margin-top:8px">※前提は全年度共通。参加者だけ増やしても返還後はほぼ一定＝改善は協賛金・単価・費目の見直しで。</p>`;
   document.getElementById('tblMid').innerHTML=h;
 }
 
-/* accounting budget statement */
-function tblBudget(r,s){
-  const L=(name,val,cls='',ind=false)=>`<tr class="${cls}"><td class="${ind?'ind':''}">${name}</td><td class="num">${F(val)}</td></tr>`;
-  let h=`<table class="sheet" style="min-width:460px"><thead><tr><th>科目</th><th class="num">予算額(円)</th></tr></thead><tbody>`;
-  h+=`<tr class="grp"><td>【収入の部】</td><td class="num"></td></tr>`;
-  h+=L('会費収入',r.会費収入,'sub');
-  h+=L('正会員入会金',s.会費.正会員入会金,'',true)+L('賛助会員会費(個人)',s.会費.賛助個人,'',true)+L('賛助会員会費(法人)',s.会費.賛助法人,'',true)+L('利用会員入会金',r.参加者*s.単価.利用会員入会金,'',true);
-  h+=L('事業収入',r.事業収入,'sub');
-  h+=L('参加費収入',r.参加者*s.単価.参加費月額*s.月数,'',true)+L('スポーツ安全保険料',r.参加者*s.単価.保険,'',true)+L('アプリ使用料収入',r.参加者*s.単価.アプリ,'',true);
-  h+=L('補助金等収入（市委託料）',s.委託料,'sub');
-  h+=L('協賛金収入',s.協賛,'sub')+L('寄付金収入',s.寄付,'sub');
-  h+=L('収入合計',r.歳入,'total');
-  h+=`<tr class="grp"><td>【支出の部】</td><td class="num"></td></tr>`;
-  h+=L('事業費',r.事業費,'sub');
-  h+=L('人件費（小計）',r.人件費,'',true)+L('指導者謝金('+s.採用+'案)',r.謝金,'',true);
-  s.直接.filter(d=>d[2]==='人件費').forEach(d=>h+=L(d[0],d[1],'',true));
-  h+=L('その他事業費（小計）',r.その他事業,'',true);
-  s.直接.filter(d=>d[2]==='その他').forEach(d=>h+=L(d[0],d[1],'',true));
-  h+=L('諸経費（直接×'+(s.諸経費率*100).toFixed(0)+'%）',r.諸経費,'',true);
-  h+=L('管理費',r.管理費,'sub');
-  s.間接.forEach(d=>h+=L(d[0],d[1],'',true));
-  h+=L('支出合計',r.総,'total');
-  h+=`<tr class="bal"><td>当期収支差額（収入−支出）</td><td class="num ${r.収支>=0?'pos':'neg'}">${F(r.収支)}</td></tr>`;
-  h+=`<tr class="grp"><td>【参考】返還・自主財源</td><td class="num"></td></tr>`;
-  h+=L('返還見込（参加者相当分）',r.返還,'',true)+`<tr class="bal"><td class="ind">返還後 収支差額</td><td class="num ${r.返還後>=0?'pos':'neg'}">${F(r.返還後)}</td></tr>`+L('必要協賛金の目安',r.必要協賛,'',true);
-  h+=`</tbody></table>`;
-  document.getElementById('tblBudget').innerHTML=h;
+/* ===== 経営計画：予算書を「文字の表」でなく「割合の見える木構造」で表示 ===== */
+function budgetTree(r,s){
+  const IN=r.歳入,EXP=r.総;
+  const rows=[];
+  const push=(label,val,indent,cls,base)=>rows.push({label,val,indent,cls,base});
+  push('収入の部','',0,'grp');
+  push('会費収入',r.会費収入,0,'sub',IN);
+  push('内訳：正会員・賛助会員・利用会員の入会金/会費',r.会費収入,1,'',IN);
+  push('事業収入（参加費・保険・アプリ）',r.事業収入,0,'sub',IN);
+  push('補助金等収入（市委託料）',s.委託料,0,'sub',IN);
+  push('協賛金収入',s.協賛,0,'sub',IN);
+  push('寄付金収入',s.寄付,0,'sub',IN);
+  push('収入合計',IN,0,'total',IN);
+  push('支出の部','',0,'grp');
+  push('事業費（人件費＋その他＋諸経費）',r.事業費,0,'sub',EXP);
+  push('　人件費（指導者謝金 他）',r.人件費,1,'',EXP);
+  push('　その他事業費（消耗品・システム利用料 他）',r.その他事業,1,'',EXP);
+  push('　諸経費（直接事業費×'+(s.諸経費率*100).toFixed(0)+'%）',r.諸経費,1,'',EXP);
+  push('管理費（事務局旅費・通信・備品 他）',r.管理費,0,'sub',EXP);
+  push('支出合計',EXP,0,'total',EXP);
+  push('当期収支差額（収入−支出）',r.収支,0,'bal',Math.max(IN,EXP));
+  push('参考：返還後の実質収支',r.返還後,0,'bal',Math.max(IN,EXP));
+  push('参考：必要協賛金の目安',r.必要協賛,0,'',EXP);
+
+  const html=rows.map(row=>{
+    if(row.cls==='grp') return `<div class="row grp">${row.label}</div>`;
+    const pct=row.base?Math.min(100,Math.abs(row.val)/row.base*100):0;
+    const vcls=row.val<0?'neg':(row.cls==='total'||row.cls==='bal'?'pos':'');
+    const indentCls=row.indent?' i1':'';
+    return `<div class="row ${row.cls}${indentCls}"><div>${row.label}</div>`+
+      `<div class="track"><div class="fill" style="width:${pct.toFixed(1)}%"></div></div>`+
+      `<div class="val ${vcls}">${F(row.val)}</div></div>`;
+  }).join('');
+  document.getElementById('btree').innerHTML=html;
 }
 
-/* detail sheets */
+/* ===== 支出の内訳：費目ランキング（棒グラフ） ===== */
+function expenseBars(r,s){
+  const COL={'人件費':'var(--exp1)','その他':'var(--exp2)','管理費':'var(--exp4)','諸経費':'var(--exp3)'};
+  const items=[{n:'指導者謝金（採用'+s.採用+'案）',v:r.謝金,c:'人件費'}];
+  s.直接.forEach(d=>items.push({n:d[0],v:d[1],c:d[2]}));
+  s.間接.forEach(d=>items.push({n:d[0],v:d[1],c:'管理費'}));
+  items.push({n:'諸経費（直接×'+(s.諸経費率*100).toFixed(0)+'%）',v:r.諸経費,c:'諸経費'});
+  items.sort((a,b)=>b.v-a.v);
+  const top=items.slice(0,8),rest=items.slice(8),restSum=rest.reduce((a,b)=>a+b.v,0);
+  const max=top.length?top[0].v:1;
+  document.getElementById('expBars').innerHTML=top.map(it=>{
+    const w=Math.max(2,it.v/max*100);
+    return `<div class="barRow"><div class="barLbl">${it.n}</div><div class="barTrack"><div class="barFill" style="width:${w.toFixed(1)}%;background:${COL[it.c]||'var(--muted)'}"></div></div><div class="barVal">${F(it.v)}</div></div>`;
+  }).join('');
+  const legend=Object.keys(COL).map(k=>`<span><i style="background:${COL[k]}"></i>${k}</span>`).join('');
+  document.getElementById('expLegend').innerHTML=legend+(rest.length?`<span>＋他${rest.length}件 計 ${F(restSum)}円（詳細表を参照）</span>`:'');
+}
+
+/* ===== 収入シナリオ表（人数別） ===== */
 function tbl01(s){
   const cols=[100,150,200,250,300],u={利:s.単価.利用会員入会金,参:s.単価.参加費月額*s.月数,保:s.単価.保険,ア:s.単価.アプリ};
   const rows=[["正会員入会金",()=>s.会費.正会員入会金],["賛助会員(個人)",()=>s.会費.賛助個人],["賛助会員(法人)",()=>s.会費.賛助法人],["利用会員入会金",c=>u.利*c],["参加費",c=>u.参*c],["スポーツ安全保険",c=>u.保*c],["アプリ使用料",c=>u.ア*c],["市委託料",()=>s.委託料]];
@@ -358,15 +521,16 @@ function tbl01(s){
   h+=`<tr class="total"><td>歳入計（協賛除く）</td>`+cols.map(c=>{let t=0;rows.forEach(r=>t+=r[1](c));return `<td class="num">${F(t)}</td>`;}).join('')+`</tr></tbody></table>`;
   document.getElementById('tbl01').innerHTML=h;
 }
+/* ===== 支出の生データ表（折りたたみ内） ===== */
 function tbl02(r,s){
-  let h=`<table class="sheet" style="min-width:560px"><thead><tr><th>費目</th><th>区分</th><th>群</th><th class="num">金額</th></tr></thead><tbody>`;
-  h+=`<tr><td>指導者謝金(採用${s.採用})</td><td>直接</td><td class="k">人件費</td><td class="num">${F(r.謝金)}</td></tr>`;
-  s.直接.forEach(d=>h+=`<tr><td>${d[0]}</td><td>直接</td><td class="k">${d[2]}</td><td class="num">${F(d[1])}</td></tr>`);
-  s.間接.forEach(d=>h+=`<tr><td>${d[0]}</td><td class="k">間接</td><td class="k">管理費</td><td class="num">${F(d[1])}</td></tr>`);
-  h+=`<tr class="sub"><td>直接事業費</td><td colspan="2"></td><td class="num">${F(r.直接)}</td></tr>`+
-     `<tr class="sub"><td>諸経費（×${(s.諸経費率*100).toFixed(0)}%）</td><td colspan="2"></td><td class="num">${F(r.諸経費)}</td></tr>`+
-     `<tr class="sub"><td>間接事業費（管理費）</td><td colspan="2"></td><td class="num">${F(r.間接)}</td></tr>`+
-     `<tr class="total"><td>総事業費</td><td colspan="2"></td><td class="num">${F(r.総)}</td></tr></tbody></table>`;
+  let h=`<table class="sheet" style="min-width:520px"><thead><tr><th>費目</th><th>区分</th><th class="num">金額</th></tr></thead><tbody>`;
+  h+=`<tr><td>指導者謝金(採用${s.採用})</td><td class="k">人件費</td><td class="num">${F(r.謝金)}</td></tr>`;
+  s.直接.forEach(d=>h+=`<tr><td>${d[0]}</td><td class="k">${d[2]}</td><td class="num">${F(d[1])}</td></tr>`);
+  s.間接.forEach(d=>h+=`<tr><td>${d[0]}</td><td class="k">管理費</td><td class="num">${F(d[1])}</td></tr>`);
+  h+=`<tr class="total"><td>直接事業費</td><td></td><td class="num">${F(r.直接)}</td></tr>`+
+     `<tr class="total"><td>諸経費（×${(s.諸経費率*100).toFixed(0)}%）</td><td></td><td class="num">${F(r.諸経費)}</td></tr>`+
+     `<tr class="total"><td>間接事業費（管理費）</td><td></td><td class="num">${F(r.間接)}</td></tr>`+
+     `<tr class="bal"><td>総事業費</td><td></td><td class="num">${F(r.総)}</td></tr></tbody></table>`;
   document.getElementById('tbl02').innerHTML=h;
 }
 function tbl04(s){
@@ -389,7 +553,7 @@ function tbl13(r,s){
   document.getElementById('tbl13').innerHTML=h;
 }
 
-/* editor */
+/* ===== 前提を編集 ===== */
 function editor(){
   const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="number" step="any" min="0" inputmode="decimal" data-p="${path}" value="${val}"></div>`;
   let h=`<div class="ed-grp"><h4>収入単価・会費・委託料</h4><div class="ed-grid">`+
@@ -405,7 +569,7 @@ function editor(){
 }
 function setPath(o,path,val){const k=path.split('.');let x=o;for(let i=0;i<k.length-1;i++)x=x[k[i]];x[k[k.length-1]]=val;}
 
-/* URL/CSV */
+/* ===== URL共有 / CSV ===== */
 function saveHash(){try{history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(S)));}catch(e){}}
 function loadHash(){if(location.hash.length>1){try{S=Object.assign(base(),JSON.parse(decodeURIComponent(location.hash.slice(1))));}catch(e){}}}
 function toast(btn,msg){const o=btn.textContent;btn.textContent=msg;setTimeout(()=>btn.textContent=o,1400);}
@@ -427,9 +591,10 @@ function csvExport(){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yatomi_budget.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
+/* ===== 描画 ===== */
 function render(){
   const r=calc(S);
-  verdict(r,S);kpis(r);growthChart(S);
+  yearCards(S);gauge(r,S);kpis(r);growthChart(S);
   donut('donutInc','lgdInc',[
     {n:'会費収入',v:r.会費収入,c:'var(--inc1)'},{n:'事業収入',v:r.事業収入,c:'var(--inc2)'},
     {n:'補助金(委託料)',v:S.委託料,c:'var(--inc3)'},{n:'協賛金',v:S.協賛,c:'var(--inc4)'},{n:'寄付金',v:S.寄付,c:'var(--inc5)'}],
@@ -438,7 +603,7 @@ function render(){
     {n:'事業費・人件費',v:r.人件費,c:'var(--exp1)'},{n:'事業費・その他',v:r.その他事業,c:'var(--exp2)'},
     {n:'諸経費(30%)',v:r.諸経費,c:'var(--exp3)'},{n:'管理費(間接)',v:r.管理費,c:'var(--exp4)'}],
     {t:'支出計',v:(r.総/1e6).toFixed(1)+'M'});
-  chart3(r,S);tblBudget(r,S);midChart(S);tblMid(S);tbl01(S);tbl02(r,S);tbl04(S);tbl13(r,S);saveHash();
+  chart3(r,S);budgetTree(r,S);midChart(S);tblMid(S);expenseBars(r,S);tbl01(S);tbl02(r,S);tbl04(S);tbl13(r,S);saveHash();
 }
 function syncControls(){
   document.getElementById('c_p').value=partOf(S);document.getElementById('v_p').textContent=partOf(S);
@@ -450,20 +615,26 @@ document.getElementById('presets').addEventListener('click',e=>{const b=e.target
   [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
 document.getElementById('c_p').addEventListener('input',e=>{S.成長[S.対象][1]=+e.target.value;document.getElementById('v_p').textContent=+e.target.value;render();});
 document.getElementById('c_adopt').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));S.採用=b.dataset.v;render();});
-
-/* growth table: edit + select row */
-document.getElementById('growthTbl').addEventListener('input',e=>{const el=e.target.closest('input[data-gi]');if(!el)return;
-  const i=+el.dataset.gi,k=+el.dataset.gk;S.成長[i][k]=(k===1?(parseFloat(el.value)||0):el.value);syncControls();render();
-  // keep focus
-  setTimeout(()=>{const n=document.querySelector(`#growthTbl input[data-gi="${i}"][data-gk="${k}"]`);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);});
-document.getElementById('growthTbl').addEventListener('click',e=>{if(e.target.closest('input'))return;const tr=e.target.closest('tr[data-i]');if(!tr)return;S.対象=+tr.dataset.i;syncControls();render();});
+document.getElementById('yearCards').addEventListener('click',e=>{const b=e.target.closest('.yCard');if(!b)return;S.対象=+b.dataset.i;syncControls();render();});
 
 document.getElementById('editor').addEventListener('input',e=>{const el=e.target.closest('input[data-p]');if(!el)return;let v=parseFloat(el.value);if(isNaN(v))v=0;setPath(S,el.dataset.p,v);render();});
 document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();[...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
 
+/* 上位タブ */
 const tabs=document.getElementById('tabs');
 tabs.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;tabs.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===b));document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==b.dataset.t);});
 tabs.addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const l=[...tabs.querySelectorAll('.tab')],i=l.findIndex(t=>t.getAttribute('aria-selected')==='true'),j=(i+(e.key==='ArrowRight'?1:l.length-1))%l.length;l[j].click();l[j].focus();});
+
+/* サブトグル（タブ内の二択切替） */
+document.querySelectorAll('.subtoggle').forEach(st=>{
+  st.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const group=st.dataset.group;
+    [...st.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    document.querySelectorAll(`[data-panel="${group}"]`).forEach(p=>p.hidden=p.dataset.show!==b.dataset.show);
+  });
+});
+
 document.getElementById('print').addEventListener('click',()=>window.print());
 document.getElementById('csv').addEventListener('click',()=>csvExport());
 document.getElementById('share').addEventListener('click',e=>{saveHash();const u=location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>toast(e.target,'✓ コピー済'),()=>toast(e.target,'コピー不可'));}else toast(e.target,'URL反映');});
