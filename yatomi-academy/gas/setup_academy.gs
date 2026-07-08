@@ -40,7 +40,8 @@ var SH = {
   SETTLE: '12_年度末精算',
   GOV: '13_行政提出様式出力',
   BUDGET: '14_収支予算書',
-  MID: '15_中期収支計画'
+  MID: '15_中期収支計画',
+  MSIM: '★月次シミュレーション'
 };
 
 function setupAcademyBook() {
@@ -64,14 +65,18 @@ function setupAcademyBook() {
   _buildGov(ss);         // 13
   _buildBudgetStatement(ss); // 14 会計要項の収支予算書
   _buildMidterm(ss);     // 15 中期収支計画（成長カーブ）
+  _buildMonthlySim(ss);  // ★ 月次シミュレーション（主軸）
+
+  // 月次シミュレーションを先頭へ移動して主軸に
+  try { var m = ss.getSheetByName(SH.MSIM); ss.setActiveSheet(m); ss.moveActiveSheet(1); } catch (e) {}
 
   // 既定のシート1が空なら削除
   var def = ss.getSheetByName('シート1') || ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) { try { ss.deleteSheet(def); } catch (e) {} }
 
-  ss.setActiveSheet(ss.getSheetByName(SH.BUDGET));
-  Logger.log('やとみ放課後アカデミー ブックを生成しました（15シート）');
-  try { SpreadsheetApp.getUi().alert('生成完了！\n15シート・名前付き範囲・計算式を作成しました。\n00_入力条件を編集すると全シートが連動します。'); } catch (e) {}
+  ss.setActiveSheet(ss.getSheetByName(SH.MSIM));
+  Logger.log('やとみ放課後アカデミー ブックを生成しました（16シート・月次主軸）');
+  try { SpreadsheetApp.getUi().alert('生成完了！\n16シート（★月次シミュレーションを主軸）を作成しました。\n月次の開催回数・参加者・協賛を入力すると年間へ集約されます。'); } catch (e) {}
 }
 
 /* ============================ 共通ヘルパ ============================ */
@@ -92,7 +97,9 @@ function _header(sheet, row, headers) {
   sheet.setFrozenRows(row);
 }
 function _named(ss, name, sheetName, a1) {
-  try { ss.removeNamedRange(name); } catch (e) {}
+  // 存在する場合のみ削除（存在しない名前を removeNamedRange するとflush時に
+  // 例外「名前付き範囲『…』は存在しません」が投げられ try/catch で捕まらないため）
+  if (ss.getRangeByName(name)) { try { ss.removeNamedRange(name); } catch (e) {} }
   ss.setNamedRange(name, ss.getSheetByName(sheetName).getRange(a1));
 }
 function _yen(sheet, a1) { sheet.getRange(a1).setNumberFormat('#,##0'); }
@@ -153,6 +160,9 @@ function _buildInputs(ss) {
   s.getRange('B23:B24').setBackground('#ffe9d6'); // 案セレクタ(採用案/提出案)
   s.setColumnWidth(1, 200); s.setColumnWidth(4, 320);
   for (var c = 3; c <= 3 + rows.length; c++) _yen(s, 'B' + c);
+
+  // 名前付き範囲を確実にコミットしてから後続シートへ（遅延実行対策）
+  SpreadsheetApp.flush();
 }
 
 /* ============================ 01_収入シミュレーション ============================ */
@@ -785,4 +795,87 @@ function _buildMidterm(ss) {
   s.getRange(13, 1).setValue('※前提（単価・費目・採用案）は全年度共通。参加者だけ増やしても返還後はほぼ一定＝手残りは協賛/単価/費目の見直しで改善。').setFontColor('#b00');
   s.setColumnWidth(1, 210);
   for (var w = 2; w <= 6; w++) s.setColumnWidth(w, 110);
+}
+
+/* ============================ ★月次シミュレーション（主軸） ============================ */
+
+function _buildMonthlySim(ss) {
+  var s = _sheet(ss, SH.MSIM);
+  var p = PropertiesService.getDocumentProperties();
+  var E = "'" + SH.EXP + "'!";
+  var TOTAL = E + p.getProperty('EXP_TOTAL');       // 総事業費
+  var SAL = E + 'D' + p.getProperty('EXP_FIRST');   // 指導員謝金(採用案連動) セル
+  var 通勤年 = 252000;                               // 210×40回×30人（年）
+
+  _title(s, '★月次シミュレーション（主軸）｜ 黄=入力（開催回数・参加者・その他収入・協賛）。年間へ集約し02/14と一致');
+  _header(s, 2, ['月', '開催回数', '参加者数', '参加費収入', 'その他収入(一時)', '市委託料',
+    '協賛金', '収入計', '指導員謝金', '通勤手当', '運営費(固定)', '支出計', '月次収支', '累計収支']);
+
+  // 月と入力の既定値（9〜3月に活動、40回、参加者200、一時金は9月に一括）
+  var 一時 = '=参加者数*(利用入会金+保険単価+アプリ単価)+正会員収入+賛助個人+賛助法人'; // 入会+保険+アプリ+固定会費
+  var months = [
+    ['4月', 0, 0, 0], ['5月', 0, 0, 0], ['6月', 0, 0, 0], ['7月', 0, 0, 0], ['8月', 0, 0, 0],
+    ['9月', 6, 200, 1], ['10月', 6, 200, 0], ['11月', 6, 200, 0], ['12月', 6, 200, 0],
+    ['1月', 6, 200, 0], ['2月', 5, 200, 0], ['3月', 5, 200, 0]
+  ];
+  var start = 3;
+  for (var i = 0; i < months.length; i++) {
+    var r = start + i, m = months[i];
+    s.getRange(r, 1).setValue(m[0]);
+    s.getRange(r, 2).setValue(m[1]);                 // B 開催回数(入力)
+    s.getRange(r, 3).setValue(m[2]);                 // C 参加者数(入力)
+    // D 参加費収入 = 活動月のみ 参加者×月額
+    s.getRange(r, 4).setFormula('=IF(B' + r + '>0,C' + r + '*参加費月額,0)');
+    // E その他収入(一時) 9月のみ 入会+保険+アプリ+固定会費、他は0（入力可）
+    s.getRange(r, 5).setValue(0);
+    if (m[3] === 1) s.getRange(r, 5).setFormula(一時);
+    // F 市委託料 = 委託料/12
+    s.getRange(r, 6).setFormula('=市委託料/12');
+    // G 協賛金(入力)
+    s.getRange(r, 7).setValue(0);
+    // H 収入計
+    s.getRange(r, 8).setFormula('=D' + r + '+E' + r + '+F' + r + '+G' + r);
+    // I 指導員謝金 = 開催回数 × (年間謝金/回数)
+    s.getRange(r, 9).setFormula('=B' + r + '*(' + SAL + '/回数)');
+    // J 通勤手当 = 開催回数 × 指導員数 × 210
+    s.getRange(r, 10).setFormula('=B' + r + '*指導員数*210');
+    // K 運営費(固定) = (総事業費 − 謝金年 − 通勤年)/12
+    s.getRange(r, 11).setFormula('=(' + TOTAL + '-' + SAL + '-' + 通勤年 + ')/12');
+    // L 支出計
+    s.getRange(r, 12).setFormula('=I' + r + '+J' + r + '+K' + r);
+    // M 月次収支
+    s.getRange(r, 13).setFormula('=H' + r + '-L' + r);
+    // N 累計収支
+    s.getRange(r, 14).setFormula(i === 0 ? '=M' + r : '=N' + (r - 1) + '+M' + r);
+  }
+  // 入力セルを黄色
+  s.getRange(start, 2, months.length, 2).setBackground('#fffbe6'); // 開催回数・参加者
+  s.getRange(start, 5, months.length, 1).setBackground('#fffbe6'); // その他収入
+  s.getRange(start, 7, months.length, 1).setBackground('#fffbe6'); // 協賛
+
+  // 計 行
+  var tr = start + months.length;
+  s.getRange(tr, 1).setValue('計').setFontWeight('bold');
+  ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].forEach(function (col) {
+    s.getRange(col + tr).setFormula('=SUM(' + col + start + ':' + col + (tr - 1) + ')').setFontWeight('bold');
+  });
+  s.getRange(tr, 14).setFormula('=M' + tr).setFontWeight('bold'); // 累計=年間収支
+  s.getRange(tr, 1, 1, 14).setBackground('#eef7ee');
+
+  // 照合行
+  var cr = tr + 2;
+  s.getRange(cr, 1).setValue('▼ 年間照合（02/14と一致するはず）').setFontWeight('bold');
+  s.getRange(cr + 1, 1).setValue('収入計(年)');   s.getRange(cr + 1, 2).setFormula('=H' + tr);
+  s.getRange(cr + 1, 4).setValue('＝14_収支予算書 収入合計 / 目安 24,272,480（200人・協賛0）');
+  s.getRange(cr + 2, 1).setValue('支出計(年)');   s.getRange(cr + 2, 2).setFormula('=L' + tr);
+  s.getRange(cr + 2, 4).setValue('＝総事業費 21,596,280');
+  s.getRange(cr + 3, 1).setValue('当期収支差額(年)'); s.getRange(cr + 3, 2).setFormula('=M' + tr);
+  s.getRange(cr + 3, 4).setValue('＝2,676,200（返還前）');
+  s.getRange(cr + 5, 1).setValue('※開催回数の計＝40、参加者・協賛・一時金は入力で調整。参加費は活動月のみ計上。').setFontColor('#b00');
+
+  // 書式
+  s.getRange(start, 4, months.length + 1, 11).setNumberFormat('#,##0');
+  s.getRange(cr + 1, 2, 3, 1).setNumberFormat('#,##0');
+  s.setColumnWidth(1, 64); for (var w = 2; w <= 14; w++) s.setColumnWidth(w, 96);
+  s.setColumnWidth(5, 130); s.setColumnWidth(4, 130);
 }
