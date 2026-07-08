@@ -157,7 +157,9 @@
     <button class="pchip" data-k="満員">満員(300人)</button>
   </div>
   <span class="sp"></span>
-  <button class="ib" id="print">🖶 印刷/PDF</button>
+  <button class="ib" id="share">🔗 共有</button>
+  <button class="ib" id="csv">⬇ CSV</button>
+  <button class="ib" id="print">🖶 印刷</button>
   <button class="ib toggle" id="tg">◐</button>
  </div>
 </div>
@@ -405,7 +407,7 @@ function tbl13(r,s){
 
 /* editor */
 function editor(){
-  const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="number" data-p="${path}" value="${val}"></div>`;
+  const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="number" step="any" min="0" inputmode="decimal" data-p="${path}" value="${val}"></div>`;
   let h='';
   h+=`<div class="ed-grp"><h4>参加者・収入単価</h4><div class="ed-grid">`+
     ef('参加者数(人)','参加者',S.参加者)+ef('参加費 月額(円)','単価.参加費月額',S.単価.参加費月額)+ef('参加月数','月数',S.月数)+
@@ -419,7 +421,30 @@ function editor(){
   h+=`<div class="ed-grp"><h4>間接事業費（費目）</h4><div class="ed-grid">`+S.間接.map((d,i)=>ef(d[0],'間接.'+i+'.1',d[1])).join('')+`</div></div>`;
   document.getElementById('editor').innerHTML=h;
 }
-function setPath(o,path,val){const k=path.split('.');let x=o;for(let i=0;i<k.length-1;i++)x=x[k[i]];x[k[k.length-1]]=val;}
+function setPath(o,path,val){if(path==='参加者')val=Math.max(0,Math.min(400,val));const k=path.split('.');let x=o;for(let i=0;i<k.length-1;i++)x=x[k[i]];x[k[k.length-1]]=val;}
+
+/* URL state (共有リンク) */
+function saveHash(){try{history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(S)));}catch(e){}}
+function loadHash(){if(location.hash.length>1){try{const p=JSON.parse(decodeURIComponent(location.hash.slice(1)));S=Object.assign(base(),p);}catch(e){}}}
+function toast(btn,msg){const o=btn.textContent;btn.textContent=msg;setTimeout(()=>btn.textContent=o,1400);}
+function csvExport(){
+  const r=calc(S),rows=[];
+  rows.push(['やとみ放課後アカデミー 収支シミュレーション']);
+  rows.push(['前提','参加者',S.参加者,'採用案',S.採用,'提出案',S.提出,'月数',S.月数,'協賛',S.協賛,'寄付',S.寄付]);
+  rows.push([]);rows.push(['03_収支サマリー','金額']);
+  [['参加者連動収入',r.連動],['固定収入',r.固定],['協賛金',S.協賛],['寄付金',S.寄付],['歳入計',r.歳入],['総事業費',r.総],['収支(返還前)',r.収支],['返還見込',r.返還],['返還後収支',r.返還後],['必要協賛金',r.必要協賛]].forEach(x=>rows.push(x));
+  rows.push([]);rows.push(['02_支出 費目','区分','金額']);
+  rows.push(['指導者謝金(採用'+S.採用+')','直接',r.謝金]);
+  S.直接.forEach(d=>rows.push([d[0],'直接',d[1]]));S.間接.forEach(d=>rows.push([d[0],'間接',d[1]]));
+  [['直接事業費',r.直接],['間接事業費',r.間接],['諸経費',r.諸経費],['総事業費',r.総]].forEach(x=>rows.push([x[0],'',x[1]]));
+  rows.push([]);rows.push(['01_収入 参加者別','100','150','200','250','300']);
+  const cols=[100,150,200,250,300],u={利:S.単価.利用会員入会金,参:S.単価.参加費月額*S.月数,保:S.単価.保険,ア:S.単価.アプリ};
+  const ir=[['正会員入会金',()=>S.会費.正会員入会金],['賛助個人',()=>S.会費.賛助個人],['賛助法人',()=>S.会費.賛助法人],['利用会員入会金',c=>u.利*c],['参加費',c=>u.参*c],['保険',c=>u.保*c],['アプリ',c=>u.ア*c],['市委託料',()=>S.委託料]];
+  ir.forEach(x=>rows.push([x[0],...cols.map(c=>x[1](c))]));
+  rows.push(['歳入計',...cols.map(c=>ir.reduce((a,x)=>a+x[1](c),0))]);
+  const csv='﻿'+rows.map(rw=>rw.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yatomi_sim.csv';a.click();URL.revokeObjectURL(a.href);
+}
 
 /* render */
 function render(){
@@ -429,7 +454,7 @@ function render(){
   document.getElementById('exp-total').textContent=F(r.総);
   stacked('chartInc','lgdInc',[{n:'参加者連動',v:r.連動,c:'var(--inc1)'},{n:'固定(会費+委託料)',v:r.固定,c:'var(--inc2)'},{n:'協賛金',v:S.協賛,c:'var(--inc3)'},{n:'寄付金',v:S.寄付,c:'var(--inc4)'}]);
   stacked('chartExp','lgdExp',[{n:'指導員謝金',v:r.謝金,c:'var(--exp1)'},{n:'その他直接費',v:r.非謝金直接,c:'var(--exp2)'},{n:'間接費',v:r.間接,c:'var(--exp3)'},{n:'諸経費',v:r.諸経費,c:'var(--exp4)'}]);
-  chart3(r,S);tbl01(S);tbl02(r,S);tbl03(r,S);tbl04(S);tbl13(r,S);
+  chart3(r,S);tbl01(S);tbl02(r,S);tbl03(r,S);tbl04(S);tbl13(r,S);saveHash();
 }
 function syncControls(){
   document.getElementById('c_p').value=S.参加者;document.getElementById('v_p').textContent=S.参加者;
@@ -447,7 +472,7 @@ const PRESETS={
 };
 document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;
   [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
-  if(b.dataset.k==='標準')S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
+  S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
 
 /* primary controls */
 document.getElementById('c_p').addEventListener('input',e=>{S.参加者=+e.target.value;document.getElementById('v_p').textContent=S.参加者;render();});
@@ -468,8 +493,12 @@ tabs.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
 tabs.addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const l=[...tabs.querySelectorAll('.tab')],i=l.findIndex(t=>t.getAttribute('aria-selected')==='true'),j=(i+(e.key==='ArrowRight'?1:l.length-1))%l.length;l[j].click();l[j].focus();});
 
 document.getElementById('print').addEventListener('click',()=>window.print());
+document.getElementById('csv').addEventListener('click',()=>csvExport());
+document.getElementById('share').addEventListener('click',e=>{saveHash();const u=location.href;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>toast(e.target,'✓ コピー済'),()=>toast(e.target,'コピー不可'));}
+  else toast(e.target,'URL上部に反映');});
 const root=document.documentElement;
 document.getElementById('tg').addEventListener('click',()=>{const c=root.getAttribute('data-theme');root.setAttribute('data-theme',c?(c==='dark'?'light':'dark'):(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark'));render();});
 
-editor();syncControls();render();
+loadHash();editor();syncControls();render();
 </script>
