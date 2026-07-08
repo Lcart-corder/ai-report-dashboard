@@ -38,7 +38,9 @@ var SH = {
   SPON: '10_協賛管理',
   BILL: '11_請求入金管理',
   SETTLE: '12_年度末精算',
-  GOV: '13_行政提出様式出力'
+  GOV: '13_行政提出様式出力',
+  BUDGET: '14_収支予算書',
+  MID: '15_中期収支計画'
 };
 
 function setupAcademyBook() {
@@ -60,14 +62,16 @@ function setupAcademyBook() {
   _buildBilling(ss);     // 11
   _buildSettlement(ss);  // 12
   _buildGov(ss);         // 13
+  _buildBudgetStatement(ss); // 14 会計要項の収支予算書
+  _buildMidterm(ss);     // 15 中期収支計画（成長カーブ）
 
   // 既定のシート1が空なら削除
   var def = ss.getSheetByName('シート1') || ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) { try { ss.deleteSheet(def); } catch (e) {} }
 
-  ss.setActiveSheet(ss.getSheetByName(SH.SUM));
-  Logger.log('やとみ放課後アカデミー ブックを生成しました（13シート）');
-  try { SpreadsheetApp.getUi().alert('生成完了！\n13シート・名前付き範囲・計算式を作成しました。\n00_入力条件を編集すると全シートが連動します。'); } catch (e) {}
+  ss.setActiveSheet(ss.getSheetByName(SH.BUDGET));
+  Logger.log('やとみ放課後アカデミー ブックを生成しました（15シート）');
+  try { SpreadsheetApp.getUi().alert('生成完了！\n15シート・名前付き範囲・計算式を作成しました。\n00_入力条件を編集すると全シートが連動します。'); } catch (e) {}
 }
 
 /* ============================ 共通ヘルパ ============================ */
@@ -225,8 +229,16 @@ function _buildExpense(ss) {
 
   // --- 費目テーブル（ヘッダ行8、明細9〜） ---
   var HROW = 8;
-  _header(s, HROW, ['#', '費目', '事業費区分', '金額(円)', '固変', '補助区分', '財源', '積算根拠']);
+  _header(s, HROW, ['#', '費目', '事業費区分', '金額(円)', '固変', '補助区分', '財源', '積算根拠', '会計区分']);
   s.setFrozenRows(HROW);
+
+  // 会計要項の区分（15_収支予算書がSUMIFで参照）。items と同順。
+  var kaikei = [
+    '人件費','人件費','人件費','人件費','その他事業費','人件費','人件費',
+    'その他事業費','その他事業費','その他事業費','その他事業費','その他事業費','その他事業費',
+    '管理費','管理費','管理費','管理費','管理費','管理費','管理費','管理費','管理費',
+    'メモ','メモ','メモ','メモ','メモ'
+  ];
 
   // [費目, 直接/間接/メモ, 金額(数値 or null=謝金式), 固変, 補助区分, 財源, 根拠]
   var items = [
@@ -261,10 +273,10 @@ function _buildExpense(ss) {
   ];
 
   var body = items.map(function (it, idx) {
-    return [idx + 1, it[0], it[1], it[2] === null ? '' : it[2], it[3], it[4], it[5], it[6]];
+    return [idx + 1, it[0], it[1], it[2] === null ? '' : it[2], it[3], it[4], it[5], it[6], kaikei[idx]];
   });
   var first = HROW + 1;
-  s.getRange(first, 1, body.length, 8).setValues(body);
+  s.getRange(first, 1, body.length, 9).setValues(body);
   // 謝金行(1行目)の金額を採用案に連動
   s.getRange(first, 4).setFormula('=IF(採用案="A",F3,IF(採用案="B",F4,F5))');
   var last = first + body.length - 1;
@@ -272,7 +284,7 @@ function _buildExpense(ss) {
 
   // メモ行を薄いグレーに
   for (var i = 0; i < items.length; i++) {
-    if (items[i][1] === 'メモ') s.getRange(first + i, 1, 1, 8).setBackground('#f4f4f4').setFontColor('#777');
+    if (items[i][1] === 'メモ') s.getRange(first + i, 1, 1, 9).setBackground('#f4f4f4').setFontColor('#777');
   }
 
   // --- 合計ブロック ---
@@ -302,7 +314,7 @@ function _buildExpense(ss) {
     EXP_DIRECT: 'D' + t, EXP_INDIRECT: 'D' + (t + 1), EXP_SHOKEIHI: 'D' + (t + 3),
     EXP_TOTAL: 'D' + (t + 4), EXP_SUBSIDY: 'D' + (t + 6), EXP_NONSUB: 'D' + (t + 7),
     EXP_HEADER: String(HROW), EXP_FIRST: String(first), EXP_LAST: String(last),
-    EXP_C_A: 'F3', EXP_C_C: 'F5'
+    EXP_C_A: 'F3', EXP_C_C: 'F5', EXP_KAIKEI: 'I'
   });
   s.setColumnWidth(2, 260); s.setColumnWidth(8, 300);
 }
@@ -656,4 +668,121 @@ function _buildGov(ss) {
   s.getRange(tr + 6, 1).setValue('※資料③別添1-2の実提出はC案(20,851,480＝委託料)。提出案をA/Bにすると委託料と差が出る。').setFontColor('#b00');
   s.getRange(tr + 7, 1).setValue('　差額は委託料内配分/自主財源で説明（§1-3）。この様式は基準額で提出、実支給は02/03で管理。').setFontColor('#b00');
   s.setColumnWidth(2, 260); s.setColumnWidth(3, 320);
+}
+
+/* ============================ 14_収支予算書（会計要項） ============================ */
+
+function _buildBudgetStatement(ss) {
+  var s = _sheet(ss, SH.BUDGET);
+  var p = PropertiesService.getDocumentProperties();
+  var E = "'" + SH.EXP + "'!";
+  var kai = p.getProperty('EXP_KAIKEI');                 // 'I'
+  var f = p.getProperty('EXP_FIRST'), l = p.getProperty('EXP_LAST');
+  var Irng = E + kai + f + ':' + kai + l, Drng = E + 'D' + f + ':D' + l;
+  var syo = E + p.getProperty('EXP_SHOKEIHI');           // 諸経費
+  var spon = "SUM('" + SH.SPON + "'!E3:E200)";           // 協賛金合計
+  var会費 = '正会員収入+賛助個人+賛助法人';
+
+  _title(s, '14_収支予算書（会計要項）｜ 00_入力条件の参加者数で連動。収入の部／支出の部（事業費・管理費）');
+  _header(s, 2, ['科目', '予算額(円)', '積算 / 備考']);
+
+  // ※各行は r=i+3。相互参照は下記の実行番号に一致させること。
+  //   3見出/4会費計/5正/6個/7法/8利用/9事業計/10参加費/11保険/12アプリ/13委託/14協賛/15寄付/16収入合計
+  //   17見出/18事業費/19人件費/20その他/21諸経費/22管理費/23支出合計/24当期/25見出/26返還見込/27返還後/28必要協賛
+  var rows = [
+    ['【収入の部】', '', '', 'grp'],
+    ['会費収入', '=B5+B6+B7+B8', '小計', 'sub'],
+    ['　正会員入会金', '=正会員収入', '', ''],
+    ['　賛助会員会費(個人)', '=賛助個人', '', ''],
+    ['　賛助会員会費(法人)', '=賛助法人', '', ''],
+    ['　利用会員入会金', '=参加者数*利用入会金', '参加者数×単価', ''],
+    ['事業収入', '=B10+B11+B12', '小計', 'sub'],
+    ['　参加費収入', '=参加者数*参加費月額*参加月数', '', ''],
+    ['　スポーツ安全保険料', '=参加者数*保険単価', '', ''],
+    ['　アプリ使用料収入', '=参加者数*アプリ単価', '', ''],
+    ['補助金等収入（市委託料）', '=市委託料', '', 'sub'],
+    ['協賛金収入', '=' + spon, '10_協賛管理', 'sub'],
+    ['寄付金収入', '=寄付金', '', 'sub'],
+    ['収入合計', '=B4+B9+B13+B14+B15', '', 'total'],
+    ['【支出の部】', '', '', 'grp'],
+    ['事業費', '=B19+B20+B21', '人件費+その他+諸経費', 'sub'],
+    ['　人件費(小計)', '=SUMIF(' + Irng + ',"人件費",' + Drng + ')', '指導者謝金ほか', ''],
+    ['　その他事業費(小計)', '=SUMIF(' + Irng + ',"その他事業費",' + Drng + ')', '', ''],
+    ['　諸経費(直接×30%)', '=' + syo, '', ''],
+    ['管理費', '=SUMIF(' + Irng + ',"管理費",' + Drng + ')', '間接費', 'sub'],
+    ['支出合計', '=B18+B22', '', 'total'],
+    ['当期収支差額（収入−支出）', '=B16-B23', '', 'bal'],
+    ['【参考】返還・自主財源', '', '', 'grp'],
+    ['　返還見込（参加者相当分）', '=参加者数*参加者単価', '資料②備考', ''],
+    ['　返還後 収支差額', '=B24-B26', '', 'bal'],
+    ['　必要協賛金の目安', '=B22-(' + 会費 + ')-寄付金', '管理費−固定会費', '']
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    var r = i + 3;
+    s.getRange(r, 1).setValue(rows[i][0]);
+    if (rows[i][1]) s.getRange(r, 2).setFormula(rows[i][1]).setNumberFormat('#,##0');
+    if (rows[i][2]) s.getRange(r, 3).setValue(rows[i][2]).setFontColor('#666');
+    var cls = rows[i][3];
+    if (cls === 'grp') s.getRange(r, 1, 1, 3).setBackground('#e8eef7').setFontWeight('bold');
+    if (cls === 'sub') { s.getRange(r, 1).setFontWeight('bold'); s.getRange(r, 2).setFontWeight('bold'); }
+    if (cls === 'total') s.getRange(r, 1, 1, 3).setBackground('#eef7ee').setFontWeight('bold');
+    if (cls === 'bal') s.getRange(r, 1, 1, 3).setBackground('#fff7e0').setFontWeight('bold');
+  }
+  s.setColumnWidth(1, 260); s.setColumnWidth(3, 220);
+}
+
+/* ============================ 15_中期収支計画（成長カーブ） ============================ */
+
+function _buildMidterm(ss) {
+  var s = _sheet(ss, SH.MID);
+  var p = PropertiesService.getDocumentProperties();
+  var total = "'" + SH.EXP + "'!" + p.getProperty('EXP_TOTAL');   // 総事業費
+  var indirect = "'" + SH.EXP + "'!" + p.getProperty('EXP_INDIRECT'); // 間接
+  var 会費 = '正会員収入+賛助個人+賛助法人';
+
+  _title(s, '15_中期収支計画（成長カーブ）｜ 年度別の参加者・協賛を入力（黄）。支出計は02連動、参加者連動収入が返還対象');
+  // 年度ヘッダ（編集可） 行2、B..F
+  var yLabels = ['R9', 'R10', 'R11', 'R12', 'R13'];
+  s.getRange(2, 1).setValue('年度').setFontWeight('bold').setBackground('#e8eef7');
+  s.getRange(2, 2, 1, 5).setValues([yLabels]).setFontWeight('bold').setBackground('#e8eef7').setHorizontalAlignment('right');
+  s.setFrozenRows(2); s.setFrozenColumns(1);
+
+  // 入力行：参加者(3)・協賛(4)
+  s.getRange(3, 1).setValue('参加者数（入力）');
+  s.getRange(3, 2, 1, 5).setValues([[200, 240, 280, 300, 320]]).setBackground('#fffbe6');
+  s.getRange(4, 1).setValue('協賛金（入力）');
+  s.getRange(4, 2, 1, 5).setValues([[0, 0, 0, 0, 0]]).setBackground('#fffbe6');
+
+  var cols = ['B', 'C', 'D', 'E', 'F'];
+  // 計算行の定義：[ラベル, 行, 各列の数式(colを受け取る), クラス]
+  var calcRows = [
+    ['収入計', 5, function (c) { return '=(' + 会費 + '+市委託料)+' + c + '3*参加者単価+' + c + '4+寄付金'; }, 'sub'],
+    ['支出計（02連動）', 6, function (c) { return '=' + total; }, 'sub'],
+    ['当期収支差額', 7, function (c) { return '=' + c + '5-' + c + '6'; }, 'bal'],
+    ['返還見込（参加者相当分）', 8, function (c) { return '=' + c + '3*参加者単価'; }, ''],
+    ['返還後 収支差額', 9, function (c) { return '=' + c + '7-' + c + '8'; }, 'bal'],
+    ['必要協賛金の目安', 10, function (c) { return '=' + indirect + '-(' + 会費 + ')-寄付金'; }, ''],
+    ['返還後 累計', 11, null, 'total']
+  ];
+  for (var i = 0; i < calcRows.length; i++) {
+    var def = calcRows[i], r = def[1];
+    s.getRange(r, 1).setValue(def[0]);
+    if (def[2]) {
+      for (var c = 0; c < 5; c++) s.getRange(r, c + 2).setFormula(def[2](cols[c]));
+    }
+    var cls = def[3];
+    if (cls === 'sub') s.getRange(r, 1).setFontWeight('bold');
+    if (cls === 'bal') s.getRange(r, 1, 1, 6).setBackground('#fff7e0').setFontWeight('bold');
+    if (cls === 'total') s.getRange(r, 1, 1, 6).setBackground('#eef7ee').setFontWeight('bold');
+    s.getRange(r, 2, 1, 5).setNumberFormat('#,##0');
+  }
+  // 返還後累計（行11）：B=B9, C=B11+C9 ...
+  s.getRange(11, 2).setFormula('=B9');
+  s.getRange('C11').setFormula('=B11+C9'); s.getRange('D11').setFormula('=C11+D9');
+  s.getRange('E11').setFormula('=D11+E9'); s.getRange('F11').setFormula('=E11+F9');
+  s.getRange(11, 2, 1, 5).setNumberFormat('#,##0');
+
+  s.getRange(13, 1).setValue('※前提（単価・費目・採用案）は全年度共通。参加者だけ増やしても返還後はほぼ一定＝手残りは協賛/単価/費目の見直しで改善。').setFontColor('#b00');
+  s.setColumnWidth(1, 210);
+  for (var w = 2; w <= 6; w++) s.setColumnWidth(w, 110);
 }
