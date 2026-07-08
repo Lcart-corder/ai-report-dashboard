@@ -219,6 +219,13 @@ export async function deactivateMasterKey(id: number) {
   return { id };
 }
 
+/** マスターキーの利用回数を1消費する。 */
+export async function consumeMasterKey(keyId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(masterKeys).set({ usedCount: sql`${masterKeys.usedCount} + 1` }).where(eq(masterKeys.id, keyId));
+}
+
 /** マスターキー検証。無効/期限切れ/回数超過なら理由付きで拒否。 */
 export async function validateMasterKey(keyCode: string): Promise<{ valid: boolean; reason?: string; companyId?: number; keyId?: number }> {
   const db = await getDb();
@@ -275,6 +282,69 @@ export async function bulkCreateLearners(companyId: number, rows: Array<{ name: 
   );
   await writeAuditLog({ category: "user_change", action: "learner.bulk_create", targetType: "company", targetId: companyId, detail: { count: rows.length } });
   return { inserted: rows.length };
+}
+
+/**
+ * 受講者(会社員)の初回登録(FR-01/FR-02)。
+ * ログイン中ユーザーのメールとマスターキーで、企業に紐づく learner を発行または既存招待とリンクする。
+ * マスターキー無しの自由登録は不可。
+ */
+export async function registerLearnerWithMasterKey(
+  user: { email?: string | null; name?: string | null },
+  input: { keyCode: string; name?: string; employeeNumber?: string; department?: string; lineUserId?: string },
+): Promise<{ learnerId: number; companyId: number; linked: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const email = user.email ?? "";
+  if (!email) throw new Error("メールアドレスが取得できませんでした。ログインし直してください。");
+
+  const v = await validateMasterKey(input.keyCode);
+  if (!v.valid || v.companyId == null || v.keyId == null) {
+    const reasonMsg: Record<string, string> = {
+      not_found: "マスターキーが見つかりません",
+      inactive: "このマスターキーは停止されています",
+      expired: "このマスターキーは有効期限切れです",
+      max_uses_reached: "このマスターキーは利用回数の上限に達しています",
+      database_unavailable: "データベースに接続できません",
+    };
+    throw new Error(reasonMsg[v.reason ?? ""] ?? "マスターキーが無効です");
+  }
+  const companyId = v.companyId;
+
+  // 既存(招待済み)の受講者をメールで探す。無ければ新規作成。
+  const existing = await db.select().from(learners).where(and(eq(learners.email, email), eq(learners.companyId, companyId))).limit(1);
+  const now = new Date();
+  let learnerId: number;
+  let linked = false;
+
+  if (existing[0]) {
+    learnerId = existing[0].id;
+    linked = true;
+    await db.update(learners).set({
+      status: existing[0].status === "completed" ? existing[0].status : "active",
+      firstLoginAt: existing[0].firstLoginAt ?? now,
+      employeeNumber: input.employeeNumber ?? existing[0].employeeNumber,
+      department: input.department ?? existing[0].department,
+      lineUserId: input.lineUserId ?? existing[0].lineUserId,
+    }).where(eq(learners.id, learnerId));
+  } else {
+    const result = await db.insert(learners).values({
+      companyId,
+      name: input.name || user.name || "受講者",
+      email,
+      employeeNumber: input.employeeNumber ?? null,
+      department: input.department ?? null,
+      lineUserId: input.lineUserId ?? null,
+      status: "active",
+      invitedAt: now,
+      firstLoginAt: now,
+    });
+    learnerId = insertedId(result);
+  }
+
+  await consumeMasterKey(v.keyId);
+  await writeAuditLog({ category: "login", action: linked ? "learner.register_linked" : "learner.register_new", actor: email, targetType: "learner", targetId: learnerId, detail: { companyId } });
+  return { learnerId, companyId, linked };
 }
 
 /** 修了後の改ざん防止: 修了済み受講者の氏名等は更新不可。 */

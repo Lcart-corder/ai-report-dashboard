@@ -181,6 +181,26 @@ export const appRouter = router({
       return lms.resolveLmsIdentity(ctx.user);
     }),
 
+    // --- 受講者(会社員)の初回登録 (FR-01/FR-02) ---
+    register: router({
+      // マスターキーの事前検証(送信前のUIフィードバック用)
+      validateKey: protectedProcedure.input(z.object({ keyCode: z.string().min(1) })).query(async ({ input }) => lms.validateMasterKey(input.keyCode)),
+      // ログイン中ユーザーのメール + マスターキーで learner を発行/リンク
+      submit: protectedProcedure.input(z.object({
+        keyCode: z.string().min(1),
+        name: z.string().optional(),
+        employeeNumber: z.string().optional(),
+        department: z.string().optional(),
+        lineUserId: z.string().optional(),
+      })).mutation(async ({ ctx, input }) => {
+        try {
+          return await lms.registerLearnerWithMasterKey(ctx.user ?? {}, input);
+        } catch (e) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: e instanceof Error ? e.message : "登録に失敗しました" });
+        }
+      }),
+    }),
+
     // --- ダッシュボード (FR-13) — アクセス可能企業に自動スコープ ---
     dashboard: lmsProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
@@ -406,7 +426,11 @@ export const appRouter = router({
     // --- 受講割当 / 進捗 (FR-11) ---
     enrollments: router({
       byCourse: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getEnrollmentsByCourse(input.courseId)),
-      byLearner: protectedProcedure.input(z.object({ learnerId: z.number() })).query(async ({ input }) => lms.getEnrollmentsByLearner(input.learnerId)),
+      byLearner: lmsProcedure.input(z.object({ learnerId: z.number() })).query(async ({ ctx, input }) => {
+        const self = ctx.lms.role === "employee" && ctx.lms.learnerId === input.learnerId;
+        if (!self && !(await lms.canAccessLearnerIdentity(ctx.lms, input.learnerId))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講者の受講情報にアクセスできません" });
+        return lms.getEnrollmentsByLearner(input.learnerId);
+      }),
       getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => lms.getEnrollmentById(input.id)),
       assign: lmsProcedure.input(z.object({
         learnerId: z.number(),

@@ -72,6 +72,15 @@ application_checklists, exports, partner_sales, success_fees, audit_logs
 - 画面 `/lms/roles`(見える化) と `/lms/projects`(プロジェクト・メンバー割当)。ナビはロールで自動絞り込み。
 - ※DB未接続・メンバー0件でも既存UIは壊れない(運営にフォールバック)。
 
+### 受講者(会社員)ログイン導線 (FR-01/FR-02)
+1. 受講者がログイン(OAuth)後 `/lms/learn` へ。`LmsLearnEntry` がロール判定で振り分け:
+   受講者→`/lms/learn/:learnerId`、未登録→`/lms/register`、管理系→`/lms`。
+2. `/lms/register` でマスターキー入力 → `lms.register.validateKey` で即時検証 →
+   `lms.register.submit` が `registerLearnerWithMasterKey(ctx.user, ...)` を実行。
+   - ログイン中メールで既存(招待済み)learnerがあればリンク(firstLoginAt/active更新)、無ければ新規発行。
+   - マスターキーの利用回数を消費(`consumeMasterKey`)。マスターキー無しの自由登録は不可。
+3. 以降 `resolveLmsIdentity` がメール一致で employee として解決 → 学習ポータルへ。
+
 ## 通知チャネル戦略（多社セグメント配信）
 たくさんの導入企業が絡む前提のため、受講者への到達は **メール（Amazon SES）を主軸 + LINE任意** とする。
 - **メール主軸**: CSV登録で全社員のアドレスを保有 → 会社/部署/個人でセグメント配信可能。SESは1,000通≈$0.10と最安・線形スケール。
