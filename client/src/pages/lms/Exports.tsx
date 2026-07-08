@@ -18,6 +18,8 @@ function downloadCsv(filename: string, csv: string) {
 }
 
 export default function LmsExports() {
+  const me = trpc.lms.me.useQuery();
+  const isOperator = me.data?.role === "operator_admin";
   const courses = trpc.lms.courses.list.useQuery();
   const [courseId, setCourseId] = useState("");
   const selectedCourse = courses.data?.find(c => String(c.id) === courseId);
@@ -30,9 +32,9 @@ export default function LmsExports() {
   return (
     <LmsLayout title="証跡出力センター" description="LMS証跡・修了証・価格疎明データを一括出力（FR-15）。提出の有無に関わらず整備・保管できる状態にします。">
       <div className="grid gap-4 md:grid-cols-3">
-        <ExportCard icon={FileText} title="受講時間10時間以上 修了者一覧" desc="定額制サービス向けの必須書類（CSV）" onClick={() => tenHour.mutate({})} loading={tenHour.isPending} />
-        <ExportCard icon={Receipt} title="価格疎明データ" desc="研修費・LMS利用料・運用支援費を分離（CSV）" onClick={() => price.mutate({})} loading={price.isPending} />
-        <ExportCard icon={Download} title="操作監査ログ" desc="監査ログ画面から確認・出力できます" href="/lms/audit" />
+        <ExportCard icon={FileText} title="受講時間10時間以上 修了者一覧" desc="定額制サービス向けの必須書類（CSV）。担当企業分のみ出力されます。" onClick={() => tenHour.mutate({})} loading={tenHour.isPending} />
+        {isOperator && <ExportCard icon={Receipt} title="価格疎明データ" desc="研修費・LMS利用料・運用支援費を分離（CSV／運営のみ）" onClick={() => price.mutate({})} loading={price.isPending} />}
+        {isOperator && <ExportCard icon={Download} title="操作監査ログ" desc="監査ログ画面から確認・出力できます" href="/lms/audit" />}
       </div>
 
       <Card className="mt-6">

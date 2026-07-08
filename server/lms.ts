@@ -15,6 +15,17 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { dispatchByChannel, dispatchWebhook } from "./lms-notify";
 import {
+  SUBSIDY_MIN_MINUTES,
+  calcFeeAmount,
+  formatCertificateNumber,
+  gradeQuiz,
+  meetsSubsidyMinutes,
+  reminderReasonsFor,
+  statusLabel,
+  toCsv,
+  REMINDER_LABELS,
+} from "./lms-logic";
+import {
   applicationChecklists,
   auditLogs,
   certificates,
@@ -100,10 +111,33 @@ export async function writeAuditLog(entry: {
   }
 }
 
-export async function getAuditLogs(limit = 200) {
+export async function getAuditLogs(opts?: { limit?: number; category?: string; actor?: string }) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
+  const conds = [];
+  if (opts?.category) conds.push(eq(auditLogs.category, opts.category));
+  if (opts?.actor) conds.push(eq(auditLogs.actor, opts.actor));
+  const where = conds.length === 1 ? conds[0] : conds.length > 1 ? and(...conds) : undefined;
+  const q = db.select().from(auditLogs);
+  const rows = await (where ? q.where(where) : q).orderBy(desc(auditLogs.createdAt)).limit(opts?.limit ?? 200);
+  return rows;
+}
+
+/** 監査ログCSV(FR-19)。分類・実行者で絞り込み可能。 */
+export async function exportAuditLogsCsv(opts?: { category?: string; actor?: string }, actor?: string) {
+  const headers = ["日時", "分類", "操作", "対象種別", "対象ID", "実行者", "IP"];
+  const rows = await getAuditLogs({ limit: 5000, category: opts?.category, actor: opts?.actor });
+  const out = rows.map(l => [
+    new Date(l.createdAt).toISOString().slice(0, 19).replace("T", " "),
+    l.category,
+    l.action,
+    l.targetType ?? "",
+    l.targetId ?? "",
+    l.actor ?? "",
+    l.ipAddress ?? "",
+  ]);
+  await recordExport("audit_logs", "csv", { actor });
+  return toCsv(headers, out);
 }
 
 // ============================================================
@@ -364,8 +398,8 @@ export async function updateLearner(id: number, input: Partial<InsertLearner>) {
 // コース / レッスン(FR-05, FR-06)
 // ============================================================
 
-/** 助成金要件: 標準学習時間10時間(600分)以上。 */
-export const SUBSIDY_MIN_MINUTES = 600;
+// 助成金要件(標準学習時間10時間)や採点・CSV等の純粋ロジックは ./lms-logic に集約。
+export { SUBSIDY_MIN_MINUTES };
 
 export async function getAllCourses() {
   const db = await getDb();
@@ -430,7 +464,7 @@ export async function getCourseDuration(courseId: number) {
   if (!db) return { totalMinutes: 0, meetsSubsidy: false };
   const rows = await db.select().from(lessons).where(eq(lessons.courseId, courseId));
   const totalMinutes = rows.reduce((s, l) => s + (l.durationMinutes ?? 0), 0);
-  return { totalMinutes, meetsSubsidy: totalMinutes >= SUBSIDY_MIN_MINUTES };
+  return { totalMinutes, meetsSubsidy: meetsSubsidyMinutes(totalMinutes) };
 }
 
 // ============================================================
@@ -676,22 +710,10 @@ export async function submitQuiz(input: {
     throw new Error(`再受験回数の上限(${quiz.maxAttempts}回)に達しています`);
   }
 
-  let earned = 0;
-  let total = 0;
-  for (const question of quiz.questions) {
-    total += question.points;
-    const submitted = input.answers[String(question.id)];
-    if (question.questionType === "text") {
-      // 記述式は自動採点対象外(合否には影響させず満点付与)。運用で手動確認。
-      earned += question.points;
-      continue;
-    }
-    const correct = (question.correctAnswers as number[] | null) ?? [];
-    const given = Array.isArray(submitted) ? (submitted as number[]) : [];
-    const isCorrect = correct.length === given.length && correct.every(c => given.includes(c));
-    if (isCorrect) earned += question.points;
-  }
-  const score = total === 0 ? 0 : Math.round((earned / total) * 100);
+  const { score } = gradeQuiz(
+    quiz.questions.map(q => ({ id: q.id, questionType: q.questionType, correctAnswers: (q.correctAnswers as number[] | null) ?? null, points: q.points })),
+    input.answers,
+  );
   const passed = score >= quiz.passingScore;
 
   const result = await db.insert(quizResults).values({
@@ -788,7 +810,7 @@ export async function issueCertificate(enrollmentId: number, issuer = "Lカー�
   const learner = await getLearnerById(enrollment.learnerId);
   const course = await getCourseById(enrollment.courseId);
   const dur = await getCourseDuration(enrollment.courseId);
-  const certificateNumber = `RLMS-${today().replace(/-/g, "")}-${String(enrollmentId).padStart(6, "0")}`;
+  const certificateNumber = formatCertificateNumber(today(), enrollmentId);
 
   const result = await db.insert(certificates).values({
     enrollmentId,
@@ -957,29 +979,24 @@ export async function setAdvisorReview(companyId: number, courseId: number, revi
 // 証跡CSV出力(FR-15) — LMS受講状況・10時間以上修了者一覧など
 // ============================================================
 
-function csvEscape(v: unknown): string {
-  const s = v == null ? "" : String(v);
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-
-function toCsv(headers: string[], rows: Array<Array<unknown>>): string {
-  const lines = [headers.map(csvEscape).join(",")];
-  for (const r of rows) lines.push(r.map(csvEscape).join(","));
-  return "﻿" + lines.join("\r\n"); // BOM付きでExcel文字化け回避
-}
-
-/** LMS受講状況レポートCSV(コース単位)。修了日・受講開始/終了・進捗率等。 */
-export async function exportCourseProgressCsv(courseId: number, actor?: string) {
+/**
+ * LMS受講状況レポートCSV(コース単位)。修了日・受講開始/終了・進捗率等。
+ * @param scopeCompanyIds アクセス制御スコープ。null=無制限, [ids]=その企業の受講者のみ
+ */
+export async function exportCourseProgressCsv(courseId: number, actor?: string, scopeCompanyIds?: number[] | null) {
+  const headers = ["企業名", "受講者名", "社員番号", "コース名", "標準学習時間(分)", "標準学習時間(時間)", "進捗率", "状態", "受講開始日時", "修了日時", "受講期限"];
   const db = await getDb();
-  if (!db) return toCsv(["受講者", "進捗率", "状態"], []);
+  if (!db) return toCsv(headers, []);
+  const scope = scopeCompanyIds === undefined ? null : scopeCompanyIds;
   const course = await getCourseById(courseId);
   const enr = await db.select().from(enrollments).where(eq(enrollments.courseId, courseId));
   const dur = await getCourseDuration(courseId);
   const rows: Array<Array<unknown>> = [];
   for (const e of enr) {
     const learner = await getLearnerById(e.learnerId);
-    const company = learner ? await getCompanyById(learner.companyId) : undefined;
+    if (!learner) continue;
+    if (scope !== null && !scope.includes(learner.companyId)) continue; // スコープ外は除外
+    const company = await getCompanyById(learner.companyId);
     rows.push([
       company?.name ?? "",
       learner?.name ?? "",
@@ -995,40 +1012,29 @@ export async function exportCourseProgressCsv(courseId: number, actor?: string) 
     ]);
   }
   await recordExport("course_progress", "csv", { courseId, actor });
-  return toCsv(
-    ["企業名", "受講者名", "社員番号", "コース名", "標準学習時間(分)", "標準学習時間(時間)", "進捗率", "状態", "受講開始日時", "修了日時", "受講期限"],
-    rows,
-  );
+  return toCsv(headers, rows);
 }
 
-/** 受講時間10時間以上の修了者一覧CSV(定額制サービス向け書類/FR-15)。 */
-export async function exportTenHourCompletersCsv(actor?: string) {
+/**
+ * 受講時間10時間以上の修了者一覧CSV(定額制サービス向け書類/FR-15)。
+ * @param scopeCompanyIds アクセス制御スコープ。null=無制限
+ */
+export async function exportTenHourCompletersCsv(actor?: string, scopeCompanyIds?: number[] | null) {
+  const headers = ["企業名", "受講者名", "コース名", "受講時間(時間)", "修了日", "修了証番号"];
   const db = await getDb();
-  if (!db) return toCsv(["受講者", "コース", "受講時間", "修了日"], []);
+  if (!db) return toCsv(headers, []);
+  const scope = scopeCompanyIds === undefined ? null : scopeCompanyIds;
   const certs = await db.select().from(certificates);
   const rows: Array<Array<unknown>> = [];
   for (const c of certs) {
     if (c.standardMinutes < SUBSIDY_MIN_MINUTES) continue;
     const learner = await getLearnerById(c.learnerId);
+    if (scope !== null && (!learner || !scope.includes(learner.companyId))) continue;
     const company = learner ? await getCompanyById(learner.companyId) : undefined;
     rows.push([company?.name ?? "", c.learnerName, c.courseName, (c.standardMinutes / 60).toFixed(1), c.completionDate, c.certificateNumber]);
   }
   await recordExport("ten_hour_completers", "csv", { actor });
-  return toCsv(["企業名", "受講者名", "コース名", "受講時間(時間)", "修了日", "修了証番号"], rows);
-}
-
-function statusLabel(status: string): string {
-  const map: Record<string, string> = {
-    not_started: "未着手",
-    in_progress: "受講中",
-    completed: "修了",
-    expired: "期限切れ",
-    invited: "招待済",
-    active: "受講中",
-    delayed: "遅延",
-    suspended: "停止",
-  };
-  return map[status] ?? status;
+  return toCsv(headers, rows);
 }
 
 async function recordExport(exportType: string, format: "csv" | "pdf", opts: { companyId?: number; courseId?: number; actor?: string }) {
@@ -1080,7 +1086,7 @@ export async function calcSuccessFee(partnerSaleId: number) {
   if (!sale) throw new Error("partner sale not found");
   const partnerRows = await db.select().from(partners).where(eq(partners.id, sale.partnerId)).limit(1);
   const feeRate = partnerRows[0]?.successFeeRate ?? 20;
-  const feeAmount = Math.floor((sale.trainingSales * feeRate) / 100);
+  const feeAmount = calcFeeAmount(sale.trainingSales, feeRate);
 
   const existing = await db.select().from(successFees).where(eq(successFees.partnerSaleId, partnerSaleId)).limit(1);
   if (existing[0]) {
@@ -1151,15 +1157,6 @@ export async function seedDemoData() {
 // 通知・リマインド(FR-14)
 // ============================================================
 
-const REMINDER_LABELS: Record<string, string> = {
-  no_login: "初回未ログイン",
-  due_7d: "受講期限7日前",
-  due_3d: "受講期限3日前",
-  due_1d: "受講期限前日",
-  quiz_pending: "テスト未受験",
-  expired: "期限切れ",
-};
-
 export async function getNotifications() {
   const db = await getDb();
   if (!db) return [];
@@ -1218,24 +1215,24 @@ export async function detectReminderTargets(companyId?: number, scopeCompanyIds?
 
   const enrollmentRows = await db.select().from(enrollments).where(inArray(enrollments.learnerId, learnerIds));
   const now = today();
-  const d = (days: number) => { const t = new Date(); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10); };
 
   const targets: Array<{ enrollmentId: number; learnerId: number; learnerName: string; courseId: number; reason: string; reasonLabel: string; dueDate: string | null }> = [];
   for (const e of enrollmentRows) {
     const learner = learnerMap.get(e.learnerId);
     if (!learner) continue;
-    const push = (reason: string) => targets.push({ enrollmentId: e.id, learnerId: e.learnerId, learnerName: learner.name, courseId: e.courseId, reason, reasonLabel: REMINDER_LABELS[reason] ?? reason, dueDate: e.dueDate });
-
-    if (e.status === "completed") continue;
-    if (e.dueDate && e.dueDate < now) { push("expired"); continue; }
-    if (!learner.firstLoginAt && (e.status === "not_started" || learner.status === "invited")) push("no_login");
-    if (e.dueDate) {
-      if (e.dueDate <= d(1) && e.dueDate >= now) push("due_1d");
-      else if (e.dueDate <= d(3) && e.dueDate >= now) push("due_3d");
-      else if (e.dueDate <= d(7) && e.dueDate >= now) push("due_7d");
-    }
     const results = await db.select().from(quizResults).where(eq(quizResults.enrollmentId, e.id)).limit(1);
-    if (results.length === 0 && e.progressRate > 0) push("quiz_pending");
+    const reasons = reminderReasonsFor(now, {
+      status: e.status,
+      dueDate: e.dueDate,
+      hasLoggedIn: learner.firstLoginAt != null,
+      isInvited: learner.status === "invited",
+      isNotStarted: e.status === "not_started",
+      progressRate: e.progressRate,
+      hasQuizResult: results.length > 0,
+    });
+    for (const reason of reasons) {
+      targets.push({ enrollmentId: e.id, learnerId: e.learnerId, learnerName: learner.name, courseId: e.courseId, reason, reasonLabel: REMINDER_LABELS[reason] ?? reason, dueDate: e.dueDate });
+    }
   }
   return targets;
 }
@@ -1296,8 +1293,9 @@ export async function getCertificatesByCourse(courseId: number) {
 
 /** 価格疎明用データCSV(研修費/LMS利用料/運用支援費を分離、合計を明示)。 */
 export async function exportPriceJustificationCsv(actor?: string) {
+  const headers = ["コース名", "標準学習時間(時間)", "研修費", "LMS利用料", "運用支援費", "合計", "助成金区分"];
   const db = await getDb();
-  if (!db) return "﻿" + "コース名,標準学習時間(時間),研修費,LMS利用料,運用支援費,合計,助成金区分\r\n";
+  if (!db) return toCsv(headers, []);
   const rows = await db.select().from(courses);
   const out: Array<Array<unknown>> = [];
   for (const c of rows) {
@@ -1306,10 +1304,7 @@ export async function exportPriceJustificationCsv(actor?: string) {
     out.push([c.name, (dur.totalMinutes / 60).toFixed(1), c.tuitionFee, c.lmsFee, c.supportFee, total, c.subsidyCategory ?? ""]);
   }
   await recordExport("price_justification", "csv", { actor });
-  const headers = ["コース名", "標準学習時間(時間)", "研修費", "LMS利用料", "運用支援費", "合計", "助成金区分"];
-  const lines = [headers.join(",")];
-  for (const r of out) lines.push(r.map(v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(","));
-  return "﻿" + lines.join("\r\n");
+  return toCsv(headers, out);
 }
 
 // ============================================================
@@ -1371,7 +1366,7 @@ export async function getMonthlyPartnerReport(partnerId: number) {
   for (const s of sales) {
     const cur = byMonth.get(s.yearMonth) ?? { yearMonth: s.yearMonth, trainingSales: 0, feeAmount: 0, feeRate, status: "予定" };
     cur.trainingSales += s.trainingSales;
-    cur.feeAmount += Math.floor((s.trainingSales * feeRate) / 100);
+    cur.feeAmount += calcFeeAmount(s.trainingSales, feeRate);
     byMonth.set(s.yearMonth, cur);
   }
   // 確定済み報酬があれば上書き

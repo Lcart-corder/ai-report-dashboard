@@ -555,11 +555,21 @@ export const appRouter = router({
       }),
     }),
 
-    // --- 証跡出力CSV (FR-15) ---
+    // --- 証跡出力CSV (FR-15) — 企業スコープ付き(担当分のみ) ---
     exports: router({
-      courseProgressCsv: operatorProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ input }) => ({ csv: await lms.exportCourseProgressCsv(input.courseId, input.actor) })),
-      tenHourCompletersCsv: operatorProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportTenHourCompletersCsv(input?.actor) })),
+      // 運営=全件、その他=自分のアクセス可能企業の受講者のみ
+      courseProgressCsv: lmsProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ ctx, input }) => {
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        return { csv: await lms.exportCourseProgressCsv(input.courseId, input.actor ?? ctx.lms.email, scope) };
+      }),
+      tenHourCompletersCsv: lmsProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ ctx, input }) => {
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        return { csv: await lms.exportTenHourCompletersCsv(input?.actor ?? ctx.lms.email, scope) };
+      }),
+      // 価格疎明データは全社横断のため運営限定
       priceJustificationCsv: operatorProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportPriceJustificationCsv(input?.actor) })),
+      // 監査ログCSVは運営限定
+      auditLogsCsv: operatorProcedure.input(z.object({ category: z.string().optional(), actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportAuditLogsCsv({ category: input?.category, actor: input?.actor }) })),
     }),
 
     // --- 通知・リマインド (FR-14) ---
@@ -682,7 +692,11 @@ export const appRouter = router({
     }),
 
     // --- 監査ログ (FR-19) ---
-    auditLogs: protectedProcedure.input(z.object({ limit: z.number().int().positive().max(1000).optional() }).optional()).query(async ({ input }) => lms.getAuditLogs(input?.limit)),
+    auditLogs: operatorProcedure.input(z.object({
+      limit: z.number().int().positive().max(1000).optional(),
+      category: z.string().optional(),
+      actor: z.string().optional(),
+    }).optional()).query(async ({ input }) => lms.getAuditLogs({ limit: input?.limit, category: input?.category, actor: input?.actor })),
 
     // --- デモデータ投入 ---
     seedDemo: operatorProcedure.mutation(async () => lms.seedDemoData()),

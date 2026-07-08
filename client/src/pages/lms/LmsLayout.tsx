@@ -17,8 +17,8 @@ const NAV = [
   { href: "/lms/checklist", label: "申請準備チェック", icon: ClipboardCheck, roles: ["operator_admin", "project_manager", "advisor"] },
   { href: "/lms/advisor", label: "社労士確認", icon: ShieldCheck, roles: ["operator_admin", "advisor"] },
   { href: "/lms/integrations", label: "内部通知連携", icon: Webhook, roles: ["operator_admin"] },
-  { href: "/lms/exports", label: "証跡出力", icon: Download, roles: ["operator_admin"] },
-  { href: "/lms/audit", label: "監査ログ", icon: ScrollText, roles: ["operator_admin", "advisor"] },
+  { href: "/lms/exports", label: "証跡出力", icon: Download, roles: ["operator_admin", "project_manager", "partner_admin", "company_rep", "advisor"] },
+  { href: "/lms/audit", label: "監査ログ", icon: ScrollText, roles: ["operator_admin"] },
 ] as const;
 
 export function LmsLayout({ children, title, description }: { children: ReactNode; title: string; description?: string }) {
