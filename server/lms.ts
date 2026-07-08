@@ -784,9 +784,9 @@ export async function upsertLearningReport(input: {
 
 export async function getLearningReport(enrollmentId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const rows = await db.select().from(learningReports).where(eq(learningReports.enrollmentId, enrollmentId)).limit(1);
-  return rows[0];
+  return rows[0] ?? null;
 }
 
 /** 差戻し(管理者・社労士)。 */
@@ -843,9 +843,9 @@ export async function issueCertificate(enrollmentId: number, issuer = "Lカー�
 
 export async function getCertificateByEnrollment(enrollmentId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const rows = await db.select().from(certificates).where(eq(certificates.enrollmentId, enrollmentId)).limit(1);
-  return rows[0];
+  return rows[0] ?? null;
 }
 
 export async function recordCertificateDownload(id: number, actor?: string) {

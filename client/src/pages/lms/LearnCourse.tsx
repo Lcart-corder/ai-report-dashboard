@@ -215,6 +215,15 @@ function CondRow({ ok, label, value }: { ok: boolean; label: string; value: stri
   );
 }
 
+// options はJSONカラム。ドライバによって配列/文字列いずれでも返り得るため頑健に配列化する。
+function parseOptions(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw === "string") {
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
+  }
+  return [];
+}
+
 function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number; enrollmentId: number; learnerId: number; onDone: () => void }) {
   const quiz = trpc.lms.quizzes.getWithQuestions.useQuery({ quizId });
   const results = trpc.lms.quizzes.results.useQuery({ enrollmentId });
@@ -241,7 +250,7 @@ function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number
       </CardHeader>
       <CardContent className="space-y-4">
         {quiz.data?.questions.map((qq, qi) => {
-          const opts = (qq.options as string[] | null) ?? [];
+          const opts = parseOptions(qq.options);
           return (
             <div key={qq.id}>
               <div className="mb-1.5 text-sm font-medium">Q{qi + 1}. {qq.questionText}</div>
@@ -276,7 +285,7 @@ function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number
   );
 }
 
-function ReportForm({ enrollmentId, learnerId, initial, onDone }: { enrollmentId: number; learnerId: number; initial: { whatLearned?: string | null; howToApply?: string | null; status?: string } | undefined; onDone: () => void }) {
+function ReportForm({ enrollmentId, learnerId, initial, onDone }: { enrollmentId: number; learnerId: number; initial: { whatLearned?: string | null; howToApply?: string | null; status?: string } | null | undefined; onDone: () => void }) {
   const [whatLearned, setWhatLearned] = useState(initial?.whatLearned ?? "");
   const [howToApply, setHowToApply] = useState(initial?.howToApply ?? "");
 
