@@ -1043,6 +1043,43 @@ export async function exportTenHourCompletersCsv(actor?: string, scopeCompanyIds
   return toCsv(headers, rows);
 }
 
+/**
+ * コース別 テスト結果一覧CSV(証跡出力/FR-15)。合否・得点・受験回数を含む。
+ * @param scopeCompanyIds アクセス制御スコープ。null=無制限
+ */
+export async function exportQuizResultsCsv(courseId: number, actor?: string, scopeCompanyIds?: number[] | null) {
+  const headers = ["企業名", "受講者名", "社員番号", "コース名", "テスト名", "得点", "合格点", "合否", "受験回数", "受験日時"];
+  const db = await getDb();
+  if (!db) return toCsv(headers, []);
+  const scope = scopeCompanyIds === undefined ? null : scopeCompanyIds;
+  const course = await getCourseById(courseId);
+  const qs = await db.select().from(quizzes).where(eq(quizzes.courseId, courseId));
+  const rows: Array<Array<unknown>> = [];
+  for (const q of qs) {
+    const results = await db.select().from(quizResults).where(eq(quizResults.quizId, q.id)).orderBy(desc(quizResults.takenAt));
+    for (const r of results) {
+      const learner = await getLearnerById(r.learnerId);
+      if (!learner) continue;
+      if (scope !== null && !scope.includes(learner.companyId)) continue; // スコープ外は除外
+      const company = await getCompanyById(learner.companyId);
+      rows.push([
+        company?.name ?? "",
+        learner.name,
+        learner.employeeNumber ?? "",
+        course?.name ?? "",
+        q.title,
+        `${r.score}%`,
+        `${q.passingScore}%`,
+        r.passed ? "合格" : "不合格",
+        r.attemptNumber,
+        r.takenAt ? new Date(r.takenAt).toISOString().slice(0, 19).replace("T", " ") : "",
+      ]);
+    }
+  }
+  await recordExport("quiz_results", "csv", { courseId, actor });
+  return toCsv(headers, rows);
+}
+
 async function recordExport(exportType: string, format: "csv" | "pdf", opts: { companyId?: number; courseId?: number; actor?: string }) {
   const db = await getDb();
   if (!db) return;
@@ -1817,4 +1854,32 @@ export async function getDashboardDetail(scopeCompanyIds?: number[] | null, limi
   }).sort((a, b) => b.avgProgress - a.avgProgress);
 
   return { learners: list.slice(0, limit), companyComparison };
+}
+
+// ============================================================
+// ユーザー管理 統合ビュー(モックP5: 全ユーザーをロールタブで一覧)
+// ============================================================
+
+export type PersonRow = { kind: "member" | "learner"; id: number; name: string; email: string | null; role: LmsRole; affiliation: string; status: string };
+
+export async function getAllPeople(): Promise<PersonRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const companyRows = await db.select().from(companies);
+  const companyName = new Map(companyRows.map(c => [c.id, c.name] as const));
+  const partnerRows = await db.select().from(partners);
+  const partnerName = new Map(partnerRows.map(p => [p.id, p.name] as const));
+
+  const members = await db.select().from(lmsMembers).orderBy(desc(lmsMembers.createdAt));
+  const learnerRows = await db.select().from(learners).orderBy(desc(learners.createdAt));
+
+  const out: PersonRow[] = [];
+  for (const m of members) {
+    const affiliation = m.role === "partner_admin" ? (m.partnerId != null ? partnerName.get(m.partnerId) ?? "" : "") : m.role === "company_rep" ? (m.companyId != null ? companyName.get(m.companyId) ?? "" : "") : m.role === "advisor" || m.role === "project_manager" ? "担当プロジェクト" : "提供会社（Lカート）";
+    out.push({ kind: "member", id: m.id, name: m.name, email: m.email, role: m.role as LmsRole, affiliation, status: m.isActive ? "active" : "suspended" });
+  }
+  for (const l of learnerRows) {
+    out.push({ kind: "learner", id: l.id, name: l.name, email: l.email, role: "employee", affiliation: companyName.get(l.companyId) ?? "", status: l.status as string });
+  }
+  return out;
 }

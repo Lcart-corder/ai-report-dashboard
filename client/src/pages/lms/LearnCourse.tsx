@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft } from "lucide-react";
+import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target } from "lucide-react";
+import { Donut } from "./ui";
 
 export default function LmsLearnCourse() {
   const params = useParams();
@@ -23,6 +23,7 @@ export default function LmsLearnCourse() {
   const checks = trpc.lms.enrollments.checks.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const progressLogs = trpc.lms.enrollments.progressLogs.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const quizzes = trpc.lms.quizzes.byCourse.useQuery({ courseId: courseId! }, { enabled: !!courseId });
+  const quizResults = trpc.lms.quizzes.results.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const report = trpc.lms.reports.get.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const certificate = trpc.lms.certificates.getByEnrollment.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
 
@@ -52,83 +53,164 @@ export default function LmsLearnCourse() {
   }
 
   const e = enrollment.data;
+  const allLessons = lessons.data ?? [];
+  const requiredLessons = allLessons.filter(l => l.isRequired);
+  const requiredTotal = requiredLessons.length;
+  const watchedCount = requiredLessons.filter(l => watchedLessonIds.has(l.id)).length;
+  const checkedCount = requiredLessons.filter(l => checkedLessonIds.has(l.id)).length;
+  const quizPassed = (quizzes.data?.length ?? 0) > 0 && quizzes.data!.every(q => quizResults.data?.some(r => r.quizId === q.id && r.passed));
+  const reportSubmitted = report.data?.status === "submitted" || report.data?.status === "approved";
+  const remainVideos = Math.max(0, requiredTotal - watchedCount);
+  const remainChecks = Math.max(0, requiredTotal - checkedCount);
+  const quizTaken = (quizResults.data?.length ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="border-b bg-white dark:bg-slate-900">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-4">
+    <div className="min-h-screen bg-[#f4f6fa] dark:bg-slate-950">
+      <header className="border-b bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <a href={`/lms/learn/${learnerId}`} className="text-slate-400 hover:text-slate-600"><ArrowLeft className="h-5 w-5" /></a>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white"><GraduationCap className="h-5 w-5" /></div>
-          <div>
-            <div className="text-sm font-semibold">{course.data?.name ?? "コース"}</div>
-            <div className="text-xs text-slate-500">進捗 {e?.progressRate ?? 0}% ・ 合格点 {course.data?.passingScore ?? 80}%</div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white"><GraduationCap className="h-5 w-5" /></div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-bold">{course.data?.name ?? "コース"}</div>
+            <div className="text-xs text-slate-500">L cart 学習ポータル ・ 合格点 {course.data?.passingScore ?? 80}%</div>
           </div>
           {e?.status === "completed" && <Badge className="ml-auto bg-emerald-600">修了</Badge>}
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
-        <Progress value={e?.progressRate ?? 0} className="h-2" />
-
-        {/* レッスン */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">動画レッスンと確認チェック</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {lessons.data?.map(l => {
-              const watched = watchedLessonIds.has(l.id);
-              const checked = checkedLessonIds.has(l.id);
-              return (
-                <div key={l.id} className="flex items-center gap-3 rounded-lg border p-3">
-                  {checked ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" /> : <Circle className="h-5 w-5 shrink-0 text-slate-300" />}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{l.chapter ? `${l.chapter} ` : ""}{l.title}</div>
-                    <div className="text-xs text-slate-500">{l.durationMinutes}分 {watched && "・視聴済"}</div>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => watchAndComplete(l.id)} disabled={recordProgress.isPending}>
-                    <PlayCircle className="mr-1 h-4 w-4" /> 視聴
-                  </Button>
-                  <Button size="sm" variant={checked ? "secondary" : "default"} disabled={!watched || checked || recordCheck.isPending} onClick={() => recordCheck.mutate({ enrollmentId, lessonId: l.id, learnerId })}>
-                    {checked ? "チェック済" : "視聴完了"}
-                  </Button>
-                </div>
-              );
-            })}
-            {lessons.data?.length === 0 && <p className="text-sm text-slate-400">レッスンがありません。</p>}
+      <main className="mx-auto max-w-5xl px-4 py-6">
+        {/* コース概要 */}
+        <Card className="mb-5 border-slate-200 dark:border-slate-800">
+          <CardContent className="flex items-center gap-5 p-5">
+            <Donut value={e?.progressRate ?? 0} size={72} color="#2563eb" />
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold">{course.data?.name ?? "コース"}</div>
+              <div className="mt-1 text-sm text-slate-500">
+                受講期限: {e?.dueDate ?? "-"}
+                {e?.dueDate && <span className="ml-2 text-rose-500">{daysLeftLabel(e.dueDate)}</span>}
+              </div>
+            </div>
           </CardContent>
         </Card>
+
+        <div className="grid gap-5 lg:grid-cols-[1.7fr_1fr]">
+          {/* チャプター一覧 */}
+          <Card className="border-slate-200 dark:border-slate-800">
+            <CardHeader className="pb-2"><CardTitle className="text-base">チャプター一覧</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {allLessons.map(l => {
+                const watched = watchedLessonIds.has(l.id);
+                const checked = checkedLessonIds.has(l.id);
+                return (
+                  <div key={l.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                    <PlayCircle className={`h-5 w-5 shrink-0 ${watched ? "text-blue-600" : "text-slate-300"}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{l.chapter ? `${l.chapter} ` : ""}{l.title}</div>
+                      <div className="text-xs text-slate-400">{l.durationMinutes}分</div>
+                    </div>
+                    {checked
+                      ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">視聴済み</span>
+                      : watched
+                        ? <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">視聴中</span>
+                        : <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800">未視聴</span>}
+                    <Button size="sm" variant="ghost" className="h-7" onClick={() => watchAndComplete(l.id)} disabled={recordProgress.isPending}>視聴</Button>
+                    <Button size="sm" className="h-7" variant={checked ? "secondary" : "default"} disabled={!watched || checked || recordCheck.isPending} onClick={() => recordCheck.mutate({ enrollmentId, lessonId: l.id, learnerId })}>
+                      {checked ? "済" : "視聴完了"}
+                    </Button>
+                  </div>
+                );
+              })}
+              {allLessons.length === 0 && <p className="text-sm text-slate-400">レッスンがありません。</p>}
+            </CardContent>
+          </Card>
+
+          {/* 未完了タスク + 修了条件 */}
+          <div className="space-y-5">
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><ListChecks className="h-4 w-4 text-slate-400" /> 未完了タスク</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <TaskRow label="動画を視聴する" sub={`残り${remainVideos}本`} count={remainVideos} done={remainVideos === 0} />
+                <TaskRow label="確認チェックを行う" sub={`残り${remainChecks}回`} count={remainChecks} done={remainChecks === 0} />
+                <TaskRow label="確認テストを受験する" sub={quizPassed ? "合格済" : quizTaken ? "再受験可" : "未受験"} count={quizPassed ? 0 : (quizzes.data?.length ?? 0)} done={quizPassed} />
+                {course.data?.requireReport && <TaskRow label="学習レポートを提出する" sub={reportSubmitted ? "提出済" : "未提出"} count={reportSubmitted ? 0 : 1} done={!!reportSubmitted} />}
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4 text-slate-400" /> 修了条件</CardTitle></CardHeader>
+              <CardContent className="space-y-2.5">
+                <CondRow ok={requiredTotal > 0 && watchedCount === requiredTotal} label="すべての動画を視聴" value={`${watchedCount}/${requiredTotal}`} />
+                <CondRow ok={requiredTotal > 0 && checkedCount === requiredTotal} label="確認チェックを完了" value={`${checkedCount}/${requiredTotal}`} />
+                <CondRow ok={quizPassed} label="確認テストに合格" value={quizPassed ? "合格" : `${quizTaken ? "未合格" : "-"}/${quizzes.data?.length ?? 0}`} />
+                {course.data?.requireReport && <CondRow ok={!!reportSubmitted} label="学習レポートを提出" value={reportSubmitted ? "済" : "未"} />}
+                <p className="pt-1 text-[11px] text-slate-400">※ すべての条件を満たすと修了となります。</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* テスト */}
-        {quizzes.data?.map(q => <QuizTaker key={q.id} quizId={q.id} enrollmentId={enrollmentId} learnerId={learnerId} onDone={refreshAll} />)}
+        <div className="mt-5 space-y-5">
+          {quizzes.data?.map(q => <QuizTaker key={q.id} quizId={q.id} enrollmentId={enrollmentId} learnerId={learnerId} onDone={refreshAll} />)}
+          <ReportForm enrollmentId={enrollmentId} learnerId={learnerId} initial={report.data} onDone={() => { utils.lms.reports.get.invalidate({ enrollmentId }); refreshAll(); }} />
 
-        {/* 学習レポート */}
-        <ReportForm enrollmentId={enrollmentId} learnerId={learnerId} initial={report.data} onDone={() => { utils.lms.reports.get.invalidate({ enrollmentId }); refreshAll(); }} />
-
-        {/* 修了証 */}
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> 修了証</CardTitle></CardHeader>
-          <CardContent>
-            {certificate.data ? (
-              <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950">
-                <div className="text-sm text-slate-600 dark:text-slate-300">証明番号: <span className="font-mono">{certificate.data.certificateNumber}</span></div>
-                <div className="mt-1 text-lg font-bold">{certificate.data.learnerName} 様</div>
-                <div className="text-sm">{certificate.data.courseName}（標準学習時間 {(certificate.data.standardMinutes / 60).toFixed(1)}時間）を修了</div>
-                <div className="mt-1 text-sm text-slate-500">修了日: {certificate.data.completionDate} ／ 発行: {certificate.data.issuer}</div>
-                <a href={`/lms/certificate/${enrollmentId}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700">
-                  <Award className="h-4 w-4" /> 修了証を開く（印刷 / PDF保存）
-                </a>
-              </div>
-            ) : (
-              <div className="text-sm text-slate-500">
-                <p>全レッスンの視聴完了・確認チェック・テスト合格・レポート提出が揃うと発行できます。</p>
-                <Button className="mt-3" onClick={() => issueCert.mutate({ enrollmentId })} disabled={issueCert.isPending || e?.status !== "completed"}>
-                  <Award className="mr-1.5 h-4 w-4" /> 修了証を発行
-                </Button>
-                {e?.status !== "completed" && <p className="mt-2 text-xs text-amber-600">※ まだ修了条件を満たしていません。</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* 修了証 */}
+          <Card className="border-slate-200 dark:border-slate-800">
+            <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Award className="h-4 w-4" /> 修了証</CardTitle></CardHeader>
+            <CardContent>
+              {certificate.data ? (
+                <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950">
+                  <div className="text-sm text-slate-600 dark:text-slate-300">証明番号: <span className="font-mono">{certificate.data.certificateNumber}</span></div>
+                  <div className="mt-1 text-lg font-bold">{certificate.data.learnerName} 様</div>
+                  <div className="text-sm">{certificate.data.courseName}（標準学習時間 {(certificate.data.standardMinutes / 60).toFixed(1)}時間）を修了</div>
+                  <div className="mt-1 text-sm text-slate-500">修了日: {certificate.data.completionDate} ／ 発行: {certificate.data.issuer}</div>
+                  <a href={`/lms/certificate/${enrollmentId}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
+                    <Award className="h-4 w-4" /> 修了証を開く（印刷 / PDF保存）
+                  </a>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500">
+                  <p>全レッスンの視聴完了・確認チェック・テスト合格・レポート提出が揃うと発行できます。</p>
+                  <Button className="mt-3 bg-blue-600 hover:bg-blue-700" onClick={() => issueCert.mutate({ enrollmentId })} disabled={issueCert.isPending || e?.status !== "completed"}>
+                    <Award className="mr-1.5 h-4 w-4" /> 修了証を発行
+                  </Button>
+                  {e?.status !== "completed" && <p className="mt-2 text-xs text-amber-600">※ まだ修了条件を満たしていません。</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
+    </div>
+  );
+}
+
+function daysLeftLabel(due: string): string {
+  const d = Math.ceil((new Date(`${due}T00:00:00`).getTime() - Date.now()) / 86400000);
+  if (d < 0) return "期限切れ";
+  if (d === 0) return "本日まで";
+  return `残り${d}日`;
+}
+
+function TaskRow({ label, sub, count, done }: { label: string; sub: string; count: number; done: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Circle className="h-4 w-4 text-slate-300" />}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm">{label}</div>
+        <div className="text-xs text-slate-400">{sub}</div>
+      </div>
+      {!done && count > 0 && <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white">{count}</span>}
+    </div>
+  );
+}
+
+function CondRow({ ok, label, value }: { ok: boolean; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      {ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <Circle className="h-4 w-4 shrink-0 text-slate-300" />}
+      <span className="flex-1 text-slate-600 dark:text-slate-300">{label}</span>
+      <span className={`tabular-nums font-medium ${ok ? "text-emerald-600" : "text-slate-400"}`}>{value}</span>
     </div>
   );
 }

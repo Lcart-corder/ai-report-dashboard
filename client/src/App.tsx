@@ -44,6 +44,7 @@ const UnifiedPageManagerPage = lazy(() => import("@/pages/admin/pages/UnifiedPag
 const LmsHome = lazy(() => import("@/pages/lms/LmsHome"));
 const LmsAdminDashboard = lazy(() => import("@/pages/lms/AdminDashboard"));
 const LmsCompanies = lazy(() => import("@/pages/lms/Companies"));
+const LmsUsers = lazy(() => import("@/pages/lms/Users"));
 const LmsCourses = lazy(() => import("@/pages/lms/Courses"));
 const LmsPartners = lazy(() => import("@/pages/lms/Partners"));
 const LmsChecklist = lazy(() => import("@/pages/lms/Checklist"));
@@ -135,6 +136,7 @@ function LmsApp() {
         <Route path="/lms/roles" component={LmsRoles} />
         <Route path="/lms/projects" component={LmsProjects} />
         <Route path="/lms/companies" component={LmsCompanies} />
+        <Route path="/lms/users" component={LmsUsers} />
         <Route path="/lms/courses" component={LmsCourses} />
         <Route path="/lms/notifications" component={LmsNotifications} />
         <Route path="/lms/partners" component={LmsPartners} />
@@ -290,6 +292,7 @@ function App() {
             <Route path="/lms/roles" component={LmsRoles} />
             <Route path="/lms/projects" component={LmsProjects} />
             <Route path="/lms/companies" component={LmsCompanies} />
+        <Route path="/lms/users" component={LmsUsers} />
             <Route path="/lms/courses" component={LmsCourses} />
             <Route path="/lms/notifications" component={LmsNotifications} />
             <Route path="/lms/partners" component={LmsPartners} />

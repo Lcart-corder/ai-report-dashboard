@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, Building2, BookOpen, Handshake, ClipboardCheck, ScrollText,
   Bell, ShieldCheck, Download, Webhook, FolderKanban, KeyRound, HelpCircle,
-  ChevronLeft, ChevronRight, GraduationCap,
+  ChevronLeft, ChevronRight, GraduationCap, Users2,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ROLE_LABEL, type RoleCode } from "./roles-data";
@@ -14,6 +14,7 @@ import { ROLE_LABEL, type RoleCode } from "./roles-data";
 const NAV = [
   { href: "/lms", label: "ダッシュボード", icon: LayoutDashboard, exact: true, roles: ["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor"] },
   { href: "/lms/companies", label: "企業・受講者", icon: Building2, roles: ["operator_admin", "project_manager", "partner_admin", "company_rep"] },
+  { href: "/lms/users", label: "ユーザー管理", icon: Users2, roles: ["operator_admin"] },
   { href: "/lms/courses", label: "コース・教材", icon: BookOpen, roles: ["operator_admin", "project_manager", "instructor"] },
   { href: "/lms/notifications", label: "通知・リマインド", icon: Bell, roles: ["operator_admin", "project_manager", "company_rep"] },
   { href: "/lms/partners", label: "協業先・成果報酬", icon: Handshake, roles: ["operator_admin", "partner_admin"] },

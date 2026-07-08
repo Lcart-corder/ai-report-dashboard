@@ -589,6 +589,10 @@ export const appRouter = router({
         const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
         return { csv: await lms.exportTenHourCompletersCsv(input?.actor ?? ctx.lms.email, scope) };
       }),
+      quizResultsCsv: lmsProcedure.input(z.object({ courseId: z.number(), actor: z.string().optional() })).mutation(async ({ ctx, input }) => {
+        const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+        return { csv: await lms.exportQuizResultsCsv(input.courseId, input.actor ?? ctx.lms.email, scope) };
+      }),
       // 価格疎明データは全社横断のため運営限定
       priceJustificationCsv: operatorProcedure.input(z.object({ actor: z.string().optional() }).optional()).mutation(async ({ input }) => ({ csv: await lms.exportPriceJustificationCsv(input?.actor) })),
       // 監査ログCSVは運営限定
@@ -650,6 +654,9 @@ export const appRouter = router({
       companies: protectedProcedure.input(z.object({ projectId: z.number() })).query(async ({ input }) => lms.getCompaniesByProject(input.projectId)),
       assignCompany: operatorProcedure.input(z.object({ companyId: z.number(), projectId: z.number().nullable() })).mutation(async ({ input }) => lms.assignCompanyToProject(input.companyId, input.projectId)),
     }),
+
+    // --- ユーザー管理 統合ビュー(全ユーザーをロールタブで一覧 / P5) ---
+    people: operatorProcedure.query(async () => lms.getAllPeople()),
 
     // --- メンバー(ロール付き管理アカウント) ---
     members: router({
