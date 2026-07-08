@@ -1606,6 +1606,21 @@ export async function resolveLmsIdentity(user: { email?: string | null; name?: s
   const email = user.email ?? "";
   const name = user.name ?? (email || "ユーザー");
 
+  // 開発用のロール確認オーバーライド(本番無効)。LMS_DEV_LOGIN=1 かつ LMS_DEV_ROLE 指定時のみ。
+  if (process.env.NODE_ENV !== "production" && process.env.LMS_DEV_LOGIN === "1" && process.env.LMS_DEV_ROLE) {
+    const role = process.env.LMS_DEV_ROLE as LmsRole;
+    return {
+      kind: role === "operator_admin" ? "operator" : role === "employee" ? "learner" : "member",
+      role,
+      name,
+      email,
+      learnerId: role === "employee" ? Number(process.env.LMS_DEV_LEARNER_ID ?? "1") : undefined,
+      projectId: null,
+      companyId: role === "company_rep" ? Number(process.env.LMS_DEV_COMPANY_ID ?? "1") : null,
+      partnerId: role === "partner_admin" ? Number(process.env.LMS_DEV_PARTNER_ID ?? "1") : null,
+    };
+  }
+
   if (email) {
     const member = await getMemberByEmail(email);
     if (member && member.isActive) {
@@ -1679,4 +1694,57 @@ export async function canAccessEnrollmentIdentity(id: LmsIdentity | null, enroll
 /** 受講者・受講割当の管理(登録/割当/リマインド)が可能なロールか。 */
 export function canManageLearners(role: LmsRole): boolean {
   return role === "operator_admin" || role === "project_manager" || role === "company_rep";
+}
+
+// ============================================================
+// ロール別ホーム(代表 / 協業先管理者)
+// ============================================================
+
+/** 代表(company_rep)向け: 自社の受講者と各コース進捗のまとめ。 */
+export async function getCompanyProgress(companyId: number) {
+  const db = await getDb();
+  const company = await getCompanyById(companyId);
+  const stats = await getDashboardStats(companyId);
+  if (!db) return { company, stats, courses: new Map<number, string>(), learners: [] as Array<{ id: number; name: string; department: string | null; status: string; enrollments: Array<{ enrollmentId: number; courseId: number; progressRate: number; status: string }> }> };
+
+  const learnerRows = await db.select().from(learners).where(eq(learners.companyId, companyId)).orderBy(desc(learners.createdAt));
+  const learnerIds = learnerRows.map(l => l.id);
+  const enrollmentRows = learnerIds.length > 0 ? await db.select().from(enrollments).where(inArray(enrollments.learnerId, learnerIds)) : [];
+  const courseRows = await db.select().from(courses);
+  const courseName = new Map(courseRows.map(c => [c.id, c.name] as const));
+
+  const learnersOut = learnerRows.map(l => ({
+    id: l.id,
+    name: l.name,
+    department: l.department,
+    status: l.status as string,
+    enrollments: enrollmentRows
+      .filter(e => e.learnerId === l.id)
+      .map(e => ({ enrollmentId: e.id, courseId: e.courseId, progressRate: e.progressRate, status: e.status as string })),
+  }));
+
+  return { company, stats, courses: Object.fromEntries(courseName), learners: learnersOut };
+}
+
+/** 協業先管理者(partner_admin)向け: 担当企業のロールアップ + 成果報酬サマリー。 */
+export async function getPartnerCompaniesOverview(partnerId: number) {
+  const db = await getDb();
+  const partnerRows = db ? await db.select().from(partners).where(eq(partners.id, partnerId)).limit(1) : [];
+  const partner = partnerRows[0];
+  const monthly = await getMonthlyPartnerReport(partnerId);
+  const forecastTotal = monthly.reduce((s, m) => s + m.feeAmount, 0);
+
+  if (!db) return { partner, feeRate: partner?.successFeeRate ?? 20, companies: [] as Array<{ id: number; name: string; learners: number; enrollments: number; completed: number; avgProgress: number }>, monthly, forecastTotal };
+
+  const companyRows = await db.select().from(companies).where(eq(companies.partnerId, partnerId));
+  const out: Array<{ id: number; name: string; learners: number; enrollments: number; completed: number; avgProgress: number }> = [];
+  for (const c of companyRows) {
+    const cl = await db.select().from(learners).where(eq(learners.companyId, c.id));
+    const ids = cl.map(l => l.id);
+    let enr: Array<typeof enrollments.$inferSelect> = [];
+    if (ids.length > 0) enr = await db.select().from(enrollments).where(inArray(enrollments.learnerId, ids));
+    const avg = enr.length === 0 ? 0 : Math.round(enr.reduce((s, e) => s + e.progressRate, 0) / enr.length);
+    out.push({ id: c.id, name: c.name, learners: cl.length, enrollments: enr.length, completed: enr.filter(e => e.status === "completed").length, avgProgress: avg });
+  }
+  return { partner, feeRate: partner?.successFeeRate ?? 20, companies: out, monthly, forecastTotal };
 }

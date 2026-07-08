@@ -41,6 +41,7 @@ const ShopBuilderPage = lazy(() => import("@/pages/shop-builder/ShopBuilder"));
 const UnifiedPageManagerPage = lazy(() => import("@/pages/admin/pages/UnifiedPageManager"));
 
 // 助成金対応リスキリングLMS
+const LmsHome = lazy(() => import("@/pages/lms/LmsHome"));
 const LmsAdminDashboard = lazy(() => import("@/pages/lms/AdminDashboard"));
 const LmsCompanies = lazy(() => import("@/pages/lms/Companies"));
 const LmsCourses = lazy(() => import("@/pages/lms/Courses"));
@@ -130,7 +131,7 @@ function LmsApp() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
-        <Route path="/lms" component={LmsAdminDashboard} />
+        <Route path="/lms" component={LmsHome} />
         <Route path="/lms/roles" component={LmsRoles} />
         <Route path="/lms/projects" component={LmsProjects} />
         <Route path="/lms/companies" component={LmsCompanies} />
@@ -285,7 +286,7 @@ function App() {
             <Route path="/admin/static-pages/:id" component={StaticPageEditPage} />
 
             {/* 助成金対応リスキリングLMS */}
-            <Route path="/lms" component={LmsAdminDashboard} />
+            <Route path="/lms" component={LmsHome} />
             <Route path="/lms/roles" component={LmsRoles} />
             <Route path="/lms/projects" component={LmsProjects} />
             <Route path="/lms/companies" component={LmsCompanies} />

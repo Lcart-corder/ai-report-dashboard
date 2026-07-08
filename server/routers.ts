@@ -201,6 +201,18 @@ export const appRouter = router({
       }),
     }),
 
+    // --- 代表(company_rep)ホーム: 自社の受講者・進捗 ---
+    companyHome: lmsProcedure.input(z.object({ companyId: z.number() })).query(async ({ ctx, input }) => {
+      if (!(await lms.canAccessCompanyIdentity(ctx.lms, input.companyId))) throw new TRPCError({ code: "FORBIDDEN", message: "この企業にアクセスできません" });
+      return lms.getCompanyProgress(input.companyId);
+    }),
+
+    // --- 協業先管理者(partner_admin)ホーム: 担当企業ロールアップ + 成果報酬 ---
+    partnerHome: lmsProcedure.input(z.object({ partnerId: z.number() })).query(async ({ ctx, input }) => {
+      if (ctx.lms.role !== "operator_admin" && ctx.lms.partnerId !== input.partnerId) throw new TRPCError({ code: "FORBIDDEN", message: "この協業先にアクセスできません" });
+      return lms.getPartnerCompaniesOverview(input.partnerId);
+    }),
+
     // --- ダッシュボード (FR-13) — アクセス可能企業に自動スコープ ---
     dashboard: lmsProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ ctx, input }) => {
       const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
