@@ -239,6 +239,8 @@ export const appRouter = router({
         branchId: z.number().optional(),
         name: z.string().min(1),
         email: z.string().email().optional(),
+        lineUserId: z.string().optional(),
+        preferredChannel: z.enum(["email", "line", "app"]).optional(),
         employeeNumber: z.string().optional(),
         department: z.string().optional(),
       })).mutation(async ({ input }) => lms.createLearner({ ...input, status: "invited" })),
@@ -255,6 +257,8 @@ export const appRouter = router({
         id: z.number(),
         name: z.string().optional(),
         email: z.string().email().optional(),
+        lineUserId: z.string().optional(),
+        preferredChannel: z.enum(["email", "line", "app"]).optional(),
         department: z.string().optional(),
         status: z.enum(["invited", "active", "delayed", "completed", "expired", "suspended"]).optional(),
       })).mutation(async ({ input }) => lms.updateLearner(input.id, input)),
@@ -445,8 +449,10 @@ export const appRouter = router({
       reminderTargets: protectedProcedure.input(z.object({ companyId: z.number().optional() }).optional()).query(async ({ input }) => lms.detectReminderTargets(input?.companyId)),
       send: protectedProcedure.input(z.object({
         learnerIds: z.array(z.number()),
-        channel: z.string().default("email"),
+        channel: z.string().default("email"), // "email" | "line" | "app" | "auto"(受講者の希望チャネル)
         notificationId: z.number().optional(),
+        subject: z.string().optional(),
+        body: z.string().optional(),
       })).mutation(async ({ input }) => lms.sendReminders(input)),
     }),
 

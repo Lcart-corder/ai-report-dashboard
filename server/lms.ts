@@ -13,6 +13,7 @@
  */
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "./db";
+import { dispatchByChannel } from "./lms-notify";
 import {
   applicationChecklists,
   auditLogs,
@@ -1136,22 +1137,39 @@ export async function detectReminderTargets(companyId?: number) {
   return targets;
 }
 
-/** リマインド送信(現状はログ記録=キュー投入。実配信は各Integrationで実装)。 */
-export async function sendReminders(input: { learnerIds: number[]; channel: string; notificationId?: number }) {
+/**
+ * リマインド送信。チャネルごとに実配信(メールSES / LINEプッシュ)し、結果を通知ログに記録。
+ * channel="auto" の場合は受講者の希望チャネル(preferredChannel)に従う(既定メール)。
+ * 認証情報未設定なら status="queued"(記録のみ)にフォールバックする。
+ */
+export async function sendReminders(input: { learnerIds: number[]; channel: string; notificationId?: number; subject?: string; body?: string }) {
   const db = await getDb();
   if (!db) throw new Error(REQUIRE_DB);
-  if (input.learnerIds.length === 0) return { queued: 0 };
-  await db.insert(notificationLogs).values(
-    input.learnerIds.map(learnerId => ({
+  if (input.learnerIds.length === 0) return { queued: 0, sent: 0, failed: 0 };
+
+  const learnerRows = await db.select().from(learners).where(inArray(learners.id, input.learnerIds));
+  const subject = input.subject ?? "リスキリング研修の受講リマインド";
+
+  let sent = 0;
+  let queued = 0;
+  let failed = 0;
+  for (const learner of learnerRows) {
+    const channel = input.channel === "auto" ? learner.preferredChannel : input.channel;
+    const body = input.body ?? `${learner.name} 様\n\nリスキリング研修の受講状況をご確認ください。期限内の修了をお願いします。`;
+    const status = await dispatchByChannel(channel, { email: learner.email, lineUserId: learner.lineUserId }, subject, body);
+    if (status === "sent") sent += 1;
+    else if (status === "failed") failed += 1;
+    else queued += 1;
+    await db.insert(notificationLogs).values({
       notificationId: input.notificationId ?? null,
-      learnerId,
-      channel: input.channel,
-      status: "sent" as const,
-      sentAt: new Date(),
-    })),
-  );
-  await writeAuditLog({ category: "admin", action: "reminder.send", detail: { channel: input.channel, count: input.learnerIds.length } });
-  return { queued: input.learnerIds.length };
+      learnerId: learner.id,
+      channel,
+      status,
+      sentAt: status === "sent" ? new Date() : null,
+    });
+  }
+  await writeAuditLog({ category: "admin", action: "reminder.send", detail: { channel: input.channel, sent, queued, failed } });
+  return { queued, sent, failed };
 }
 
 // ============================================================

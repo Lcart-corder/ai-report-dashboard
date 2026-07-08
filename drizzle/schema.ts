@@ -542,6 +542,10 @@ export const learners = mysqlTable("learners", {
   branchId: int("branchId"),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
+  /** LINE公式アカウントを友だち追加した受講者のuserId(任意)。LINE通知の宛先。 */
+  lineUserId: varchar("lineUserId", { length: 128 }),
+  /** 希望通知チャネル(email/line/app)。既定はメール(多社セグメント配信に最適)。 */
+  preferredChannel: mysqlEnum("preferredChannel", ["email", "line", "app"]).default("email").notNull(),
   employeeNumber: varchar("employeeNumber", { length: 64 }),
   department: varchar("department", { length: 128 }),
   status: mysqlEnum("status", ["invited", "active", "delayed", "completed", "expired", "suspended"]).default("invited").notNull(),

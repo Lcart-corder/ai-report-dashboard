@@ -32,12 +32,23 @@ const CHANNELS = [
   { value: "slack", label: "Slack" },
   { value: "googlechat", label: "Google Chat" },
 ];
-const channelLabel = (v: string) => CHANNELS.find(c => c.value === v)?.label ?? v;
+// 送信チャネル(多社セグメント配信): 既定はメール主軸、autoは受講者の希望チャネル
+const SEND_CHANNELS = [
+  { value: "email", label: "メール（推奨）" },
+  { value: "line", label: "LINE" },
+  { value: "app", label: "アプリ内" },
+  { value: "auto", label: "受講者の希望チャネル" },
+];
+const channelLabel = (v: string) => CHANNELS.find(c => c.value === v)?.label ?? (v === "auto" ? "希望チャネル" : v);
 
 export default function LmsNotifications() {
   const utils = trpc.useUtils();
   const rules = trpc.lms.notifications.list.useQuery();
-  const targets = trpc.lms.notifications.reminderTargets.useQuery({});
+  const companies = trpc.lms.companies.list.useQuery();
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const targets = trpc.lms.notifications.reminderTargets.useQuery(
+    companyFilter === "all" ? {} : { companyId: Number(companyFilter) },
+  );
   const logs = trpc.lms.notifications.logs.useQuery({ limit: 100 });
 
   const [nr, setNr] = useState({ name: "", trigger: "due_7d", channel: "email", template: "" });
@@ -52,7 +63,11 @@ export default function LmsNotifications() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [sendChannel, setSendChannel] = useState("email");
   const send = trpc.lms.notifications.send.useMutation({
-    onSuccess: r => { toast.success(`${r.queued}件のリマインドを送信キューに投入しました`); setSelected(new Set()); utils.lms.notifications.logs.invalidate(); },
+    onSuccess: r => {
+      toast.success(`送信: 成功 ${r.sent} / キュー ${r.queued} / 失敗 ${r.failed}`);
+      setSelected(new Set());
+      utils.lms.notifications.logs.invalidate();
+    },
     onError: e => toast.error(e.message),
   });
 
@@ -63,19 +78,31 @@ export default function LmsNotifications() {
   return (
     <LmsLayout title="通知・リマインド" description="リマインドルール管理と未受講者への自動リマインド（FR-14）">
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* リマインド対象 */}
+        {/* リマインド対象（会社別セグメント配信） */}
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="flex items-center gap-2 text-base"><AlertTriangle className="h-4 w-4 text-amber-500" /> リマインド対象（{targetList.length}）</CardTitle>
-            <div className="flex items-center gap-2">
-              <Select value={sendChannel} onValueChange={setSendChannel}>
-                <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
-                <SelectContent>{CHANNELS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
-              </Select>
-              <Button size="sm" disabled={selected.size === 0 || send.isPending} onClick={() => send.mutate({ learnerIds: Array.from(selected), channel: sendChannel })}>
-                <Send className="mr-1 h-4 w-4" /> 送信（{selected.size}）
-              </Button>
+          <CardHeader className="space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base"><AlertTriangle className="h-4 w-4 text-amber-500" /> リマインド対象（{targetList.length}）</CardTitle>
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={companyFilter} onValueChange={v => { setCompanyFilter(v); setSelected(new Set()); }}>
+                <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全企業</SelectItem>
+                  {companies.data?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <div className="ml-auto flex items-center gap-2">
+                <Select value={sendChannel} onValueChange={setSendChannel}>
+                  <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>{SEND_CHANNELS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                </Select>
+                <Button size="sm" disabled={selected.size === 0 || send.isPending} onClick={() => send.mutate({ learnerIds: Array.from(selected), channel: sendChannel })}>
+                  <Send className="mr-1 h-4 w-4" /> 送信（{selected.size}）
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">企業で絞り込み → 対象を選択 → チャネルを選んで配信。メール主軸で会社/個人単位に送れます（多社セグメント配信）。</p>
           </CardHeader>
           <CardContent>
             <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">

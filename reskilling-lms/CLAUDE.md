@@ -51,8 +51,21 @@ application_checklists, exports, partner_sales, success_fees, audit_logs
   LINE/Chatwork/Slack通知、価格疎明用データ管理
 - Phase 3: 協業先管理、案件管理、協業先売上管理、成果報酬20%計算、請求予定額管理、月次レポート
 
+## 通知チャネル戦略（多社セグメント配信）
+たくさんの導入企業が絡む前提のため、受講者への到達は **メール（Amazon SES）を主軸 + LINE任意** とする。
+- **メール主軸**: CSV登録で全社員のアドレスを保有 → 会社/部署/個人でセグメント配信可能。SESは1,000通≈$0.10と最安・線形スケール。
+- **LINE任意**: 友だち追加した希望者（`learners.lineUserId` 保有）にのみプッシュ。1公式アカウントの月200通無料枠は全社合算のため主軸には不向き。
+- **管理者/協業先向け内部通知**: Slack/Chatwork/Google Chat の Webhook（無料）を想定（未配線）。
+- 配線は `server/lms-notify.ts`（`dispatchByChannel`）。`sendReminders` の channel: `email`/`line`/`app`/`auto`（受講者の希望チャネル）。
+- 認証情報が未設定なら送信は `queued`（記録のみ）にフォールバックし、設定後に実送信へ切替。
+
+### 通知の環境変数
+- メール(SES): `AWS_REGION`, `LMS_MAIL_FROM`（SESで検証済み送信元）, AWS認証情報。`@aws-sdk/client-ses` は動的import（未導入でもビルドは壊れない）。
+- LINE: 既存 `integrations`（`line_official`, status=active）の `channelAccessToken`/`channelSecret` を利用。
+
 ## 注意点
 - 研修費・LMS利用料・運用支援費・AIツール利用料・協業先売上・Lカート成果報酬・助成金申請額/受給額は
   それぞれ分離して管理し、混同しないこと（実質無料スキーム等の疑義を避けるため）。
 - 視聴ログ・チェック履歴・テスト結果・修了判定は監査ログ対象。管理者による直接編集は不可とし、
   修正が必要な場合は差戻し・再実施のフローを通す。
+- 成果報酬は「協業先の研修売上 × 報酬率」で算定し、助成金受給額には一切連動させない。

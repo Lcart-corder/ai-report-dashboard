@@ -114,9 +114,9 @@ function CompanyDetail({ companyId, companyName }: { companyId: number; companyN
     onSuccess: () => { toast.success("キーを停止しました"); utils.lms.masterKeys.list.invalidate({ companyId }); },
   });
 
-  const [newLearner, setNewLearner] = useState({ name: "", email: "", employeeNumber: "", department: "" });
+  const [newLearner, setNewLearner] = useState({ name: "", email: "", employeeNumber: "", department: "", lineUserId: "", preferredChannel: "email" as "email" | "line" | "app" });
   const createLearner = trpc.lms.learners.create.useMutation({
-    onSuccess: () => { toast.success("受講者を登録しました"); utils.lms.learners.listByCompany.invalidate({ companyId }); setNewLearner({ name: "", email: "", employeeNumber: "", department: "" }); },
+    onSuccess: () => { toast.success("受講者を登録しました"); utils.lms.learners.listByCompany.invalidate({ companyId }); setNewLearner({ name: "", email: "", employeeNumber: "", department: "", lineUserId: "", preferredChannel: "email" }); },
     onError: e => toast.error(e.message),
   });
 
@@ -177,14 +177,27 @@ function CompanyDetail({ companyId, companyName }: { companyId: number; companyN
       <Card>
         <CardHeader><CardTitle className="text-base">受講者一覧（{learners.data?.length ?? 0}） — {companyName}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2 rounded-lg border p-3 md:grid-cols-5">
-            <Input placeholder="氏名 *" value={newLearner.name} onChange={e => setNewLearner({ ...newLearner, name: e.target.value })} />
-            <Input placeholder="メール" value={newLearner.email} onChange={e => setNewLearner({ ...newLearner, email: e.target.value })} />
-            <Input placeholder="社員番号" value={newLearner.employeeNumber} onChange={e => setNewLearner({ ...newLearner, employeeNumber: e.target.value })} />
-            <Input placeholder="部署" value={newLearner.department} onChange={e => setNewLearner({ ...newLearner, department: e.target.value })} />
-            <Button onClick={() => createLearner.mutate({ companyId, name: newLearner.name, email: newLearner.email || undefined, employeeNumber: newLearner.employeeNumber || undefined, department: newLearner.department || undefined })} disabled={!newLearner.name || createLearner.isPending}>
-              <UserPlus className="mr-1 h-4 w-4" /> 追加
-            </Button>
+          <div className="space-y-2 rounded-lg border p-3">
+            <div className="grid gap-2 md:grid-cols-4">
+              <Input placeholder="氏名 *" value={newLearner.name} onChange={e => setNewLearner({ ...newLearner, name: e.target.value })} />
+              <Input placeholder="メール（主軸チャネル）" value={newLearner.email} onChange={e => setNewLearner({ ...newLearner, email: e.target.value })} />
+              <Input placeholder="社員番号" value={newLearner.employeeNumber} onChange={e => setNewLearner({ ...newLearner, employeeNumber: e.target.value })} />
+              <Input placeholder="部署" value={newLearner.department} onChange={e => setNewLearner({ ...newLearner, department: e.target.value })} />
+            </div>
+            <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
+              <Input placeholder="LINE userId（任意・友だち追加済の受講者）" value={newLearner.lineUserId} onChange={e => setNewLearner({ ...newLearner, lineUserId: e.target.value })} />
+              <Select value={newLearner.preferredChannel} onValueChange={(v: "email" | "line" | "app") => setNewLearner({ ...newLearner, preferredChannel: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">希望: メール</SelectItem>
+                  <SelectItem value="line">希望: LINE</SelectItem>
+                  <SelectItem value="app">希望: アプリ内</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => createLearner.mutate({ companyId, name: newLearner.name, email: newLearner.email || undefined, employeeNumber: newLearner.employeeNumber || undefined, department: newLearner.department || undefined, lineUserId: newLearner.lineUserId || undefined, preferredChannel: newLearner.preferredChannel })} disabled={!newLearner.name || createLearner.isPending}>
+                <UserPlus className="mr-1 h-4 w-4" /> 追加
+              </Button>
+            </div>
           </div>
 
           <details className="rounded-lg border p-3">
