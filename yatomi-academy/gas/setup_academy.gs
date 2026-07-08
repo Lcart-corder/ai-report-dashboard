@@ -691,7 +691,7 @@ function _buildBudgetStatement(ss) {
   var Irng = E + kai + f + ':' + kai + l, Drng = E + 'D' + f + ':D' + l;
   var syo = E + p.getProperty('EXP_SHOKEIHI');           // 諸経費
   var spon = "SUM('" + SH.SPON + "'!E3:E200)";           // 協賛金合計
-  var会費 = '正会員収入+賛助個人+賛助法人';
+  var kaihi = '正会員収入+賛助個人+賛助法人';
 
   _title(s, '14_収支予算書（会計要項）｜ 00_入力条件の参加者数で連動。収入の部／支出の部（事業費・管理費）');
   _header(s, 2, ['科目', '予算額(円)', '積算 / 備考']);
@@ -725,7 +725,7 @@ function _buildBudgetStatement(ss) {
     ['【参考】返還・自主財源', '', '', 'grp'],
     ['　返還見込（参加者相当分）', '=参加者数*参加者単価', '資料②備考', ''],
     ['　返還後 収支差額', '=B24-B26', '', 'bal'],
-    ['　必要協賛金の目安', '=B22-(' + 会費 + ')-寄付金', '管理費−固定会費', '']
+    ['　必要協賛金の目安', '=B22-(' + kaihi + ')-寄付金', '管理費−固定会費', '']
   ];
   for (var i = 0; i < rows.length; i++) {
     var r = i + 3;
@@ -748,7 +748,7 @@ function _buildMidterm(ss) {
   var p = PropertiesService.getDocumentProperties();
   var total = "'" + SH.EXP + "'!" + p.getProperty('EXP_TOTAL');   // 総事業費
   var indirect = "'" + SH.EXP + "'!" + p.getProperty('EXP_INDIRECT'); // 間接
-  var 会費 = '正会員収入+賛助個人+賛助法人';
+  var kaihi = '正会員収入+賛助個人+賛助法人';
 
   _title(s, '15_中期収支計画（成長カーブ）｜ 年度別の参加者・協賛を入力（黄）。支出計は02連動、参加者連動収入が返還対象');
   // 年度ヘッダ（編集可） 行2、B..F
@@ -766,12 +766,12 @@ function _buildMidterm(ss) {
   var cols = ['B', 'C', 'D', 'E', 'F'];
   // 計算行の定義：[ラベル, 行, 各列の数式(colを受け取る), クラス]
   var calcRows = [
-    ['収入計', 5, function (c) { return '=(' + 会費 + '+市委託料)+' + c + '3*参加者単価+' + c + '4+寄付金'; }, 'sub'],
+    ['収入計', 5, function (c) { return '=(' + kaihi + '+市委託料)+' + c + '3*参加者単価+' + c + '4+寄付金'; }, 'sub'],
     ['支出計（02連動）', 6, function (c) { return '=' + total; }, 'sub'],
     ['当期収支差額', 7, function (c) { return '=' + c + '5-' + c + '6'; }, 'bal'],
     ['返還見込（参加者相当分）', 8, function (c) { return '=' + c + '3*参加者単価'; }, ''],
     ['返還後 収支差額', 9, function (c) { return '=' + c + '7-' + c + '8'; }, 'bal'],
-    ['必要協賛金の目安', 10, function (c) { return '=' + indirect + '-(' + 会費 + ')-寄付金'; }, ''],
+    ['必要協賛金の目安', 10, function (c) { return '=' + indirect + '-(' + kaihi + ')-寄付金'; }, ''],
     ['返還後 累計', 11, null, 'total']
   ];
   for (var i = 0; i < calcRows.length; i++) {
