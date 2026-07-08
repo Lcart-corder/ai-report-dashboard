@@ -336,7 +336,9 @@ function _buildSummary(ss) {
     ['返還後 収支',         '=B13-B14', '返還を織り込んだ実質収支'],
     ['', '', ''],
     ['市委託料',           '=市委託料', '＝事業委託費(直接費)'],
-    ['NPO自主財源で賄う額', '=B11', '＝間接事業費（委託料外）']
+    ['NPO自主財源で賄う額', '=B11', '＝間接事業費（委託料外）'],
+    ['自主財源で補填が必要な額', '=MAX(0,-B15)', '返還後がマイナス→協賛金/寄付で補填が必要'],
+    ['必要協賛金の目安', '=MAX(0,B11-正会員収入-賛助個人-賛助法人-寄付金)', '間接費−固定会費（協賛でカバー）']
   ];
   for (var i = 0; i < rows.length; i++) {
     var r = i + 3;
@@ -644,6 +646,14 @@ function _buildGov(ss) {
 
   s.getRange(tr + 2, 1).setValue('参考：実支給(C案)との差額').setFontWeight('bold');
   s.getRange(tr + 2, 4).setFormula('=' + cC + '-IF(提出案="B",' + E + 'F4,' + cA + ')').setNumberFormat('#,##0').setFontColor('#b00');
-  s.getRange(tr + 3, 1).setValue('※差額は委託料内配分/自主財源で説明（§1-3）。この様式は補助基準額で提出、実支給は02/03で管理。').setFontColor('#b00');
+  // 資料③（実提出＝C案）は補助対象16,039,600＋諸経費4,811,880＝20,851,480＝市委託料に一致
+  s.getRange(tr + 3, 1).setValue('参考：資料③実績＝実支給C案 合計').setFontWeight('bold');
+  s.getRange(tr + 3, 4).setFormula('=' + E + p.getProperty('EXP_SUBSIDY') + '+' + E + p.getProperty('EXP_SHOKEIHI')).setNumberFormat('#,##0');
+  s.getRange(tr + 3, 3).setValue('補助対象16,039,600＋諸経費4,811,880');
+  s.getRange(tr + 4, 1).setValue('　（比較）市委託料').setFontWeight('bold');
+  s.getRange(tr + 4, 4).setFormula('=市委託料').setNumberFormat('#,##0');
+  s.getRange(tr + 4, 3).setValue('↑ C案合計＝委託料に一致（資料③の実提出）');
+  s.getRange(tr + 6, 1).setValue('※資料③別添1-2の実提出はC案(20,851,480＝委託料)。提出案をA/Bにすると委託料と差が出る。').setFontColor('#b00');
+  s.getRange(tr + 7, 1).setValue('　差額は委託料内配分/自主財源で説明（§1-3）。この様式は基準額で提出、実支給は02/03で管理。').setFontColor('#b00');
   s.setColumnWidth(2, 260); s.setColumnWidth(3, 320);
 }

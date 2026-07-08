@@ -1,0 +1,345 @@
+<title>やとみ放課後アカデミー｜生成ブック プレビュー</title>
+<style>
+  :root{
+    --paper:#f7f8fa; --card:#ffffff; --ink:#1c2733; --muted:#5b6b7c;
+    --line:#d5dde6; --line2:#e6ebf1;
+    --accent:#1f3a5f; --accent-soft:#e8eef7; --accent-ink:#1f3a5f;
+    --input:#fffbe6; --input-line:#f0e6b8;
+    --good:#2f7d4f; --good-soft:#eef7ee;
+    --warn-soft:#fff7e0; --warn-line:#e6d9a8;
+    --bad:#b3261e; --bad-soft:#fbeeee;
+    --sel:#ffe9d6;
+    --shadow:0 1px 2px rgba(20,40,70,.06),0 6px 20px rgba(20,40,70,.06);
+    --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","YuGothic",Meiryo,system-ui,sans-serif;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0f151c; --card:#161e27; --ink:#e7edf3; --muted:#93a3b4;
+      --line:#2a3644; --line2:#212c38;
+      --accent:#9fc0ea; --accent-soft:#1c2c40; --accent-ink:#cfe0f5;
+      --input:#2a2716; --input-line:#4a4322;
+      --good:#7ec79a; --good-soft:#16281d;
+      --warn-soft:#2d2712; --warn-line:#4a4020;
+      --bad:#f0938b; --bad-soft:#2c1917;
+      --sel:#3a2a1c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f7f8fa;--card:#fff;--ink:#1c2733;--muted:#5b6b7c;--line:#d5dde6;--line2:#e6ebf1;
+    --accent:#1f3a5f;--accent-soft:#e8eef7;--accent-ink:#1f3a5f;--input:#fffbe6;--input-line:#f0e6b8;
+    --good:#2f7d4f;--good-soft:#eef7ee;--warn-soft:#fff7e0;--warn-line:#e6d9a8;--bad:#b3261e;--bad-soft:#fbeeee;--sel:#ffe9d6;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f151c;--card:#161e27;--ink:#e7edf3;--muted:#93a3b4;--line:#2a3644;--line2:#212c38;
+    --accent:#9fc0ea;--accent-soft:#1c2c40;--accent-ink:#cfe0f5;--input:#2a2716;--input-line:#4a4322;
+    --good:#7ec79a;--good-soft:#16281d;--warn-soft:#2d2712;--warn-line:#4a4020;--bad:#f0938b;--bad-soft:#2c1917;--sel:#3a2a1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.5;-webkit-font-smoothing:antialiased;font-size:15px}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;
+    border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:6px}
+  header.top h1{font-family:var(--serif);font-weight:700;font-size:23px;margin:0;letter-spacing:.01em;
+    text-wrap:balance;color:var(--ink)}
+  .sub{color:var(--muted);font-size:13px}
+  .badge{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent-ink);background:var(--accent-soft);border:1px solid var(--line);
+    padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .note{color:var(--muted);font-size:12.5px;margin:8px 0 18px}
+
+  /* findings */
+  .findings{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin:18px 0 26px}
+  @media(max-width:720px){.findings{grid-template-columns:1fr}.wrap{padding:20px 12px 60px}}
+  .find{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--bad);
+    border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+  .find h3{margin:0 0 6px;font-size:14px;display:flex;gap:8px;align-items:center}
+  .find .tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--bad);
+    padding:2px 7px;border-radius:5px}
+  .find p{margin:0;font-size:13px;color:var(--muted)}
+  .find b{color:var(--ink)}
+  .find .num{font-variant-numeric:tabular-nums;color:var(--bad);font-weight:700}
+
+  /* tabs */
+  .tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line);margin-top:8px}
+  .tab{appearance:none;border:1px solid transparent;border-bottom:none;background:transparent;
+    color:var(--muted);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;
+    padding:9px 13px;border-radius:8px 8px 0 0;white-space:nowrap}
+  .tab .n{font-variant-numeric:tabular-nums;color:var(--accent-ink);margin-right:5px;font-weight:700}
+  .tab:hover{background:var(--accent-soft)}
+  .tab[aria-selected="true"]{background:var(--card);color:var(--ink);
+    border-color:var(--line);box-shadow:0 -2px 0 var(--accent) inset}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-top:none;
+    border-radius:0 0 12px 12px;box-shadow:var(--shadow);padding:18px 18px 22px}
+  .panel[hidden]{display:none}
+  .panel h2{font-size:15.5px;margin:2px 0 3px;color:var(--accent-ink)}
+  .panel .cap{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+  th,td{border:1px solid var(--line2);padding:6px 10px;text-align:left;vertical-align:top}
+  thead th{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;position:sticky;top:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.total td{background:var(--good-soft);font-weight:700}
+  tr.rev td{background:var(--accent-soft)}
+  tr.exp td{background:var(--bad-soft)}
+  tr.bal td{background:var(--warn-soft);font-weight:700}
+  td.input{background:var(--input)}
+  td.sel{background:var(--sel)}
+  tr.memo td{color:var(--muted);background:var(--line2)}
+  .k{color:var(--muted);font-size:12px}
+  .pos{color:var(--good);font-weight:700}
+  .neg{color:var(--bad);font-weight:700}
+  .chip{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;
+    border:1px solid var(--line)}
+  .chip.a{background:var(--accent-soft);color:var(--accent-ink)}
+  .chip.g{background:var(--good-soft);color:var(--good)}
+  .chip.b{background:var(--bad-soft);color:var(--bad)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 2px 2px;font-size:12px;color:var(--muted)}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--line);
+    vertical-align:-1px;margin-right:5px}
+  footer{color:var(--muted);font-size:12px;margin-top:22px;text-align:center}
+  .toggle{position:fixed;top:12px;right:12px;z-index:5;background:var(--card);border:1px solid var(--line);
+    color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;box-shadow:var(--shadow);font-family:var(--sans)}
+</style>
+
+<button class="toggle" id="tg" aria-label="テーマ切替">◐ テーマ</button>
+<div class="wrap">
+  <header class="top">
+    <h1>やとみ放課後アカデミー</h1>
+    <span class="sub">予算・実績・精算ブック ＜生成プレビュー＞</span>
+    <span class="badge">setupAcademyBook() 実行後イメージ</span>
+  </header>
+  <p class="note">GASはこの環境では実行できないため、<b>計算式を評価した忠実プレビュー</b>を表示しています。数値は資料①〜④の実数と一致（検算済）。実機実行の代わりに、ここを見ながら微調整します。</p>
+
+  <div class="findings">
+    <div class="find">
+      <h3><span class="tag">指摘 1</span> 返還後の収支がマイナス</h3>
+      <p>参加者連動収入 <b>3,336,000</b> を全額「参加者相当分」として市に戻すと、間接費 744,800 を固定会費 85,000 で賄えず <span class="num">−659,800円</span> 不足。→ <b>03に「必要協賛金の目安」行を追加済</b>（協賛で補填）。</p>
+    </div>
+    <div class="find">
+      <h3><span class="tag">指摘 2</span> 別添1-2の提出案の既定</h3>
+      <p>資料③の実提出は <b>C案(7,560,000)</b> で合計 <b>20,851,480＝市委託料</b> に一致。既定を国庫A案にすると 19,051,480 で委託料と差。→ <b>13に「資料③実績(C案)＝委託料」比較行を追加済</b>。</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" aria-selected="true" data-t="s00"><span class="n">00</span>入力条件</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="s01"><span class="n">01</span>収入</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="s02"><span class="n">02</span>支出(3案)</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="s03"><span class="n">03</span>収支</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="s04"><span class="n">04</span>指導員配置</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="s13"><span class="n">13</span>別添1-2</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="sxx"><span class="n">＋</span>他7シート</button>
+  </div>
+
+  <!-- 00 -->
+  <section class="panel" id="s00" role="tabpanel">
+    <h2>00_入力条件</h2>
+    <p class="cap">全シートの前提値。<span class="chip a">黄＝入力セル</span> を変えると全シートが連動。<span class="chip b">橙＝案セレクタ</span></p>
+    <div class="scroll"><table>
+      <thead><tr><th>項目</th><th class="num">値</th><th>単位</th><th>備考 / 出典</th></tr></thead>
+      <tbody>
+        <tr><td>参加者数</td><td class="num input">200</td><td>人</td><td class="k">資料①②（100〜300で変更可）</td></tr>
+        <tr><td>種目数</td><td class="num input">15</td><td>種目</td><td class="k">資料①③④</td></tr>
+        <tr><td>指導回数/年</td><td class="num input">40</td><td>回</td><td class="k">全資料</td></tr>
+        <tr><td>配置指導員数</td><td class="num input">30</td><td>人</td><td class="k">資料①③④</td></tr>
+        <tr><td>指導時間(国庫案A)</td><td class="num input">3</td><td>時間/回</td><td class="k">資料①</td></tr>
+        <tr><td>指導時間(実運営B/C)</td><td class="num input">3.5</td><td>時間/回</td><td class="k">資料②③④</td></tr>
+        <tr><td>時給(国庫/中間 A・B)</td><td class="num input">1,600</td><td>円/h</td><td class="k">資料①④</td></tr>
+        <tr><td>時給(実運営 C)</td><td class="num input">1,800</td><td>円/h</td><td class="k">資料②③④</td></tr>
+        <tr><td>参加費(月額)</td><td class="num input">2,000</td><td>円/月</td><td class="k">資料②</td></tr>
+        <tr><td>参加月数(当年度)</td><td class="num input">7</td><td>月</td><td class="k">9〜3月（通年は12）</td></tr>
+        <tr><td>市委託料</td><td class="num input">20,851,480</td><td>円</td><td class="k">資料②③</td></tr>
+        <tr><td>採用謝金案(A/B/C)</td><td class="num sel">C</td><td>案</td><td class="k">提出=A/B・実支給=C（§1）</td></tr>
+        <tr><td>提出用謝金案(A/B)</td><td class="num sel">A</td><td>案</td><td class="k">別添1-2に載せる案（§13）</td></tr>
+        <tr class="total"><td>参加者1人あたり変動収入単価</td><td class="num">16,680</td><td>円/人</td><td class="k">＝1,000+2,000×7+800+880</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 01 -->
+  <section class="panel" id="s01" role="tabpanel" hidden>
+    <h2>01_収入シミュレーション</h2>
+    <p class="cap">参加者数別（協賛金は10で別計上）。変動行＝単価×参加者数、固定行＝一定。</p>
+    <div class="scroll"><table>
+      <thead><tr><th>収入項目</th><th>区分</th><th class="num">単価/固定額</th>
+        <th class="num">100人</th><th class="num">150人</th><th class="num">200人</th><th class="num">250人</th><th class="num">300人</th></tr></thead>
+      <tbody>
+        <tr><td>正会員入会金</td><td>固定</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td><td class="num">10,000</td></tr>
+        <tr><td>賛助会員年会費(個人)</td><td>固定</td><td class="num">25,000</td><td class="num">25,000</td><td class="num">25,000</td><td class="num">25,000</td><td class="num">25,000</td><td class="num">25,000</td></tr>
+        <tr><td>賛助会員年会費(法人)</td><td>固定</td><td class="num">50,000</td><td class="num">50,000</td><td class="num">50,000</td><td class="num">50,000</td><td class="num">50,000</td><td class="num">50,000</td></tr>
+        <tr><td>利用会員入会金</td><td>変動</td><td class="num">1,000</td><td class="num">100,000</td><td class="num">150,000</td><td class="num">200,000</td><td class="num">250,000</td><td class="num">300,000</td></tr>
+        <tr><td>参加費</td><td>変動</td><td class="num">14,000</td><td class="num">1,400,000</td><td class="num">2,100,000</td><td class="num">2,800,000</td><td class="num">3,500,000</td><td class="num">4,200,000</td></tr>
+        <tr><td>スポーツ安全保険</td><td>変動</td><td class="num">800</td><td class="num">80,000</td><td class="num">120,000</td><td class="num">160,000</td><td class="num">200,000</td><td class="num">240,000</td></tr>
+        <tr><td>アプリ使用料</td><td>変動</td><td class="num">880</td><td class="num">88,000</td><td class="num">132,000</td><td class="num">176,000</td><td class="num">220,000</td><td class="num">264,000</td></tr>
+        <tr><td>市委託料</td><td>固定</td><td class="num">20,851,480</td><td class="num">20,851,480</td><td class="num">20,851,480</td><td class="num">20,851,480</td><td class="num">20,851,480</td><td class="num">20,851,480</td></tr>
+        <tr class="total"><td>歳入計（協賛金除く）</td><td></td><td></td><td class="num">22,604,480</td><td class="num">23,438,480</td><td class="num">24,272,480</td><td class="num">25,106,480</td><td class="num">25,940,480</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap" style="margin-top:12px;color:var(--bad)">※参加者連動収入は「参加者相当分として市に戻す」対象（資料②備考・§12）。200人＝24,272,480 は資料②と一致。</p>
+  </section>
+
+  <!-- 02 -->
+  <section class="panel" id="s02" role="tabpanel" hidden>
+    <h2>02_支出シミュレーション</h2>
+    <p class="cap">指導員謝金3案を4列で保持（統一しない）。費目は直接/間接で仕分け → SUMIFで資料合計を再現。</p>
+    <div class="scroll"><table style="min-width:640px">
+      <thead><tr><th>指導員謝金 3案</th><th class="num">時間/回</th><th class="num">回数</th><th class="num">単価</th><th class="num">人数</th><th class="num">年額</th><th>扱い</th></tr></thead>
+      <tbody>
+        <tr><td>A 国庫申請基準案</td><td class="num">3.0</td><td class="num">40</td><td class="num">1,600</td><td class="num">30</td><td class="num">5,760,000</td><td class="k">行政提出（別添1-2）</td></tr>
+        <tr><td>B 中間案(補助金積算)</td><td class="num">3.5</td><td class="num">40</td><td class="num">1,600</td><td class="num">30</td><td class="num">6,720,000</td><td class="k">補助金積算の根拠</td></tr>
+        <tr><td>C 実運営案</td><td class="num">3.5</td><td class="num">40</td><td class="num">1,800</td><td class="num">30</td><td class="num">7,560,000</td><td class="k">実支給（採用中）</td></tr>
+        <tr class="bal"><td>差額 C−A（要財源説明）</td><td colspan="4"></td><td class="num neg">1,800,000</td><td class="k">委託料内配分/自主財源</td></tr>
+      </tbody>
+    </table></div>
+    <div class="scroll" style="margin-top:16px"><table style="min-width:720px">
+      <thead><tr><th>費目</th><th>区分</th><th class="num">金額</th><th>固変</th><th>補助区分</th><th>財源</th></tr></thead>
+      <tbody>
+        <tr><td>指導者謝金(15種目)</td><td>直接</td><td class="num">7,560,000</td><td>変動</td><td><span class="chip g">補助(基準A/B)</span></td><td>委託</td></tr>
+        <tr><td>指導者研修費(費用弁償)</td><td>直接</td><td class="num">324,000</td><td>準固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>指導者講習等講師謝金</td><td>直接</td><td class="num">100,000</td><td>固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>通勤手当</td><td>直接</td><td class="num">252,000</td><td>変動</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>指導者旅費</td><td>直接</td><td class="num">300,000</td><td>準固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>スポーツ安全保険(指導者分)</td><td>直接</td><td class="num">24,000</td><td>変動</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>管理者人件費(報酬)</td><td>直接</td><td class="num">3,369,600</td><td>固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>印刷製本費</td><td>直接</td><td class="num">150,000</td><td>固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>競技用消耗品費</td><td>直接</td><td class="num">600,000</td><td>準固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>競技用備品費</td><td>直接</td><td class="num">600,000</td><td>準固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>システム運用保守 包括委託</td><td>直接</td><td class="num">2,400,000</td><td>固定</td><td><span class="chip g">補助(委託費)</span></td><td>委託</td></tr>
+        <tr><td>HPサーバ管理料</td><td>直接</td><td class="num">60,000</td><td>固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>LINE公式プラットフォーム使用料</td><td>直接</td><td class="num">300,000</td><td>固定</td><td><span class="chip g">補助</span></td><td>委託</td></tr>
+        <tr><td>事務局旅費 ほか間接9費目</td><td>間接</td><td class="num">744,800</td><td>固定</td><td><span class="chip b">対象外</span></td><td>自主</td></tr>
+        <tr class="memo"><td>期末手当・専門家費用 ほか</td><td>メモ</td><td class="num">0</td><td>—</td><td>一部対象外</td><td>要確定</td></tr>
+        <tr class="total"><td>直接事業費</td><td></td><td class="num">16,039,600</td><td colspan="3" class="k">SUMIF(直接) ＝資料②一致</td></tr>
+        <tr class="total"><td>間接事業費</td><td></td><td class="num">744,800</td><td colspan="3" class="k">SUMIF(間接) ＝資料②③一致</td></tr>
+        <tr class="total"><td>諸経費（直接×30%）</td><td></td><td class="num">4,811,880</td><td colspan="3" class="k">＝資料③</td></tr>
+        <tr class="bal"><td>総事業費</td><td></td><td class="num">21,596,280</td><td colspan="3" class="k">直接+間接+諸経費 ＝資料②③一致</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 03 -->
+  <section class="panel" id="s03" role="tabpanel" hidden>
+    <h2>03_収支サマリー <span class="k">（参加者200人）</span></h2>
+    <p class="cap">参加者数連動。返還見込を織り込むと収支が反転する点が要注意。</p>
+    <div class="scroll"><table style="min-width:560px">
+      <thead><tr><th>区分</th><th class="num">金額</th><th>計算式 / 備考</th></tr></thead>
+      <tbody>
+        <tr><td>① 参加者連動収入</td><td class="num">3,336,000</td><td class="k">参加者数×16,680</td></tr>
+        <tr><td>② 固定収入</td><td class="num">20,936,480</td><td class="k">会費＋市委託料</td></tr>
+        <tr><td>③ 協賛金</td><td class="num">0</td><td class="k">10_協賛管理の入金合計</td></tr>
+        <tr><td>④ 寄付金</td><td class="num">0</td><td class="k">00_入力条件</td></tr>
+        <tr class="rev"><td>歳入計 (①+②+③+④)</td><td class="num">24,272,480</td><td class="k">総収入</td></tr>
+        <tr class="exp"><td>総事業費(歳出)</td><td class="num">21,596,280</td><td class="k">02より</td></tr>
+        <tr class="bal"><td>収支（歳入−歳出）</td><td class="num pos">+2,676,200</td><td class="k">返還前</td></tr>
+        <tr><td>返還見込（参加者相当分）</td><td class="num">3,336,000</td><td class="k">資料②備考</td></tr>
+        <tr class="total"><td>返還後 収支</td><td class="num neg">−659,800</td><td class="k">実質収支（要補填）</td></tr>
+        <tr><td>市委託料</td><td class="num">20,851,480</td><td class="k">事業委託費(直接費)</td></tr>
+        <tr><td>NPO自主財源で賄う額</td><td class="num">744,800</td><td class="k">＝間接事業費</td></tr>
+        <tr class="bal"><td>必要協賛金の目安 <span class="chip b">追加</span></td><td class="num neg">659,800</td><td class="k">間接費−固定会費（協賛でカバー）</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 04 -->
+  <section class="panel" id="s04" role="tabpanel" hidden>
+    <h2>04_指導員配置</h2>
+    <p class="cap">種目謝金＝時給×時間×回数×配置人数。必要44 vs 配置30 の差に注意（§3-3）。研修列は現場で○/×入力。</p>
+    <div class="scroll"><table style="min-width:640px">
+      <thead><tr><th>種目</th><th class="num">想定参加</th><th class="num">必要</th><th class="num">配置</th><th class="num">時間</th><th class="num">回数</th><th class="num">時給</th><th class="num">年間謝金</th><th>追加判定</th></tr></thead>
+      <tbody>
+        <tr><td>野球</td><td class="num">13</td><td class="num">3</td><td class="num">2</td><td class="num">3.5</td><td class="num">40</td><td class="num">1,800</td><td class="num">504,000</td><td class="k">2名+補助員検討</td></tr>
+        <tr><td>バレー</td><td class="num">15</td><td class="num">3</td><td class="num">2</td><td class="num">3.5</td><td class="num">40</td><td class="num">1,800</td><td class="num">504,000</td><td class="k">2名+補助員検討</td></tr>
+        <tr><td>バスケット</td><td class="num">16</td><td class="num">3</td><td class="num">2</td><td class="num">3.5</td><td class="num">40</td><td class="num">1,800</td><td class="num">504,000</td><td class="k">2名+補助員検討</td></tr>
+        <tr><td class="k" colspan="9">… テニス／ハンドボール／卓球／柔道／剣道／FD／ゴルフ／吹奏楽／囲碁／生け花／ドローン（各 504,000）…</td></tr>
+        <tr class="total"><td>計</td><td class="num">200</td><td class="num">44</td><td class="num">30</td><td></td><td></td><td></td><td class="num">7,560,000</td><td class="k">＝C案</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap" style="margin-top:12px;color:var(--bad)">※必要44 − 配置30 ＝ 恒常的に14名不足。補助員/追加ルールで吸収（§6-2）。</p>
+  </section>
+
+  <!-- 13 -->
+  <section class="panel" id="s13" role="tabpanel" hidden>
+    <h2>13_行政提出様式出力（別添1-2）</h2>
+    <p class="cap">補助基準額で提出。提出案(A/B)を切替。<b>資料③の実提出はC案で委託料に一致</b>する点を並記。</p>
+    <div class="scroll"><table style="min-width:600px">
+      <thead><tr><th>区分</th><th>費目</th><th class="num">金額(提出=A案)</th></tr></thead>
+      <tbody>
+        <tr><td>諸謝金</td><td>指導者謝金(15種目)</td><td class="num">5,760,000</td></tr>
+        <tr><td>諸謝金</td><td>指導者講習等講師謝金</td><td class="num">100,000</td></tr>
+        <tr><td>人件費</td><td>費用弁償 指導者研修費</td><td class="num">324,000</td></tr>
+        <tr><td>人件費</td><td>通勤手当</td><td class="num">252,000</td></tr>
+        <tr><td>人件費</td><td>管理者報酬</td><td class="num">3,369,600</td></tr>
+        <tr><td>旅費</td><td>指導者旅費</td><td class="num">300,000</td></tr>
+        <tr><td>印刷製本費</td><td>募集チラシ・マニュアル</td><td class="num">150,000</td></tr>
+        <tr><td>備品/消耗品</td><td>競技用備品・消耗品</td><td class="num">1,200,000</td></tr>
+        <tr><td>保険料</td><td>指導員保険料</td><td class="num">24,000</td></tr>
+        <tr><td>雑役務費</td><td>HPサーバ・LINE</td><td class="num">360,000</td></tr>
+        <tr><td>委託費</td><td>システム運用保守 包括委託</td><td class="num">2,400,000</td></tr>
+        <tr><td>補助金</td><td>諸経費（直工費×30%）</td><td class="num">4,811,880</td></tr>
+        <tr class="total"><td colspan="2">合計（提出用・補助対象）</td><td class="num">19,051,480</td></tr>
+        <tr><td colspan="2" class="k">参考：実支給(C案)との差額</td><td class="num neg">1,800,000</td></tr>
+        <tr class="rev"><td colspan="2">参考：資料③実績＝C案 合計</td><td class="num">20,851,480</td></tr>
+        <tr class="rev"><td colspan="2">（比較）市委託料</td><td class="num">20,851,480</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap" style="margin-top:12px;color:var(--bad)">※資料③別添1-2の実提出はC案（20,851,480＝委託料）。提出案をA/Bにすると委託料と差が出る。どちらで出すか §16-確認事項①。</p>
+  </section>
+
+  <!-- xx -->
+  <section class="panel" id="sxx" role="tabpanel" hidden>
+    <h2>他7シート（構造のみ）</h2>
+    <p class="cap">下記は台帳・記録系。ヘッダーと計算式を自動生成。実データは運用開始後に入力。</p>
+    <div class="scroll"><table style="min-width:560px">
+      <thead><tr><th>シート</th><th>目的</th><th>主な自動計算</th></tr></thead>
+      <tbody>
+        <tr><td>05_参加者管理</td><td>参加者台帳（要配慮情報あり）</td><td class="k">COUNTIF（LINE登録・未払集計）</td></tr>
+        <tr><td>06_活動日報</td><td>実施ごとの記録</td><td class="k">欠席=予定−実／稼働=人数×時間</td></tr>
+        <tr><td>07_月次実績</td><td>市・理事会向け月次報告</td><td class="k">SUMIFS/COUNTIFSで日報から集計</td></tr>
+        <tr><td>08_補助対象経費</td><td>02から自動抽出</td><td class="k">FILTER＋SUMIF("補助*")</td></tr>
+        <tr><td>09_補助対象外経費</td><td>02から自動抽出</td><td class="k">FILTER＋SUMIF("*対象外*")</td></tr>
+        <tr><td>10_協賛管理</td><td>協賛台帳＋シミュレーション</td><td class="k">区分別小計／03へ連携</td></tr>
+        <tr><td>11_請求入金管理</td><td>請求・消込</td><td class="k">未収差額</td></tr>
+        <tr><td>12_年度末精算</td><td>予算/実績/差額・返還</td><td class="k">証憑チェックリスト付</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--input)"></span>入力セル</span>
+    <span><span class="sw" style="background:var(--good-soft)"></span>合計/自動計算</span>
+    <span><span class="sw" style="background:var(--accent-soft)"></span>歳入・参照</span>
+    <span><span class="sw" style="background:var(--bad-soft)"></span>歳出</span>
+    <span><span class="sw" style="background:var(--warn-soft)"></span>収支/差額</span>
+    <span><span class="chip b" style="padding:0 6px">追加</span>今回の微調整</span>
+  </div>
+
+  <footer>数値は資料①〜④の実数と一致（直接16,039,600・間接744,800・諸経費4,811,880・総事業費21,596,280・歳入24,272,480）／生成元：yatomi-academy/gas/setup_academy.gs</footer>
+</div>
+
+<script>
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){
+    var b=e.target.closest('.tab'); if(!b)return;
+    tabs.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-selected', t===b?'true':'false');});
+    document.querySelectorAll('.panel').forEach(function(p){p.hidden = p.id!==b.dataset.t;});
+  });
+  tabs.addEventListener('keydown',function(e){
+    if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;
+    var list=[].slice.call(tabs.querySelectorAll('.tab'));
+    var i=list.findIndex(function(t){return t.getAttribute('aria-selected')==='true';});
+    var j=(i+(e.key==='ArrowRight'?1:list.length-1))%list.length;
+    list[j].click(); list[j].focus();
+  });
+  var root=document.documentElement, tg=document.getElementById('tg');
+  tg.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    var next = cur? (cur==='dark'?'light':'dark') : (matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark');
+    root.setAttribute('data-theme',next);
+  });
+</script>
