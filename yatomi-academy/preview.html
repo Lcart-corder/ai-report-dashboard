@@ -152,6 +152,7 @@
 
   <div class="tabs" role="tablist" id="tabs">
     <button class="tab" role="tab" aria-selected="true" data-t="tBudget">収支予算書（会計要項）</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="tMid">中期収支計画(5年)</button>
     <button class="tab" role="tab" aria-selected="false" data-t="tEdit">✎ 前提を編集</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t3an">謝金3案</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t01"><span class="n">01</span>収入</button>
@@ -164,6 +165,10 @@
   <section class="panel" id="tBudget" role="tabpanel"><h2>収支予算書（対象年度）</h2>
     <p class="cap">会計要項に沿い【収入の部】【支出の部（事業費／管理費）】で区分し、当期収支差額を表示。返還見込は参考欄。</p>
     <div class="scroll" id="tblBudget"></div></section>
+  <section class="panel" id="tMid" role="tabpanel" hidden><h2>中期収支計画（成長カーブ連動・年度横並び）</h2>
+    <p class="cap">成長カーブの各年度を会計要項の区分で一覧。前提（単価・費目・採用案）は全年度共通。年度別の参加者は成長カーブ表で編集。</p>
+    <div id="midChart"></div><div class="lgd" id="lgdMid"></div>
+    <div class="scroll" id="tblMid" style="margin-top:14px"></div></section>
   <section class="panel" id="tEdit" role="tabpanel" hidden><h2>前提を編集</h2>
     <p class="cap">全数値を実勢値に差し替え可能。変更は即、全体に反映。</p><div id="editor"></div>
     <button class="ib" id="edReset" style="margin-top:6px">↺ 既定（資料値）に戻す</button></section>
@@ -277,6 +282,41 @@ function chart3(r,s){
   const bars=v.map((d,i)=>{const x=mL+gap/2+i*(bw+gap),h=ph*(d[1]/hi),y=mT+ph-h,on=d[0][0]===s.採用;
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="4" fill="${d[2]}" opacity="${on?1:.42}"/><text class="lbl" x="${(x+bw/2).toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle">${F(d[1])}</text><text class="tick" x="${(x+bw/2).toFixed(1)}" y="${H-15}" text-anchor="middle">${d[0]}</text><text class="tick" x="${(x+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle" fill="var(--accent)">${on?'● 採用中':(d[0][0]===s.提出?'提出':'')}</text>`;}).join('');
   document.getElementById('chart3').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${bars}</svg>`;
+}
+
+/* mid-term plan (multi-year) */
+function midChart(s){
+  const yrs=s.成長.map(g=>({y:g[0],r:calc(s,g[1])}));
+  const W=760,H=250,mL=52,mR=14,mT=14,mB=42,pw=W-mL-mR,ph=H-mT-mB,n=yrs.length;
+  const maxV=Math.max(1,...yrs.map(o=>Math.max(o.r.歳入,o.r.総)))*1.12,Y=v=>mT+ph*(1-v/maxV);
+  let g='';for(let i=0;i<=4;i++){const v=maxV*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
+  const gw=pw/n,bw=Math.min(26,gw*0.3);
+  let bars='';yrs.forEach((o,i)=>{const cx=mL+gw*(i+0.5),y1=Y(o.r.歳入),y2=Y(o.r.総),on=i===s.対象;
+    bars+=`<rect x="${(cx-bw-2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw}" height="${(mT+ph-y1).toFixed(1)}" rx="3" fill="var(--rev)" opacity="${on?1:.8}"><title>${o.y} 収入計 ${F(o.r.歳入)}</title></rect>`+
+      `<rect x="${(cx+2).toFixed(1)}" y="${y2.toFixed(1)}" width="${bw}" height="${(mT+ph-y2).toFixed(1)}" rx="3" fill="var(--exp4)" opacity="${on?1:.8}"><title>${o.y} 支出計 ${F(o.r.総)}</title></rect>`+
+      `<text class="tick" x="${cx.toFixed(1)}" y="${H-24}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${o.y}</text>`+
+      `<text class="tick" x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" style="fill:${o.r.返還後>=0?'var(--good)':'var(--bad)'}">返還後 ${F(o.r.返還後/1000)}k</text>`;});
+  document.getElementById('midChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="年度別 収入計と支出計">${g}<line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>${bars}</svg>`;
+  document.getElementById('lgdMid').innerHTML=`<span><i style="background:var(--rev)"></i>収入計</span><span><i style="background:var(--exp4)"></i>支出計</span><span>棒下＝返還後収支差額（横ばいに注目）</span>`;
+}
+function tblMid(s){
+  const yrs=s.成長.map(g=>({y:g[0],p:g[1],r:calc(s,g[1])}));
+  let cum=0;
+  let h=`<table class="sheet" style="min-width:640px"><thead><tr><th>科目 ＼ 年度</th>`+yrs.map((o,i)=>`<th class="num"${i===s.対象?' style="color:var(--accent)"':''}>${o.y}</th>`).join('')+`</tr></thead><tbody>`;
+  const line=(name,fn,cls='')=>{h+=`<tr class="${cls}"><td>${name}</td>`+yrs.map(o=>{const v=fn(o);return `<td class="num ${(cls==='balc'&&v<0)?'neg':(cls==='balc'?'pos':'')}">${F(v)}</td>`;}).join('')+`</tr>`;};
+  line('参加者数',o=>o.p);
+  line('収入計',o=>o.r.歳入,'sub');
+  line('　事業費',o=>o.r.事業費);
+  line('　管理費',o=>o.r.管理費);
+  line('支出計',o=>o.r.総,'sub');
+  line('当期収支差額',o=>o.r.収支,'balc');
+  line('返還見込',o=>o.r.返還);
+  line('返還後 収支差額',o=>o.r.返還後,'balc');
+  line('必要協賛金',o=>o.r.必要協賛);
+  // 累計 返還後
+  h+=`<tr class="total"><td>返還後 累計</td>`+yrs.map(o=>{cum+=o.r.返還後;return `<td class="num ${cum<0?'neg':'pos'}">${F(cum)}</td>`;}).join('')+`</tr>`;
+  h+=`</tbody></table><p class="cap" style="margin-top:8px">※前提は全年度共通。参加者だけ成長カーブで変えた場合、返還後は各年ほぼ一定＝「参加者増では手残りは増えない」。改善は協賛金・単価・費目の見直しで。</p>`;
+  document.getElementById('tblMid').innerHTML=h;
 }
 
 /* accounting budget statement */
@@ -398,7 +438,7 @@ function render(){
     {n:'事業費・人件費',v:r.人件費,c:'var(--exp1)'},{n:'事業費・その他',v:r.その他事業,c:'var(--exp2)'},
     {n:'諸経費(30%)',v:r.諸経費,c:'var(--exp3)'},{n:'管理費(間接)',v:r.管理費,c:'var(--exp4)'}],
     {t:'支出計',v:(r.総/1e6).toFixed(1)+'M'});
-  chart3(r,S);tblBudget(r,S);tbl01(S);tbl02(r,S);tbl04(S);tbl13(r,S);saveHash();
+  chart3(r,S);tblBudget(r,S);midChart(S);tblMid(S);tbl01(S);tbl02(r,S);tbl04(S);tbl13(r,S);saveHash();
 }
 function syncControls(){
   document.getElementById('c_p').value=partOf(S);document.getElementById('v_p').textContent=partOf(S);
