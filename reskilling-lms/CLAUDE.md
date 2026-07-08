@@ -9,7 +9,19 @@
 詳細な機能要件・DB要件・画面要件は [REQUIREMENTS.md](./REQUIREMENTS.md) を参照。
 
 ## 現状
-要件定義のみ。実装コードはまだ存在しない（このディレクトリは仕様の置き場）。
+Phase 1 MVP を既存モノレポ（Vite + Express + tRPC + Drizzle/MySQL）内に実装済み。
+このディレクトリは仕様の置き場。実装は以下に配置:
+- スキーマ: `drizzle/schema.ts`（末尾のLMSセクション、24テーブル）
+- サーバー層: `server/lms.ts`（マスターキー検証・進捗計算・修了判定・修了証発行・監査ログ・成果報酬20%計算・CSV出力・デモseed）
+- tRPCルーター: `server/routers.ts` の `lms` 名前空間
+- 画面: `client/src/pages/lms/`（管理: `/lms`, `/lms/companies`, `/lms/courses`, `/lms/partners`, `/lms/checklist`, `/lms/audit` ／ 受講者: `/lms/learn/:learnerId`, `/lms/learn/enrollment/:enrollmentId`）
+
+### 動作確認
+1. `DATABASE_URL` を設定し MySQL を用意（`pnpm db:push` でマイグレーション）
+2. `pnpm dev` で起動 → `/lms` を開く
+3. ダッシュボードの「デモデータ投入」でサンプル企業・コース・受講者・マスターキーを生成
+4. 「企業・受講者」で受講者にコースを割当 → 受講画面で 視聴→チェック→テスト→レポート→修了証 を確認
+※ DB未接続時はUIは表示されるが数値は空（db.ts と同じくグレースフルに空返却）。
 
 ## 開発時に外してはいけない7原則（要件定義書 13章より）
 1. 受講者ごとのID管理

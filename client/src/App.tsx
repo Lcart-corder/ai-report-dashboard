@@ -40,6 +40,16 @@ const VideoDetailPage = lazy(() => import("@/pages/learning/VideoDetail"));
 const ShopBuilderPage = lazy(() => import("@/pages/shop-builder/ShopBuilder"));
 const UnifiedPageManagerPage = lazy(() => import("@/pages/admin/pages/UnifiedPageManager"));
 
+// 助成金対応リスキリングLMS
+const LmsAdminDashboard = lazy(() => import("@/pages/lms/AdminDashboard"));
+const LmsCompanies = lazy(() => import("@/pages/lms/Companies"));
+const LmsCourses = lazy(() => import("@/pages/lms/Courses"));
+const LmsPartners = lazy(() => import("@/pages/lms/Partners"));
+const LmsChecklist = lazy(() => import("@/pages/lms/Checklist"));
+const LmsAuditLog = lazy(() => import("@/pages/lms/AuditLog"));
+const LmsLearnHome = lazy(() => import("@/pages/lms/LearnHome"));
+const LmsLearnCourse = lazy(() => import("@/pages/lms/LearnCourse"));
+
 // Forms
 const FormManagerPage = lazy(() => import("./pages/forms/FormManager"));
 const FormCreatePage = lazy(() => import("./pages/forms/FormCreate"));
@@ -229,6 +239,16 @@ function App() {
             <Route path="/admin/static-pages" component={StaticPageListPage} />
             <Route path="/admin/static-pages/new" component={StaticPageEditPage} />
             <Route path="/admin/static-pages/:id" component={StaticPageEditPage} />
+
+            {/* 助成金対応リスキリングLMS */}
+            <Route path="/lms" component={LmsAdminDashboard} />
+            <Route path="/lms/companies" component={LmsCompanies} />
+            <Route path="/lms/courses" component={LmsCourses} />
+            <Route path="/lms/partners" component={LmsPartners} />
+            <Route path="/lms/checklist" component={LmsChecklist} />
+            <Route path="/lms/audit" component={LmsAuditLog} />
+            <Route path="/lms/learn/enrollment/:enrollmentId" component={LmsLearnCourse} />
+            <Route path="/lms/learn/:learnerId" component={LmsLearnHome} />
 
             {/* Public Pages */}
             <Route path="/s/:slug" component={PublicPageViewer} />
