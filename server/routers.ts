@@ -456,6 +456,50 @@ export const appRouter = router({
       })).mutation(async ({ input }) => lms.sendReminders(input)),
     }),
 
+    // --- プロジェクト(案件単位の管理) ---
+    projects: router({
+      list: protectedProcedure.query(async () => lms.getProjects()),
+      create: protectedProcedure.input(z.object({
+        name: z.string().min(1),
+        partnerId: z.number().optional(),
+        description: z.string().optional(),
+      })).mutation(async ({ input }) => lms.createProject(input)),
+      update: protectedProcedure.input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        status: z.enum(["active", "closed"]).optional(),
+      })).mutation(async ({ input }) => lms.updateProject(input.id, input)),
+      companies: protectedProcedure.input(z.object({ projectId: z.number() })).query(async ({ input }) => lms.getCompaniesByProject(input.projectId)),
+      assignCompany: protectedProcedure.input(z.object({ companyId: z.number(), projectId: z.number().nullable() })).mutation(async ({ input }) => lms.assignCompanyToProject(input.companyId, input.projectId)),
+    }),
+
+    // --- メンバー(ロール付き管理アカウント) ---
+    members: router({
+      list: protectedProcedure.query(async () => lms.getMembers()),
+      create: protectedProcedure.input(z.object({
+        email: z.string().email(),
+        name: z.string().min(1),
+        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]),
+        projectId: z.number().optional(),
+        companyId: z.number().optional(),
+      })).mutation(async ({ input }) => lms.createMember({ ...input, projectId: input.projectId ?? null, companyId: input.companyId ?? null })),
+      update: protectedProcedure.input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]).optional(),
+        projectId: z.number().nullable().optional(),
+        companyId: z.number().nullable().optional(),
+        isActive: z.boolean().optional(),
+      })).mutation(async ({ input }) => lms.updateMember(input.id, input)),
+      delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteMember(input.id)),
+      accessibleCompanies: protectedProcedure.input(z.object({
+        role: z.enum(["operator_admin", "project_manager", "company_rep", "advisor"]),
+        projectId: z.number().nullable().optional(),
+        companyId: z.number().nullable().optional(),
+      })).query(async ({ input }) => lms.getAccessibleCompanyIds({ role: input.role, projectId: input.projectId ?? null, companyId: input.companyId ?? null })),
+    }),
+
     // --- 内部通知Webhook(協業先・企業管理者・運営向け / 無料) ---
     webhooks: router({
       list: protectedProcedure.query(async () => lms.getInternalWebhooks()),

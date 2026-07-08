@@ -488,6 +488,8 @@ export type InsertPartner = typeof partners.$inferInsert;
 export const companies = mysqlTable("companies", {
   id: int("id").autoincrement().primaryKey(),
   partnerId: int("partnerId"),
+  /** 所属プロジェクト(案件)。プロジェクト管理者・社労士のスコープ判定に使用。 */
+  projectId: int("projectId"),
   name: varchar("name", { length: 255 }).notNull(),
   /** 法人番号(13桁) */
   corporateNumber: varchar("corporateNumber", { length: 13 }),
@@ -887,3 +889,52 @@ export const internalWebhooks = mysqlTable("internal_webhooks", {
 });
 export type InternalWebhook = typeof internalWebhooks.$inferSelect;
 export type InsertInternalWebhook = typeof internalWebhooks.$inferInsert;
+
+// ============================================================
+// ロール・権限設計(認証/アクセス制御)
+// ------------------------------------------------------------
+// グループ:
+//   お客様(導入企業)  … 代表(company_rep) / 会社員(employee=learners)
+//   提供会社(Lカート) … 管理者(operator_admin)
+//   社労士            … advisor
+//   プロジェクト管理  … project_manager(案件単位で全体管理)
+// スコープ階層: プロジェクト(案件) → 導入企業 → 事業所 → 会社員
+// ============================================================
+
+/** プロジェクト(案件)。複数の導入企業を束ねる管理単位。 */
+export const projects = mysqlTable("projects", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  /** 担当協業先(任意) */
+  partnerId: int("partnerId"),
+  description: text("description"),
+  status: mysqlEnum("status", ["active", "closed"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = typeof projects.$inferInsert;
+
+/**
+ * LMSメンバー(ログイン可能な管理系アカウント)。会社員(受講者)は learners で管理。
+ * role によりアクセス範囲が決まる:
+ *  - operator_admin : 提供会社の管理者。全体。
+ *  - project_manager: 担当プロジェクト配下の全企業を横断管理。projectId 必須。
+ *  - company_rep    : お客様の代表。自社のみ。companyId 必須。
+ *  - advisor        : 社労士。担当プロジェクト/企業の証跡確認・差戻し(読み取り中心)。
+ */
+export const lmsMembers = mysqlTable("lms_members", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: mysqlEnum("role", ["operator_admin", "project_manager", "company_rep", "advisor"]).notNull(),
+  /** project_manager / advisor のスコープ */
+  projectId: int("projectId"),
+  /** company_rep / (企業限定の)advisor のスコープ */
+  companyId: int("companyId"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LmsMember = typeof lmsMembers.$inferSelect;
+export type InsertLmsMember = typeof lmsMembers.$inferInsert;

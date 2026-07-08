@@ -50,6 +50,8 @@ const LmsAuditLog = lazy(() => import("@/pages/lms/AuditLog"));
 const LmsNotifications = lazy(() => import("@/pages/lms/Notifications"));
 const LmsAdvisor = lazy(() => import("@/pages/lms/Advisor"));
 const LmsIntegrations = lazy(() => import("@/pages/lms/Integrations"));
+const LmsRoles = lazy(() => import("@/pages/lms/Roles"));
+const LmsProjects = lazy(() => import("@/pages/lms/Projects"));
 const LmsExports = lazy(() => import("@/pages/lms/Exports"));
 const LmsCertificate = lazy(() => import("@/pages/lms/Certificate"));
 const LmsLearnHome = lazy(() => import("@/pages/lms/LearnHome"));
@@ -247,6 +249,8 @@ function App() {
 
             {/* 助成金対応リスキリングLMS */}
             <Route path="/lms" component={LmsAdminDashboard} />
+            <Route path="/lms/roles" component={LmsRoles} />
+            <Route path="/lms/projects" component={LmsProjects} />
             <Route path="/lms/companies" component={LmsCompanies} />
             <Route path="/lms/courses" component={LmsCourses} />
             <Route path="/lms/notifications" component={LmsNotifications} />

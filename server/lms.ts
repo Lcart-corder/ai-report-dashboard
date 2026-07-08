@@ -27,11 +27,13 @@ import {
   learners,
   learningReports,
   lessons,
+  lmsMembers,
   masterKeys,
   notificationLogs,
   notifications,
   partnerSales,
   partners,
+  projects,
   progressLogs,
   quizQuestions,
   quizResults,
@@ -43,8 +45,11 @@ import {
   type InsertInternalWebhook,
   type InsertLearner,
   type InsertLesson,
+  type InsertLmsMember,
   type InsertNotification,
   type InsertPartner,
+  type InsertProject,
+  type LmsMember,
   type InsertQuiz,
   type InsertQuizQuestion,
 } from "../drizzle/schema";
@@ -1352,4 +1357,117 @@ export async function notifyInternal(text: string, scope?: { partnerId?: number;
     else if (status === "failed") failed += 1;
   }
   return { sent, failed };
+}
+
+// ============================================================
+// プロジェクト・メンバー・権限(認証/アクセス制御)
+// ============================================================
+
+export async function getProjects() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projects).orderBy(desc(projects.createdAt));
+}
+
+export async function createProject(input: InsertProject) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const result = await db.insert(projects).values(input);
+  await writeAuditLog({ category: "admin", action: "project.create", targetType: "project", targetId: insertedId(result), detail: { name: input.name } });
+  return { id: insertedId(result) };
+}
+
+export async function updateProject(id: number, input: Partial<InsertProject>) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.update(projects).set(input).where(eq(projects.id, id));
+  await writeAuditLog({ category: "admin", action: "project.update", targetType: "project", targetId: id });
+  return { id };
+}
+
+/** 企業をプロジェクトに割当(または解除)。 */
+export async function assignCompanyToProject(companyId: number, projectId: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.update(companies).set({ projectId }).where(eq(companies.id, companyId));
+  await writeAuditLog({ category: "admin", action: "project.assign_company", targetType: "company", targetId: companyId, detail: { projectId } });
+  return { ok: true };
+}
+
+export async function getCompaniesByProject(projectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(companies).where(eq(companies.projectId, projectId));
+}
+
+// --- メンバー(管理系アカウント) ---
+
+export async function getMembers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lmsMembers).orderBy(desc(lmsMembers.createdAt));
+}
+
+export async function getMemberByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(lmsMembers).where(eq(lmsMembers.email, email)).limit(1);
+  return rows[0];
+}
+
+export async function createMember(input: InsertLmsMember) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const result = await db.insert(lmsMembers).values(input);
+  await writeAuditLog({ category: "admin", action: "member.create", targetType: "lms_member", targetId: insertedId(result), detail: { role: input.role, email: input.email } });
+  return { id: insertedId(result) };
+}
+
+export async function updateMember(id: number, input: Partial<InsertLmsMember>) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.update(lmsMembers).set(input).where(eq(lmsMembers.id, id));
+  await writeAuditLog({ category: "admin", action: "member.update", targetType: "lms_member", targetId: id });
+  return { id };
+}
+
+export async function deleteMember(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.delete(lmsMembers).where(eq(lmsMembers.id, id));
+  await writeAuditLog({ category: "admin", action: "member.delete", targetType: "lms_member", targetId: id });
+  return { id };
+}
+
+// --- スコープ解決(アクセス制御の中核) ---
+
+/**
+ * メンバーがアクセスできる企業ID一覧を返す。
+ *  - operator_admin : 全企業(null=無制限を表す)
+ *  - project_manager: projectId 配下の企業
+ *  - advisor        : projectId 配下 or companyId 単体
+ *  - company_rep    : companyId 単体
+ */
+export async function getAccessibleCompanyIds(member: Pick<LmsMember, "role" | "projectId" | "companyId">): Promise<number[] | null> {
+  const db = await getDb();
+  if (!db) return [];
+  if (member.role === "operator_admin") return null; // 無制限
+  if (member.role === "company_rep") return member.companyId != null ? [member.companyId] : [];
+  if (member.role === "project_manager" || member.role === "advisor") {
+    const ids: number[] = [];
+    if (member.projectId != null) {
+      const rows = await db.select().from(companies).where(eq(companies.projectId, member.projectId));
+      ids.push(...rows.map(c => c.id));
+    }
+    if (member.companyId != null && !ids.includes(member.companyId)) ids.push(member.companyId);
+    return ids;
+  }
+  return [];
+}
+
+/** 指定企業へのアクセス可否。 */
+export async function canAccessCompany(member: Pick<LmsMember, "role" | "projectId" | "companyId">, companyId: number): Promise<boolean> {
+  const ids = await getAccessibleCompanyIds(member);
+  if (ids === null) return true; // operator_admin
+  return ids.includes(companyId);
 }
