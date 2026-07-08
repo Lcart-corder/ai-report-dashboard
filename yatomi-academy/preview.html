@@ -1,344 +1,276 @@
-<title>やとみ放課後アカデミー｜収支シミュレーター</title>
+<title>やとみ放課後アカデミー｜収支計画シミュレーター</title>
 <style>
   :root{
-    --paper:#f5f7f9; --card:#ffffff; --ink:#16212e; --muted:#64748b; --faint:#94a3b2;
-    --line:#e2e8ef; --line2:#eef2f6;
-    --accent:#1f3a5f; --accent-soft:#eaf0f7; --accent-ink:#254a76;
-    --input:#fffdf3; --input-line:#e7dcae;
-    --good:#0f7a3d; --good-soft:#e9f5ee; --bad:#c0271e; --bad-soft:#fceceb; --warn:#b7791f; --warn-soft:#fdf4e3;
-    --surface:#fcfcfb;
-    --inc1:#2a78d6;--inc2:#1baf7a;--inc3:#eda100;--inc4:#94a3b2;
-    --exp1:#2a78d6;--exp2:#1baf7a;--exp3:#4a3aa7;--exp4:#eb6834;
+    --paper:#f5f7f9;--card:#fff;--ink:#16212e;--muted:#64748b;--faint:#94a3b2;--line:#e2e8ef;--line2:#eef2f6;
+    --accent:#1f3a5f;--accent-soft:#eaf0f7;--accent-ink:#254a76;--input:#fffdf3;--input-line:#e7dcae;
+    --good:#0f7a3d;--good-soft:#e9f5ee;--bad:#c0271e;--bad-soft:#fceceb;--warn:#b7791f;--warn-soft:#fdf4e3;--surface:#fcfcfb;
+    --inc1:#2a78d6;--inc2:#1baf7a;--inc3:#eda100;--inc4:#4a3aa7;--inc5:#94a3b2;
+    --exp1:#2a78d6;--exp2:#1baf7a;--exp3:#eda100;--exp4:#eb6834;
     --rev:#2a78d6;--net:#eb6834;
-    --r:14px; --shadow:0 1px 2px rgba(20,40,70,.05),0 10px 30px rgba(20,40,70,.06);
+    --r:14px;--shadow:0 1px 2px rgba(20,40,70,.05),0 10px 30px rgba(20,40,70,.06);
     --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","YuGothic",Meiryo,system-ui,sans-serif;
   }
   @media (prefers-color-scheme:dark){:root{
-    --paper:#0c1117; --card:#141c26; --ink:#e9eef4; --muted:#94a3b4; --faint:#68788a;
-    --line:#25303d; --line2:#1b242f;
-    --accent:#9fc0ea; --accent-soft:#1a2a3e; --accent-ink:#cfe0f5;
-    --input:#242112; --input-line:#4a4322;
-    --good:#43c47a; --good-soft:#12261a; --bad:#f0938b; --bad-soft:#2c1917; --warn:#e0b64b; --warn-soft:#2a2411;
-    --surface:#1a1a19;
-    --inc1:#3987e5;--inc2:#199e70;--inc3:#c98500;--inc4:#68788a;
-    --exp1:#3987e5;--exp2:#199e70;--exp3:#9085e9;--exp4:#d95926;
-    --rev:#3987e5;--net:#d95926;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px rgba(0,0,0,.45);
+    --paper:#0c1117;--card:#141c26;--ink:#e9eef4;--muted:#94a3b4;--faint:#68788a;--line:#25303d;--line2:#1b242f;
+    --accent:#9fc0ea;--accent-soft:#1a2a3e;--accent-ink:#cfe0f5;--input:#242112;--input-line:#4a4322;
+    --good:#43c47a;--good-soft:#12261a;--bad:#f0938b;--bad-soft:#2c1917;--warn:#e0b64b;--warn-soft:#2a2411;--surface:#1a1a19;
+    --inc1:#3987e5;--inc2:#199e70;--inc3:#c98500;--inc4:#9085e9;--inc5:#68788a;
+    --exp1:#3987e5;--exp2:#199e70;--exp3:#c98500;--exp4:#d95926;
+    --rev:#3987e5;--net:#d95926;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px rgba(0,0,0,.45);
   }}
-  :root[data-theme="light"]{--paper:#f5f7f9;--card:#fff;--ink:#16212e;--muted:#64748b;--faint:#94a3b2;--line:#e2e8ef;--line2:#eef2f6;--accent:#1f3a5f;--accent-soft:#eaf0f7;--accent-ink:#254a76;--input:#fffdf3;--input-line:#e7dcae;--good:#0f7a3d;--good-soft:#e9f5ee;--bad:#c0271e;--bad-soft:#fceceb;--warn:#b7791f;--warn-soft:#fdf4e3;--surface:#fcfcfb;--inc1:#2a78d6;--inc2:#1baf7a;--inc3:#eda100;--inc4:#94a3b2;--exp1:#2a78d6;--exp2:#1baf7a;--exp3:#4a3aa7;--exp4:#eb6834;--rev:#2a78d6;--net:#eb6834}
-  :root[data-theme="dark"]{--paper:#0c1117;--card:#141c26;--ink:#e9eef4;--muted:#94a3b4;--faint:#68788a;--line:#25303d;--line2:#1b242f;--accent:#9fc0ea;--accent-soft:#1a2a3e;--accent-ink:#cfe0f5;--input:#242112;--input-line:#4a4322;--good:#43c47a;--good-soft:#12261a;--bad:#f0938b;--bad-soft:#2c1917;--warn:#e0b64b;--warn-soft:#2a2411;--surface:#1a1a19;--inc1:#3987e5;--inc2:#199e70;--inc3:#c98500;--inc4:#68788a;--exp1:#3987e5;--exp2:#199e70;--exp3:#9085e9;--exp4:#d95926;--rev:#3987e5;--net:#d95926}
+  :root[data-theme="light"]{--paper:#f5f7f9;--card:#fff;--ink:#16212e;--muted:#64748b;--faint:#94a3b2;--line:#e2e8ef;--line2:#eef2f6;--accent:#1f3a5f;--accent-soft:#eaf0f7;--accent-ink:#254a76;--input:#fffdf3;--input-line:#e7dcae;--good:#0f7a3d;--good-soft:#e9f5ee;--bad:#c0271e;--bad-soft:#fceceb;--warn:#b7791f;--warn-soft:#fdf4e3;--surface:#fcfcfb;--inc1:#2a78d6;--inc2:#1baf7a;--inc3:#eda100;--inc4:#4a3aa7;--inc5:#94a3b2;--exp1:#2a78d6;--exp2:#1baf7a;--exp3:#eda100;--exp4:#eb6834;--rev:#2a78d6;--net:#eb6834}
+  :root[data-theme="dark"]{--paper:#0c1117;--card:#141c26;--ink:#e9eef4;--muted:#94a3b4;--faint:#68788a;--line:#25303d;--line2:#1b242f;--accent:#9fc0ea;--accent-soft:#1a2a3e;--accent-ink:#cfe0f5;--input:#242112;--input-line:#4a4322;--good:#43c47a;--good-soft:#12261a;--bad:#f0938b;--bad-soft:#2c1917;--warn:#e0b64b;--warn-soft:#2a2411;--surface:#1a1a19;--inc1:#3987e5;--inc2:#199e70;--inc3:#c98500;--inc4:#9085e9;--inc5:#68788a;--exp1:#3987e5;--exp2:#199e70;--exp3:#c98500;--exp4:#d95926;--rev:#3987e5;--net:#d95926}
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:14.5px;-webkit-font-smoothing:antialiased}
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px 90px}
-  h1,h2,h3{text-wrap:balance;margin:0}
-
-  /* slim banner */
-  .bar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--card) 90%,transparent);
-    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  h1,h2,h3,h4{text-wrap:balance;margin:0}
+  .bar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .bar-in{max-width:1080px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .logo{font-weight:800;font-size:14px;color:var(--accent-ink);white-space:nowrap}
   .logo small{color:var(--faint);font-weight:600;margin-left:5px;font-size:11px}
   .presets{display:flex;gap:5px;flex-wrap:wrap}
-  .pchip{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--muted);
-    font-family:var(--sans);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
+  .pchip{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--muted);font-family:var(--sans);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
   .pchip:hover{border-color:var(--accent);color:var(--ink)}
   .pchip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
   .bar .sp{margin-left:auto}
-  .ib{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;
-    padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+  .ib{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap}
   .ib:hover{border-color:var(--accent)}
-
-  header.hd{padding:26px 0 2px}
+  header.hd{padding:24px 0 2px}
   header.hd .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
   header.hd h1{font-size:21px;margin-top:3px;line-height:1.35}
-
-  /* verdict sentence */
-  .verdict{margin:16px 0 6px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line);
-    background:var(--card);box-shadow:var(--shadow);font-size:14.5px;line-height:1.7}
-  .verdict b{font-variant-numeric:tabular-nums}
-  .verdict .big{font-size:17px;font-weight:800}
-  .verdict .pos{color:var(--good)} .verdict .neg{color:var(--bad)}
-  .verdict .hint{color:var(--muted);font-size:12.5px;margin-top:4px}
-
-  /* KPI */
+  .verdict{margin:16px 0 6px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);font-size:14.5px;line-height:1.7}
+  .verdict b{font-variant-numeric:tabular-nums}.verdict .big{font-size:17px;font-weight:800}
+  .verdict .pos{color:var(--good)}.verdict .neg{color:var(--bad)}.verdict .hint{color:var(--muted);font-size:12.5px;margin-top:4px}
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
   @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:460px){.wrap{padding:0 12px 60px}.bar-in{padding:9px 12px}}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--shadow)}
   .kpi .l{font-size:11.5px;color:var(--muted);font-weight:700}
-  .kpi .v{font-size:23px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .v{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
   .kpi .s{font-size:11px;color:var(--faint);margin-top:2px}
-  .kpi .v.pos{color:var(--good)} .kpi .v.neg{color:var(--bad)}
-
-  /* primary controls row (compact, always visible) */
-  .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;background:var(--card);border:1px solid var(--line);
-    border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .kpi .v.pos{color:var(--good)}.kpi .v.neg{color:var(--bad)}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px}
   @media(max-width:720px){.quick{grid-template-columns:1fr}}
-  .q{display:flex;flex-direction:column;gap:5px}
-  .q label{font-size:11.5px;font-weight:700;color:var(--muted)}
-  .q .rowv{display:flex;justify-content:space-between;align-items:baseline}
-  .q .rowv b{font-variant-numeric:tabular-nums;font-size:14px}
-  input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin:0}
+  .q{display:flex;flex-direction:column;gap:5px}.q label{font-size:11.5px;font-weight:700;color:var(--muted)}
+  .q .rowv{display:flex;justify-content:space-between;align-items:baseline}.q .rowv b{font-variant-numeric:tabular-nums;font-size:14px}
+  input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:fit-content}
-  .seg button{appearance:none;border:none;background:var(--card);color:var(--muted);font-family:var(--sans);
-    font-size:12px;font-weight:700;padding:6px 11px;cursor:pointer;border-right:1px solid var(--line)}
-  .seg button:last-child{border-right:none}
-  .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
-
+  .seg button{appearance:none;border:none;background:var(--card);color:var(--muted);font-family:var(--sans);font-size:12px;font-weight:700;padding:6px 11px;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:none}.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
   .chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 12px;box-shadow:var(--shadow);margin-bottom:14px}
-  .chart h3{font-size:14px} .chart .ch-sub{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
+  .chart h3{font-size:14px}.chart .ch-sub{color:var(--muted);font-size:11.5px;margin:2px 0 10px}
   svg{display:block;width:100%;height:auto;overflow:visible}
   .grid{stroke:var(--line2);stroke-width:1}.ax{stroke:var(--line);stroke-width:1}
-  .zero{stroke:var(--faint);stroke-width:1.5;stroke-dasharray:3 3}
   .tick{fill:var(--faint);font-size:10px}.lbl{fill:var(--ink);font-size:11px;font-weight:700}
-  .lgd{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:10px;font-size:11.5px}
-  .lgd span{display:flex;align-items:center;gap:5px;color:var(--muted)}
-  .lgd i{width:11px;height:11px;border-radius:3px}.lgd b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .lgd{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:11.5px}
+  .lgd span{display:flex;align-items:center;gap:5px;color:var(--muted)}.lgd i{width:11px;height:11px;border-radius:3px}.lgd b{color:var(--ink);font-variant-numeric:tabular-nums}
   .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--card);font-size:11.5px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;z-index:50;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:var(--shadow)}
-
-  /* tabs */
+  .gtbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}
+  .gtbl th,.gtbl td{border-bottom:1px solid var(--line2);padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+  .gtbl th{color:var(--muted);font-weight:700;font-size:11px}
+  .gtbl td:first-child,.gtbl th:first-child{text-align:left}
+  .gtbl tr.sel td{background:var(--accent-soft)}
+  .gtbl tr{cursor:pointer}
+  .gtbl input{width:64px;font-family:var(--sans);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:6px;padding:3px 5px}
+  .gtbl input.yr{width:52px;text-align:left}
+  .donuts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  @media(max-width:640px){.donuts{grid-template-columns:1fr}}
   .tabs{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
-  .tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);font-family:var(--sans);
-    font-size:12.5px;font-weight:700;cursor:pointer;padding:8px 13px;border-radius:9px;white-space:nowrap}
+  .tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);font-family:var(--sans);font-size:12.5px;font-weight:700;cursor:pointer;padding:8px 13px;border-radius:9px;white-space:nowrap}
   .tab .n{font-variant-numeric:tabular-nums;color:var(--accent-ink);margin-right:5px}
-  .tab:hover{background:var(--accent-soft)}
-  .tab[aria-selected="true"]{background:var(--accent);color:#fff}
-  .tab[aria-selected="true"] .n{color:#fff;opacity:.8}
+  .tab:hover{background:var(--accent-soft)}.tab[aria-selected="true"]{background:var(--accent);color:#fff}.tab[aria-selected="true"] .n{color:#fff;opacity:.8}
   .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-top:10px}
-  .panel[hidden]{display:none}
-  .panel h2{font-size:15px;color:var(--accent-ink)}
-  .panel .cap{color:var(--muted);font-size:12px;margin:3px 0 14px}
+  .panel[hidden]{display:none}.panel h2{font-size:15px;color:var(--accent-ink)}.panel .cap{color:var(--muted);font-size:12px;margin:3px 0 14px}
   .scroll{overflow-x:auto}
-  table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px}
-  th,td{border-bottom:1px solid var(--line2);padding:6px 10px;text-align:left;vertical-align:top}
-  thead th{color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--line);font-size:11.5px}
-  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  tr.total td{background:var(--good-soft);font-weight:700}
-  tr.rev td{background:var(--accent-soft)} tr.exp td{background:var(--bad-soft)} tr.bal td{background:var(--warn-soft);font-weight:700}
-  tr.hl td{box-shadow:inset 3px 0 0 var(--accent)}
-  tr.memo td{color:var(--faint)}
-  .k{color:var(--muted);font-size:11.5px}
-  .pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
-  .chip{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
-  .chip.g{background:var(--good-soft);color:var(--good)}.chip.b{background:var(--bad-soft);color:var(--bad)}
-
-  /* editor */
-  .ed-grp{margin-bottom:18px}
-  .ed-grp h4{font-size:12.5px;color:var(--accent-ink);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  table.sheet{border-collapse:collapse;width:100%;font-size:12.5px;min-width:480px}
+  table.sheet th,table.sheet td{border-bottom:1px solid var(--line2);padding:6px 10px;text-align:left;vertical-align:top}
+  table.sheet thead th{color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--line);font-size:11.5px}
+  table.sheet td.num,table.sheet th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.grp td{background:var(--accent-soft);font-weight:700}
+  tr.sub td{font-weight:700;border-top:1px solid var(--line)}
+  tr.total td{background:var(--good-soft);font-weight:800}
+  tr.bal td{background:var(--warn-soft);font-weight:700}
+  td.ind{padding-left:24px!important;color:var(--ink)}
+  .k{color:var(--muted);font-size:11.5px}.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+  .ed-grp{margin-bottom:18px}.ed-grp h4{font-size:12.5px;color:var(--accent-ink);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
   .ed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px 14px}
-  .ef{display:flex;flex-direction:column;gap:2px}
-  .ef label{font-size:11px;color:var(--muted);font-weight:600}
-  .ef input{font-family:var(--sans);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;
-    border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:7px;padding:5px 8px}
-  .ef input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
-  .ed-note{font-size:11.5px;color:var(--muted);margin-top:2px}
-
-  .benefits{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:8px 0 2px}
-  @media(max-width:640px){.benefits{grid-template-columns:1fr};.kpis .kpi .v{font-size:20px}}
-  .bene{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:11px 13px;box-shadow:var(--shadow)}
-  .bene b{font-size:12.5px}.bene p{margin:3px 0 0;font-size:12px;color:var(--muted)}
-
+  .ef{display:flex;flex-direction:column;gap:2px}.ef label{font-size:11px;color:var(--muted);font-weight:600}
+  .ef input{font-family:var(--sans);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:7px;padding:5px 8px}
+  .ef input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
   footer{color:var(--faint);font-size:11.5px;margin-top:24px;text-align:center}
   @media print{.bar,.quick,.tabs,.ib,.toggle{display:none!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
 </style>
 
 <div class="tip" id="tip"></div>
 
-<div class="bar">
- <div class="bar-in">
-  <span class="logo">収支シミュレーター<small>やとみ放課後アカデミー R9</small></span>
+<div class="bar"><div class="bar-in">
+  <span class="logo">収支計画シミュレーター<small>やとみ放課後アカデミー R9</small></span>
   <div class="presets" id="presets">
     <button class="pchip" data-k="標準" aria-pressed="true">標準(C案)</button>
     <button class="pchip" data-k="国庫">国庫申請(A案)</button>
     <button class="pchip" data-k="協賛">協賛で±0</button>
     <button class="pchip" data-k="平年">平年(12ヶ月)</button>
-    <button class="pchip" data-k="満員">満員(300人)</button>
   </div>
   <span class="sp"></span>
   <button class="ib" id="share">🔗 共有</button>
   <button class="ib" id="csv">⬇ CSV</button>
   <button class="ib" id="print">🖶 印刷</button>
   <button class="ib toggle" id="tg">◐</button>
- </div>
-</div>
+</div></div>
 
 <div class="wrap">
   <header class="hd">
-    <div class="eyebrow">Interactive Budget Simulator · 資料①〜④準拠</div>
-    <h1>参加者・謝金案・協賛金を動かし、収支と補助の全体像を1画面で掴む</h1>
+    <div class="eyebrow">収支予算書（会計要項準拠）· 成長カーブ · 資料①〜④</div>
+    <h1>年度別の成長カーブを描き、会計要項の収支予算書で全体像を掴む</h1>
   </header>
 
   <div class="verdict" id="verdict"></div>
-
   <div class="kpis" id="kpis"></div>
 
-  <!-- primary controls -->
   <div class="quick">
-    <div class="q"><div class="rowv"><label>参加者数</label><b><span id="v_p">200</span> 人</b></div>
+    <div class="q"><div class="rowv"><label>対象年度の参加者数（成長カーブに反映）</label><b><span id="v_p">200</span> 人</b></div>
       <input type="range" id="c_p" min="0" max="400" step="10" value="200"></div>
-    <div class="q"><div class="rowv"><label>協賛金</label><b><span id="v_s">0</span> 円</b></div>
-      <input type="range" id="c_s" min="0" max="3000000" step="50000" value="0"></div>
     <div class="q"><label>採用謝金案（実支給）</label>
       <div class="seg" id="c_adopt"><button data-v="A">A</button><button data-v="B">B</button><button data-v="C" aria-pressed="true">C</button></div></div>
   </div>
 
-  <!-- hero chart -->
+  <!-- editable growth curve -->
   <div class="chart">
-    <h3>参加者数 × 収支（返還前 / 返還後）</h3>
-    <p class="ch-sub">返還後（オレンジ）は参加者が増えても<b>ほぼ横ばい</b>＝手残りは増えない。青との差が「市に戻す額」。縦線＝現在値。ホバーで数値。</p>
-    <div id="chartLine"></div>
-    <div class="lgd">
-      <span><i style="background:var(--rev)"></i>収支（返還前）</span>
-      <span><i style="background:var(--net)"></i>返還後 収支</span>
-      <span><i style="background:var(--faint)"></i>損益分岐(0円)</span>
-    </div>
+    <h3>参加者 成長カーブ（編集可能）</h3>
+    <p class="ch-sub">下の表の年度・参加者数を編集すると曲線が変わります。行をクリックで「対象年度」を選択（KPI・ドーナツ・収支予算書に反映）。</p>
+    <div id="growthChart"></div>
+    <div class="scroll"><table class="gtbl" id="growthTbl"></table></div>
   </div>
 
-  <!-- tabs -->
+  <!-- donuts -->
+  <div class="donuts">
+    <div class="chart"><h3>収入内訳（対象年度）</h3><div id="donutInc"></div><div class="lgd" id="lgdInc"></div></div>
+    <div class="chart"><h3>支出内訳（対象年度）</h3><div id="donutExp"></div><div class="lgd" id="lgdExp"></div></div>
+  </div>
+
   <div class="tabs" role="tablist" id="tabs">
-    <button class="tab" role="tab" aria-selected="true" data-t="tGraph">📊 グラフ詳細</button>
+    <button class="tab" role="tab" aria-selected="true" data-t="tBudget">収支予算書（会計要項）</button>
     <button class="tab" role="tab" aria-selected="false" data-t="tEdit">✎ 前提を編集</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t3an">謝金3案</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t01"><span class="n">01</span>収入</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t02"><span class="n">02</span>支出</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="t03"><span class="n">03</span>収支</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t02"><span class="n">02</span>支出明細</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t04"><span class="n">04</span>指導員</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t13"><span class="n">13</span>別添1-2</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="tHelp">？ 使い方</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="tHelp">？</button>
   </div>
 
-  <section class="panel" id="tGraph" role="tabpanel">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="scroll">
-      <div><h3 style="font-size:13.5px">収入の内訳 <span class="k">計 <b id="inc-total"></b></span></h3><div id="chartInc"></div><div class="lgd" id="lgdInc"></div></div>
-      <div><h3 style="font-size:13.5px">支出の内訳 <span class="k">計 <b id="exp-total"></b></span></h3><div id="chartExp"></div><div class="lgd" id="lgdExp"></div></div>
-    </div>
-    <div style="margin-top:16px"><h3 style="font-size:13.5px">指導員謝金 3案の比較</h3>
-      <p class="cap">提出＝A/B（補助基準）、実支給＝採用案。差額は委託料内配分/自主財源で説明（§1）。</p>
-      <div id="chart3"></div></div>
-  </section>
-
-  <section class="panel" id="tEdit" role="tabpanel" hidden>
-    <h2>前提を編集</h2>
-    <p class="cap">すべての数値を実勢値に差し替え可能。変更は即、KPI・グラフ・全シートに反映。SUMIFの合計も再計算されます。</p>
-    <div id="editor"></div>
-    <button class="ib" id="edReset" style="margin-top:6px">↺ 全数値を既定（資料値）に戻す</button>
-  </section>
-
+  <section class="panel" id="tBudget" role="tabpanel"><h2>収支予算書（対象年度）</h2>
+    <p class="cap">会計要項に沿い【収入の部】【支出の部（事業費／管理費）】で区分し、当期収支差額を表示。返還見込は参考欄。</p>
+    <div class="scroll" id="tblBudget"></div></section>
+  <section class="panel" id="tEdit" role="tabpanel" hidden><h2>前提を編集</h2>
+    <p class="cap">全数値を実勢値に差し替え可能。変更は即、全体に反映。</p><div id="editor"></div>
+    <button class="ib" id="edReset" style="margin-top:6px">↺ 既定（資料値）に戻す</button></section>
+  <section class="panel" id="t3an" role="tabpanel" hidden><h2>指導員謝金 3案の比較</h2>
+    <p class="cap">提出＝A/B（補助基準）、実支給＝採用案。差額は委託料内配分/自主財源で説明（§1）。</p><div id="chart3"></div></section>
   <section class="panel" id="t01" role="tabpanel" hidden><h2>01_収入シミュレーション</h2>
-    <p class="cap">参加者数別（現在値の列を強調）。</p><div class="scroll" id="tbl01"></div></section>
-  <section class="panel" id="t02" role="tabpanel" hidden><h2>02_支出シミュレーション</h2>
-    <p class="cap">謝金3案＋費目別（直接/間接）。金額は「前提を編集」で変更可。</p><div class="scroll" id="tbl02"></div></section>
-  <section class="panel" id="t03" role="tabpanel" hidden><h2>03_収支サマリー</h2>
-    <p class="cap">参加者・協賛・返還方針に連動。</p><div class="scroll" id="tbl03"></div></section>
+    <p class="cap">参加者数別（対象年度の参加者に近い列を強調）。</p><div class="scroll" id="tbl01"></div></section>
+  <section class="panel" id="t02" role="tabpanel" hidden><h2>02_支出明細（費目別）</h2>
+    <p class="cap">直接/間接の費目。金額は「前提を編集」で変更可。</p><div class="scroll" id="tbl02"></div></section>
   <section class="panel" id="t04" role="tabpanel" hidden><h2>04_指導員配置（全15種目）</h2>
     <p class="cap">種目謝金＝時給×時間×回数×配置2名。</p><div class="scroll" id="tbl04"></div></section>
   <section class="panel" id="t13" role="tabpanel" hidden><h2>13_別添1-2</h2>
     <p class="cap">提出案(A/B)で切替。委託料照合付き。</p><div class="scroll" id="tbl13"></div></section>
+  <section class="panel" id="tHelp" role="tabpanel" hidden><h2>使い方</h2>
+    <p class="cap">① プリセットで代表シナリオ → ② 成長カーブ表で年度別参加者を編集・対象年度を選択 → ③ 収支予算書（会計要項）で確認 → ④ 前提を編集で費目・単価を実勢値に → ⑤ 共有/CSV/印刷。会計要項＝【収入の部】【支出の部：事業費・管理費】【当期収支差額】。数式はGAS setup_academy.gs と同一。</p></section>
 
-  <section class="panel" id="tHelp" role="tabpanel" hidden>
-    <h2>このツールで得られること</h2>
-    <div class="benefits">
-      <div class="bene"><b>① 提出前の意思決定が速い</b><p>A/B/Cどの謝金案なら委託料と整合するかを即確認。別添1-2の合計と委託料の差が自動表示。</p></div>
-      <div class="bene"><b>② 理事会・保護者への説明材料</b><p>「参加者が増えても返還後の手残りは増えない」を1枚のグラフで可視化。必要協賛額も即算出。</p></div>
-      <div class="bene"><b>③ 毎年の予算編成が回る</b><p>前提を実勢値に差し替えるだけで実運営予算を再計算。翌年度は月数12・単価変更もワンタッチ。</p></div>
-      <div class="bene"><b>④ 転記ミスの防止</b><p>費目を1か所（前提編集）で管理し、SUMIFで直接/間接/諸経費/総事業費が自動一致。別添にも同期。</p></div>
-      <div class="bene"><b>⑤ スプレッドシートと地続き</b><p>計算式はGAS(setup_academy.gs)と同一。この画面で確定→実ブックを自動生成、が一直線。</p></div>
-      <div class="bene"><b>⑥ 提出/配布はそのまま印刷</b><p>「🖶 印刷/PDF」で全タブを展開してPDF化。理事会資料・市提出の下書きに。</p></div>
-    </div>
-    <p class="cap" style="margin-top:14px">使い方：上部のプリセットで代表シナリオを一発表示 → 参加者/協賛スライダーと採用案で微調整 → 「前提を編集」で費目・単価まで実勢値に → 各シートで明細確認 → 印刷。</p>
-  </section>
-
-  <footer>数値は資料①〜④に一致（既定時：直接16,039,600・間接744,800・諸経費4,811,880・総21,596,280・歳入24,272,480）／GAS setup_academy.gs と同式</footer>
+  <footer>数値は資料①〜④に一致（既定時：事業費20,851,480＝直接16,039,600＋諸経費4,811,880／管理費744,800／総21,596,280）</footer>
 </div>
 
 <script>
 const F=n=>Math.round(n).toLocaleString('ja-JP');
-const clone=o=>JSON.parse(JSON.stringify(o));
 function base(){return {
-  参加者:200,協賛:0,寄付:0,採用:'C',提出:'A',月数:7,返還:'全額',
-  時間実:3.5,時間国庫:3,時給実:1800,時給国庫:1600,回数:40,指導員数:30,諸経費率:0.30,
+  協賛:0,寄付:0,採用:'C',提出:'A',月数:7,返還:'全額',諸経費率:0.30,
+  成長:[["R9",200],["R10",240],["R11",280],["R12",300],["R13",320]],対象:0,
+  時間実:3.5,時間国庫:3,時給実:1800,時給国庫:1600,回数:40,指導員数:30,
   単価:{利用会員入会金:1000,参加費月額:2000,保険:800,アプリ:880},
-  会費:{正会員入会金:10000,賛助個人:25000,賛助法人:50000},
-  委託料:20851480,
-  直接:[["指導者研修費(費用弁償)",324000],["指導者講習等講師謝金",100000],["通勤手当",252000],["指導者旅費",300000],
-    ["スポーツ安全保険(指導者分)",24000],["管理者人件費(報酬)",3369600],["印刷製本費",150000],["競技用消耗品費",600000],
-    ["競技用備品費",600000],["システム運用保守 包括委託",2400000],["HPサーバ管理料",60000],["LINE公式プラットフォーム使用料",300000]],
+  会費:{正会員入会金:10000,賛助個人:25000,賛助法人:50000},委託料:20851480,
+  直接:[["指導者研修費(費用弁償)",324000,"人件費"],["指導者講習等講師謝金",100000,"人件費"],["通勤手当",252000,"人件費"],
+    ["指導者旅費",300000,"その他"],["スポーツ安全保険(指導者分)",24000,"人件費"],["管理者人件費(報酬)",3369600,"人件費"],
+    ["印刷製本費",150000,"その他"],["競技用消耗品費",600000,"その他"],["競技用備品費",600000,"その他"],
+    ["システム運用保守 包括委託",2400000,"その他"],["HPサーバ管理料",60000,"その他"],["LINE公式プラットフォーム使用料",300000,"その他"]],
   間接:[["事務局旅費",50000],["事務消耗品",150000],["会議費",50000],["通信料(電話)",240000],["事務局備品費",100000],
     ["電話機借上げ",22800],["PC借上げ",68400],["プリンター借上げ",45600],["AIアプリ使用料",18000]]
 };}
 let S=base();
+function partOf(s){return s.成長[s.対象]?s.成長[s.対象][1]:0;}
 
-function calc(s){
-  const 単価=s.単価.利用会員入会金+s.単価.参加費月額*s.月数+s.単価.保険+s.単価.アプリ;
-  const 連動=s.参加者*単価;
-  const 会費=s.会費.正会員入会金+s.会費.賛助個人+s.会費.賛助法人;
-  const 固定=会費+s.委託料, 歳入=連動+固定+s.協賛+s.寄付;
-  const A=s.時間国庫*s.回数*s.時給国庫*s.指導員数, B=s.時間実*s.回数*s.時給国庫*s.指導員数, C=s.時間実*s.回数*s.時給実*s.指導員数;
+function calc(s,pp){
+  const 参加者=(pp==null)?partOf(s):pp;
+  const 会費単=s.単価.利用会員入会金, 事業単=s.単価.参加費月額*s.月数+s.単価.保険+s.単価.アプリ;
+  const 会費固=s.会費.正会員入会金+s.会費.賛助個人+s.会費.賛助法人;
+  const 会費収入=会費固+参加者*会費単;
+  const 事業収入=参加者*事業単;
+  const 連動=参加者*(会費単+事業単);
+  const 固定=会費固+s.委託料, 歳入=会費収入+事業収入+s.委託料+s.協賛+s.寄付;
+  const A=s.時間国庫*s.回数*s.時給国庫*s.指導員数,B=s.時間実*s.回数*s.時給国庫*s.指導員数,C=s.時間実*s.回数*s.時給実*s.指導員数;
   const 謝金={A,B,C}[s.採用];
-  const 非謝金直接=s.直接.reduce((a,b)=>a+b[1],0);
-  const 直接=謝金+非謝金直接, 間接=s.間接.reduce((a,b)=>a+b[1],0);
-  const 諸経費=Math.round(直接*s.諸経費率), 総=直接+間接+諸経費;
+  const 人件他=s.直接.filter(d=>d[2]==='人件費').reduce((a,b)=>a+b[1],0);
+  const その他事業=s.直接.filter(d=>d[2]==='その他').reduce((a,b)=>a+b[1],0);
+  const 人件費=謝金+人件他, 非謝金直接=人件他+その他事業, 直接=謝金+非謝金直接;
+  const 間接=s.間接.reduce((a,b)=>a+b[1],0);
+  const 諸経費=Math.round(直接*s.諸経費率), 事業費=直接+諸経費, 管理費=間接, 総=事業費+管理費;
   const 収支=歳入-総, 返還=s.返還==='全額'?連動:0, 返還後=収支-返還;
-  const 必要協賛=Math.max(0,間接-会費-s.寄付);
+  const 必要協賛=Math.max(0,間接-会費固-s.寄付);
   const 提出謝金=s.提出==='A'?A:B, 提出合計=提出謝金+非謝金直接+諸経費, 採用照合=直接+諸経費;
-  return {単価,連動,会費,固定,歳入,A,B,C,謝金,非謝金直接,直接,間接,諸経費,総,収支,返還,返還後,必要協賛,提出謝金,提出合計,採用照合};
+  return {参加者,会費固,会費収入,事業収入,連動,固定,歳入,A,B,C,謝金,人件費,その他事業,非謝金直接,直接,間接,諸経費,事業費,管理費,総,収支,返還,返還後,必要協賛,提出謝金,提出合計,採用照合};
 }
 
-/* verdict sentence */
 function verdict(r,s){
-  const okColor=r.返還後>=0?'pos':'neg';
-  const need=r.必要協賛-s.協賛;
-  let tail = r.返還後>=0
-    ? `協賛金が必要額を満たし、返還後も <b class="pos">黒字</b>を確保。`
-    : `あと <b class="neg">${F(-r.返還後)}円</b> の協賛/寄付で返還後±0（現在の必要協賛 ${F(r.必要協賛)}円）。`;
+  const cc=r.返還後>=0?'pos':'neg';
+  const tail=r.返還後>=0?`返還後も <b class="pos">黒字</b>を確保。`:`あと <b class="neg">${F(-r.返還後)}円</b> の協賛/寄付で返還後±0（必要協賛 ${F(r.必要協賛)}円）。`;
   document.getElementById('verdict').innerHTML=
-   `参加者 <b>${s.参加者}人</b>・<b>${s.採用}案</b>・協賛 <b>${F(s.協賛)}円</b> のとき、`+
-   `歳入 <b>${F(r.歳入)}</b>／総事業費 <b>${F(r.総)}</b>／`+
-   `返還後収支 <span class="big ${okColor}">${r.返還後>=0?'+':''}${F(r.返還後)}円</span>。`+
+   `対象年度 <b>${s.成長[s.対象][0]}</b>・参加者 <b>${r.参加者}人</b>・<b>${s.採用}案</b> のとき、`+
+   `収入計 <b>${F(r.歳入)}</b>／支出計 <b>${F(r.総)}</b>／`+
+   `当期収支差額 <span class="big ${r.収支>=0?'pos':'neg'}">${r.収支>=0?'+':''}${F(r.収支)}円</span>。`+
    `<div class="hint">${tail} ／ 別添1-2(提出${s.提出}案)＝<b>${F(r.提出合計)}</b>、採用${s.採用}案の補助対象+諸経費＝<b>${F(r.採用照合)}</b>（委託料 ${F(s.委託料)} と${r.採用照合===s.委託料?'一致':'差 '+F(Math.abs(r.採用照合-s.委託料))}）。</div>`;
 }
-
-function kpis(r,s){
-  const t=[
-    {l:'歳入計',v:F(r.歳入),vc:'',s:'円'},
-    {l:'総事業費',v:F(r.総),vc:'',s:'直+間+諸経費'},
-    {l:'返還後 収支',v:(r.返還後>=0?'+':'')+F(r.返還後),vc:r.返還後>=0?'pos':'neg',s:'実質手残り'},
-    {l:'必要協賛金',v:F(r.必要協賛),vc:'',s:'間接費−固定会費'},
-  ];
+function kpis(r){
+  const t=[{l:'収入計',v:F(r.歳入),vc:'',s:'収入の部 合計'},{l:'支出計',v:F(r.総),vc:'',s:'事業費+管理費'},
+    {l:'当期収支差額',v:(r.収支>=0?'+':'')+F(r.収支),vc:r.収支>=0?'pos':'neg',s:'収入−支出'},
+    {l:'返還後 収支差額',v:(r.返還後>=0?'+':'')+F(r.返還後),vc:r.返還後>=0?'pos':'neg',s:'参加者相当分 返還後'}];
   document.getElementById('kpis').innerHTML=t.map(x=>`<div class="kpi"><div class="l">${x.l}</div><div class="v ${x.vc}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
 }
 
-/* charts */
-function chartLine(s){
-  const W=760,H=270,mL=60,mR=14,mT=12,mB=28,pw=W-mL-mR,ph=H-mT-mB;
-  const pts=[];for(let p=0;p<=400;p+=20){const r=calc({...s,参加者:p});pts.push({p,rev:r.収支,net:r.返還後});}
-  let lo=Math.min(0,...pts.map(d=>Math.min(d.rev,d.net))),hi=Math.max(0,...pts.map(d=>Math.max(d.rev,d.net)));
-  const pad=(hi-lo)*.08;hi+=pad;lo-=pad*.5;
-  const X=p=>mL+pw*(p/400),Y=v=>mT+ph*(1-(v-lo)/(hi-lo));
-  const path=k=>pts.map((d,i)=>(i?'L':'M')+X(d.p).toFixed(1)+' '+Y(d[k]).toFixed(1)).join(' ');
-  let g='';for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
-  let xt='';for(let p=0;p<=400;p+=100)xt+=`<text class="tick" x="${X(p)}" y="${H-9}" text-anchor="middle">${p}人</text>`;
-  const cx=X(s.参加者),cur=calc(s);
-  document.getElementById('chartLine').innerHTML=`<svg viewBox="0 0 ${W} ${H}" id="svgLine" role="img" aria-label="参加者数と収支">
-    ${g}<line class="zero" x1="${mL}" y1="${Y(0).toFixed(1)}" x2="${W-mR}" y2="${Y(0).toFixed(1)}"/>${xt}
-    <line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>
-    <path d="${path('rev')}" fill="none" stroke="var(--rev)" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="${path('net')}" fill="none" stroke="var(--net)" stroke-width="2.5" stroke-dasharray="6 4" stroke-linejoin="round"/>
-    <line x1="${cx.toFixed(1)}" y1="${mT}" x2="${cx.toFixed(1)}" y2="${mT+ph}" stroke="var(--accent)" stroke-width="1.5" opacity=".5"/>
-    <circle cx="${cx.toFixed(1)}" cy="${Y(cur.収支).toFixed(1)}" r="4.5" fill="var(--rev)" stroke="var(--surface)" stroke-width="2"/>
-    <circle cx="${cx.toFixed(1)}" cy="${Y(cur.返還後).toFixed(1)}" r="4.5" fill="var(--net)" stroke="var(--surface)" stroke-width="2"/>
-    <rect id="hitLine" x="${mL}" y="${mT}" width="${pw}" height="${ph}" fill="transparent"/></svg>`;
-  const svg=document.getElementById('svgLine'),tip=document.getElementById('tip'),hit=document.getElementById('hitLine');
-  hit.onmousemove=e=>{const rc=svg.getBoundingClientRect(),sx=(e.clientX-rc.left)/rc.width*W;let p=Math.round((sx-mL)/pw*400/20)*20;p=Math.max(0,Math.min(400,p));const c=calc({...s,参加者:p});tip.style.opacity=1;tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY-10)+'px';tip.innerHTML=`参加者 ${p}人｜返還前 ${F(c.収支)}｜返還後 ${F(c.返還後)}`;};
-  hit.onmouseleave=()=>tip.style.opacity=0;
+/* growth curve */
+function growthChart(s){
+  const W=760,H=250,mL=52,mR=16,mT=14,mB=30,pw=W-mL-mR,ph=H-mT-mB,n=s.成長.length;
+  const maxP=Math.max(100,...s.成長.map(g=>g[1]))*1.15;
+  const X=i=>mL+(n>1?pw*i/(n-1):pw/2),Y=v=>mT+ph*(1-v/maxP);
+  let g='';for(let i=0;i<=4;i++){const v=maxP*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${Math.round(v)}</text>`;}
+  const path=s.成長.map((gg,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(gg[1]).toFixed(1)).join(' ');
+  const area=`M${X(0).toFixed(1)} ${Y(0).toFixed(1)} `+s.成長.map((gg,i)=>'L'+X(i).toFixed(1)+' '+Y(gg[1]).toFixed(1)).join(' ')+` L${X(n-1).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+  let dots='',xl='';s.成長.forEach((gg,i)=>{const on=i===s.対象;
+    dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(gg[1]).toFixed(1)}" r="${on?6:4.5}" fill="${on?'var(--accent)':'var(--rev)'}" stroke="var(--surface)" stroke-width="2"><title>${gg[0]}: ${gg[1]}人</title></circle>`+
+      `<text class="lbl" x="${X(i).toFixed(1)}" y="${(Y(gg[1])-10).toFixed(1)}" text-anchor="middle">${gg[1]}</text>`;
+    xl+=`<text class="tick" x="${X(i).toFixed(1)}" y="${H-9}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${gg[0]}</text>`;});
+  document.getElementById('growthChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="参加者成長カーブ">${g}
+    <path d="${area}" fill="var(--rev)" opacity=".08"/><path d="${path}" fill="none" stroke="var(--rev)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${dots}<line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>${xl}</svg>`;
+  // editable + projection table
+  let h=`<thead><tr><th>年度</th><th>参加者</th><th>収入計</th><th>支出計</th><th>当期収支差額</th><th>返還後</th></tr></thead><tbody>`;
+  s.成長.forEach((gg,i)=>{const rr=calc(s,gg[1]);const on=i===s.対象;
+    h+=`<tr data-i="${i}" class="${on?'sel':''}"><td><input class="yr" data-gi="${i}" data-gk="0" value="${gg[0]}"></td>`+
+      `<td><input type="number" min="0" data-gi="${i}" data-gk="1" value="${gg[1]}"></td>`+
+      `<td>${F(rr.歳入)}</td><td>${F(rr.総)}</td><td class="${rr.収支>=0?'pos':'neg'}">${F(rr.収支)}</td><td class="${rr.返還後>=0?'pos':'neg'}">${F(rr.返還後)}</td></tr>`;});
+  h+=`</tbody>`;document.getElementById('growthTbl').innerHTML=h;
 }
-function stacked(id,lgd,segs){
-  const W=520,tot=segs.reduce((a,b)=>a+b.v,0)||1;let x=0;
-  const r=segs.filter(s=>s.v>0).map(s=>{const w=W*(s.v/tot);const g=`<rect x="${x.toFixed(1)}" y="8" width="${Math.max(0,w-2).toFixed(1)}" height="26" rx="4" fill="${s.c}"><title>${s.n}: ${F(s.v)}円 (${(s.v/tot*100).toFixed(1)}%)</title></rect>`;x+=w;return g;}).join('');
-  document.getElementById(id).innerHTML=`<svg viewBox="0 0 ${W} 44" role="img">${r}</svg>`;
+
+/* donut */
+function donut(id,lgd,segs,center){
+  const rad=52,C=2*Math.PI*rad,cx=70,cy=70,sw=22,tot=segs.reduce((a,b)=>a+b.v,0)||1;let off=0;
+  const arcs=segs.filter(s=>s.v>0).map(s=>{const f=s.v/tot,len=Math.max(0,f*C-2);
+    const c=`<circle cx="${cx}" cy="${cy}" r="${rad}" fill="none" stroke="${s.c}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off*C).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${s.n}: ${F(s.v)} (${(f*100).toFixed(1)}%)</title></circle>`;off+=f;return c;}).join('');
+  document.getElementById(id).innerHTML=`<svg viewBox="0 0 140 140" role="img" style="max-width:190px;margin:2px auto">${arcs}<text x="70" y="65" text-anchor="middle" style="font-size:9px;fill:var(--muted)">${center.t}</text><text x="70" y="81" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--ink)">${center.v}</text></svg>`;
   document.getElementById(lgd).innerHTML=segs.map(s=>`<span><i style="background:${s.c}"></i>${s.n} <b>${F(s.v)}</b></span>`).join('');
 }
+
 function chart3(r,s){
   const W=520,H=140,mB=32,mT=8,mL=8,bw=94,gap=(W-mL-3*bw)/3,hi=Math.max(r.A,r.B,r.C)*1.16,ph=H-mB-mT;
   const v=[['A 国庫申請',r.A,'var(--exp3)'],['B 中間案',r.B,'var(--exp2)'],['C 実運営',r.C,'var(--exp1)']];
@@ -347,158 +279,155 @@ function chart3(r,s){
   document.getElementById('chart3').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${bars}</svg>`;
 }
 
-/* sheets */
+/* accounting budget statement */
+function tblBudget(r,s){
+  const L=(name,val,cls='',ind=false)=>`<tr class="${cls}"><td class="${ind?'ind':''}">${name}</td><td class="num">${F(val)}</td></tr>`;
+  let h=`<table class="sheet" style="min-width:460px"><thead><tr><th>科目</th><th class="num">予算額(円)</th></tr></thead><tbody>`;
+  h+=`<tr class="grp"><td>【収入の部】</td><td class="num"></td></tr>`;
+  h+=L('会費収入',r.会費収入,'sub');
+  h+=L('正会員入会金',s.会費.正会員入会金,'',true)+L('賛助会員会費(個人)',s.会費.賛助個人,'',true)+L('賛助会員会費(法人)',s.会費.賛助法人,'',true)+L('利用会員入会金',r.参加者*s.単価.利用会員入会金,'',true);
+  h+=L('事業収入',r.事業収入,'sub');
+  h+=L('参加費収入',r.参加者*s.単価.参加費月額*s.月数,'',true)+L('スポーツ安全保険料',r.参加者*s.単価.保険,'',true)+L('アプリ使用料収入',r.参加者*s.単価.アプリ,'',true);
+  h+=L('補助金等収入（市委託料）',s.委託料,'sub');
+  h+=L('協賛金収入',s.協賛,'sub')+L('寄付金収入',s.寄付,'sub');
+  h+=L('収入合計',r.歳入,'total');
+  h+=`<tr class="grp"><td>【支出の部】</td><td class="num"></td></tr>`;
+  h+=L('事業費',r.事業費,'sub');
+  h+=L('人件費（小計）',r.人件費,'',true)+L('指導者謝金('+s.採用+'案)',r.謝金,'',true);
+  s.直接.filter(d=>d[2]==='人件費').forEach(d=>h+=L(d[0],d[1],'',true));
+  h+=L('その他事業費（小計）',r.その他事業,'',true);
+  s.直接.filter(d=>d[2]==='その他').forEach(d=>h+=L(d[0],d[1],'',true));
+  h+=L('諸経費（直接×'+(s.諸経費率*100).toFixed(0)+'%）',r.諸経費,'',true);
+  h+=L('管理費',r.管理費,'sub');
+  s.間接.forEach(d=>h+=L(d[0],d[1],'',true));
+  h+=L('支出合計',r.総,'total');
+  h+=`<tr class="bal"><td>当期収支差額（収入−支出）</td><td class="num ${r.収支>=0?'pos':'neg'}">${F(r.収支)}</td></tr>`;
+  h+=`<tr class="grp"><td>【参考】返還・自主財源</td><td class="num"></td></tr>`;
+  h+=L('返還見込（参加者相当分）',r.返還,'',true)+`<tr class="bal"><td class="ind">返還後 収支差額</td><td class="num ${r.返還後>=0?'pos':'neg'}">${F(r.返還後)}</td></tr>`+L('必要協賛金の目安',r.必要協賛,'',true);
+  h+=`</tbody></table>`;
+  document.getElementById('tblBudget').innerHTML=h;
+}
+
+/* detail sheets */
 function tbl01(s){
-  const cols=[100,150,200,250,300],u={利用:s.単価.利用会員入会金,参:s.単価.参加費月額*s.月数,保:s.単価.保険,ア:s.単価.アプリ};
-  const rows=[["正会員入会金",()=>s.会費.正会員入会金],["賛助会員(個人)",()=>s.会費.賛助個人],["賛助会員(法人)",()=>s.会費.賛助法人],
-    ["利用会員入会金",c=>u.利用*c],["参加費",c=>u.参*c],["スポーツ安全保険",c=>u.保*c],["アプリ使用料",c=>u.ア*c],["市委託料",()=>s.委託料]];
-  const near=cols.reduce((a,b)=>Math.abs(b-s.参加者)<Math.abs(a-s.参加者)?b:a);
-  let h=`<table><thead><tr><th>収入項目</th>`+cols.map(c=>`<th class="num">${c}人</th>`).join('')+`</tr></thead><tbody>`;
-  rows.forEach(r=>h+=`<tr><td>${r[0]}</td>`+cols.map(c=>`<td class="num${c===near?' hl':''}">${F(r[1](c))}</td>`).join('')+`</tr>`);
+  const cols=[100,150,200,250,300],u={利:s.単価.利用会員入会金,参:s.単価.参加費月額*s.月数,保:s.単価.保険,ア:s.単価.アプリ};
+  const rows=[["正会員入会金",()=>s.会費.正会員入会金],["賛助会員(個人)",()=>s.会費.賛助個人],["賛助会員(法人)",()=>s.会費.賛助法人],["利用会員入会金",c=>u.利*c],["参加費",c=>u.参*c],["スポーツ安全保険",c=>u.保*c],["アプリ使用料",c=>u.ア*c],["市委託料",()=>s.委託料]];
+  const near=cols.reduce((a,b)=>Math.abs(b-partOf(s))<Math.abs(a-partOf(s))?b:a);
+  let h=`<table class="sheet"><thead><tr><th>収入項目</th>`+cols.map(c=>`<th class="num">${c}人</th>`).join('')+`</tr></thead><tbody>`;
+  rows.forEach(r=>h+=`<tr><td>${r[0]}</td>`+cols.map(c=>`<td class="num"${c===near?' style="background:var(--accent-soft)"':''}>${F(r[1](c))}</td>`).join('')+`</tr>`);
   h+=`<tr class="total"><td>歳入計（協賛除く）</td>`+cols.map(c=>{let t=0;rows.forEach(r=>t+=r[1](c));return `<td class="num">${F(t)}</td>`;}).join('')+`</tr></tbody></table>`;
   document.getElementById('tbl01').innerHTML=h;
 }
 function tbl02(r,s){
-  let h=`<table style="min-width:600px"><thead><tr><th>指導員謝金3案</th><th class="num">時間</th><th class="num">回数</th><th class="num">単価</th><th class="num">人数</th><th class="num">年額</th></tr></thead><tbody>`+
-   `<tr${s.採用==='A'?' class="hl"':''}><td>A 国庫申請</td><td class="num">${s.時間国庫}</td><td class="num">${s.回数}</td><td class="num">${F(s.時給国庫)}</td><td class="num">${s.指導員数}</td><td class="num">${F(r.A)}</td></tr>`+
-   `<tr${s.採用==='B'?' class="hl"':''}><td>B 中間案</td><td class="num">${s.時間実}</td><td class="num">${s.回数}</td><td class="num">${F(s.時給国庫)}</td><td class="num">${s.指導員数}</td><td class="num">${F(r.B)}</td></tr>`+
-   `<tr${s.採用==='C'?' class="hl"':''}><td>C 実運営</td><td class="num">${s.時間実}</td><td class="num">${s.回数}</td><td class="num">${F(s.時給実)}</td><td class="num">${s.指導員数}</td><td class="num">${F(r.C)}</td></tr>`+
-   `<tr class="bal"><td>差額 C−A</td><td colspan="4"></td><td class="num neg">${F(r.C-r.A)}</td></tr></tbody></table>`;
-  h+=`<table style="min-width:600px;margin-top:14px"><thead><tr><th>費目</th><th>区分</th><th class="num">金額</th></tr></thead><tbody>`;
-  h+=`<tr><td>指導者謝金(採用${s.採用})</td><td>直接</td><td class="num">${F(r.謝金)}</td></tr>`;
-  s.直接.forEach(d=>h+=`<tr><td>${d[0]}</td><td>直接</td><td class="num">${F(d[1])}</td></tr>`);
-  s.間接.forEach(d=>h+=`<tr><td>${d[0]}</td><td class="k">間接</td><td class="num">${F(d[1])}</td></tr>`);
-  h+=`<tr class="total"><td>直接事業費</td><td></td><td class="num">${F(r.直接)}</td></tr>`+
-     `<tr class="total"><td>間接事業費</td><td></td><td class="num">${F(r.間接)}</td></tr>`+
-     `<tr class="total"><td>諸経費（直接×${(s.諸経費率*100).toFixed(0)}%）</td><td></td><td class="num">${F(r.諸経費)}</td></tr>`+
-     `<tr class="bal"><td>総事業費</td><td></td><td class="num">${F(r.総)}</td></tr></tbody></table>`;
+  let h=`<table class="sheet" style="min-width:560px"><thead><tr><th>費目</th><th>区分</th><th>群</th><th class="num">金額</th></tr></thead><tbody>`;
+  h+=`<tr><td>指導者謝金(採用${s.採用})</td><td>直接</td><td class="k">人件費</td><td class="num">${F(r.謝金)}</td></tr>`;
+  s.直接.forEach(d=>h+=`<tr><td>${d[0]}</td><td>直接</td><td class="k">${d[2]}</td><td class="num">${F(d[1])}</td></tr>`);
+  s.間接.forEach(d=>h+=`<tr><td>${d[0]}</td><td class="k">間接</td><td class="k">管理費</td><td class="num">${F(d[1])}</td></tr>`);
+  h+=`<tr class="sub"><td>直接事業費</td><td colspan="2"></td><td class="num">${F(r.直接)}</td></tr>`+
+     `<tr class="sub"><td>諸経費（×${(s.諸経費率*100).toFixed(0)}%）</td><td colspan="2"></td><td class="num">${F(r.諸経費)}</td></tr>`+
+     `<tr class="sub"><td>間接事業費（管理費）</td><td colspan="2"></td><td class="num">${F(r.間接)}</td></tr>`+
+     `<tr class="total"><td>総事業費</td><td colspan="2"></td><td class="num">${F(r.総)}</td></tr></tbody></table>`;
   document.getElementById('tbl02').innerHTML=h;
-}
-function tbl03(r,s){
-  const row=(l,v,c,n,cls='')=>`<tr class="${cls}"><td>${l}</td><td class="num ${c||''}">${F(v)}</td><td class="k">${n}</td></tr>`;
-  document.getElementById('tbl03').innerHTML=`<table style="min-width:480px"><thead><tr><th>区分</th><th class="num">金額</th><th>備考</th></tr></thead><tbody>`+
-   row('① 参加者連動収入',r.連動,'',`${s.参加者}人×${F(r.単価)}`)+row('② 固定収入',r.固定,'','会費+委託料')+
-   row('③ 協賛金',s.協賛,'','')+row('④ 寄付金',s.寄付,'','')+
-   row('歳入計',r.歳入,'','','rev')+row('総事業費',r.総,'','02より','exp')+
-   row('収支（返還前）',r.収支,r.収支>=0?'pos':'neg',r.収支>=0?'黒字':'赤字','bal')+
-   row('返還見込',r.返還,'',s.返還==='全額'?'全額返還':'返還なし')+
-   row('返還後 収支',r.返還後,r.返還後>=0?'pos':'neg','実質手残り','total')+
-   row('必要協賛金の目安',r.必要協賛,r.必要協賛>0?'neg':'pos','間接費−固定会費','bal')+`</tbody></table>`;
 }
 function tbl04(s){
   const sp=[["野球",13],["サッカー",13],["バレー",15],["バスケット",16],["テニス",13],["ハンドボール",13],["卓球",13],["柔道",13],["剣道",13],["フライングディスク",13],["ゴルフ",13],["吹奏楽",13],["囲碁",13],["生け花",13],["ドローン",13]];
   const per=s.時間実*s.回数*s.時給実*2,add=n=>n>=31?'種目分割/別日':n>=21?'指導員3名':n>=11?'2名+補助員検討':'2名';
-  let h=`<table style="min-width:600px"><thead><tr><th>種目</th><th class="num">参加</th><th class="num">必要</th><th class="num">配置</th><th class="num">年間謝金</th><th>追加判定</th></tr></thead><tbody>`,tot=0,pt=0,need=0;
+  let h=`<table class="sheet" style="min-width:560px"><thead><tr><th>種目</th><th class="num">参加</th><th class="num">必要</th><th class="num">配置</th><th class="num">年間謝金</th><th>追加判定</th></tr></thead><tbody>`,tot=0,pt=0,need=0;
   sp.forEach(x=>{const nd=x[0]==='ドローン'?2:3;need+=nd;pt+=x[1];tot+=per;h+=`<tr><td>${x[0]}</td><td class="num">${x[1]}</td><td class="num">${nd}</td><td class="num">2</td><td class="num">${F(per)}</td><td class="k">${add(x[1])}</td></tr>`;});
-  h+=`<tr class="total"><td>計</td><td class="num">${pt}</td><td class="num">${need}</td><td class="num">30</td><td class="num">${F(tot)}</td><td class="k">必要${need} vs 配置30 →${need-30}名不足</td></tr></tbody></table>`;
+  h+=`<tr class="total"><td>計</td><td class="num">${pt}</td><td class="num">${need}</td><td class="num">30</td><td class="num">${F(tot)}</td><td class="k">必要${need}vs配置30→${need-30}名不足</td></tr></tbody></table>`;
   document.getElementById('tbl04').innerHTML=h;
 }
 function tbl13(r,s){
-  const gov=[['諸謝金','指導者謝金(15種目)',r.提出謝金],['諸謝金','講師謝金',100000],['人件費','研修費(費用弁償)',324000],['人件費','通勤手当',252000],['人件費','管理者報酬',3369600],['旅費','指導者旅費',300000],['印刷','チラシ・マニュアル',150000],['備品/消耗','競技用備品・消耗品',1200000],['保険','指導員保険',24000],['雑役務','HP・LINE',360000],['委託','システム包括委託',2400000],['補助金',`諸経費(直工費×${(s.諸経費率*100).toFixed(0)}%)`,r.諸経費]];
-  let h=`<table style="min-width:520px"><thead><tr><th>区分</th><th>費目</th><th class="num">金額(提出=${s.提出}案)</th></tr></thead><tbody>`;
+  const gov=[['諸謝金','指導者謝金(15種目)',r.提出謝金],['諸謝金','講師謝金',100000],['人件費','研修費(費用弁償)',324000],['人件費','通勤手当',252000],['人件費','管理者報酬',3369600],['旅費','指導者旅費',300000],['印刷','チラシ・マニュアル',150000],['備品/消耗','競技用備品・消耗品',1200000],['保険','指導員保険',24000],['雑役務','HP・LINE',360000],['委託','システム包括委託',2400000],['補助金',`諸経費(×${(s.諸経費率*100).toFixed(0)}%)`,r.諸経費]];
+  let h=`<table class="sheet" style="min-width:500px"><thead><tr><th>区分</th><th>費目</th><th class="num">金額(提出=${s.提出}案)</th></tr></thead><tbody>`;
   gov.forEach(g=>h+=`<tr><td>${g[0]}</td><td>${g[1]}</td><td class="num">${F(g[2])}</td></tr>`);
   h+=`<tr class="total"><td colspan="2">合計（提出用）</td><td class="num">${F(r.提出合計)}</td></tr>`+
      `<tr><td colspan="2" class="k">実支給(C案)との差額</td><td class="num neg">${F(r.C-r.提出謝金)}</td></tr>`+
-     `<tr class="rev"><td colspan="2">採用${s.採用}案の補助対象+諸経費</td><td class="num">${F(r.採用照合)}</td></tr>`+
-     `<tr class="rev"><td colspan="2">（比較）市委託料</td><td class="num">${F(s.委託料)}</td></tr></tbody></table>`+
-     `<p class="cap" style="color:${r.採用照合===s.委託料?'var(--good)':'var(--bad)'};margin-top:10px">${r.採用照合===s.委託料?'✔ 採用案での「補助対象＋諸経費」が市委託料に一致。':'⚠ 委託料と差 '+F(Math.abs(r.採用照合-s.委託料))+'円（採用案 or 費目を調整）。'}</p>`;
+     `<tr class="bal"><td colspan="2">採用${s.採用}案の補助対象+諸経費</td><td class="num">${F(r.採用照合)}</td></tr>`+
+     `<tr class="bal"><td colspan="2">（比較）市委託料</td><td class="num">${F(s.委託料)}</td></tr></tbody></table>`+
+     `<p class="cap" style="color:${r.採用照合===s.委託料?'var(--good)':'var(--bad)'};margin-top:10px">${r.採用照合===s.委託料?'✔ 採用案での補助対象＋諸経費が市委託料に一致。':'⚠ 委託料と差 '+F(Math.abs(r.採用照合-s.委託料))+'円。'}</p>`;
   document.getElementById('tbl13').innerHTML=h;
 }
 
 /* editor */
 function editor(){
   const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="number" step="any" min="0" inputmode="decimal" data-p="${path}" value="${val}"></div>`;
-  let h='';
-  h+=`<div class="ed-grp"><h4>参加者・収入単価</h4><div class="ed-grid">`+
-    ef('参加者数(人)','参加者',S.参加者)+ef('参加費 月額(円)','単価.参加費月額',S.単価.参加費月額)+ef('参加月数','月数',S.月数)+
-    ef('利用会員入会金','単価.利用会員入会金',S.単価.利用会員入会金)+ef('スポーツ安全保険','単価.保険',S.単価.保険)+ef('アプリ使用料','単価.アプリ',S.単価.アプリ)+
-    ef('正会員入会金(計)','会費.正会員入会金',S.会費.正会員入会金)+ef('賛助個人(計)','会費.賛助個人',S.会費.賛助個人)+ef('賛助法人(計)','会費.賛助法人',S.会費.賛助法人)+
-    ef('市委託料','委託料',S.委託料)+ef('協賛金','協賛',S.協賛)+ef('寄付金','寄付',S.寄付)+`</div></div>`;
+  let h=`<div class="ed-grp"><h4>収入単価・会費・委託料</h4><div class="ed-grid">`+
+    ef('参加費 月額','単価.参加費月額',S.単価.参加費月額)+ef('参加月数','月数',S.月数)+ef('利用会員入会金','単価.利用会員入会金',S.単価.利用会員入会金)+
+    ef('スポーツ安全保険','単価.保険',S.単価.保険)+ef('アプリ使用料','単価.アプリ',S.単価.アプリ)+ef('正会員入会金(計)','会費.正会員入会金',S.会費.正会員入会金)+
+    ef('賛助個人(計)','会費.賛助個人',S.会費.賛助個人)+ef('賛助法人(計)','会費.賛助法人',S.会費.賛助法人)+ef('市委託料','委託料',S.委託料)+ef('協賛金','協賛',S.協賛)+ef('寄付金','寄付',S.寄付)+`</div></div>`;
   h+=`<div class="ed-grp"><h4>指導員謝金パラメータ</h4><div class="ed-grid">`+
     ef('時間/回(実C)','時間実',S.時間実)+ef('時間/回(国庫A)','時間国庫',S.時間国庫)+ef('時給(実C)','時給実',S.時給実)+ef('時給(国庫A/B)','時給国庫',S.時給国庫)+
-    ef('指導回数/年','回数',S.回数)+ef('配置指導員数','指導員数',S.指導員数)+ef('諸経費率(0.30)','諸経費率',S.諸経費率)+`</div></div>`;
-  h+=`<div class="ed-grp"><h4>直接事業費（費目）</h4><div class="ed-grid">`+S.直接.map((d,i)=>ef(d[0],'直接.'+i+'.1',d[1])).join('')+`</div></div>`;
-  h+=`<div class="ed-grp"><h4>間接事業費（費目）</h4><div class="ed-grid">`+S.間接.map((d,i)=>ef(d[0],'間接.'+i+'.1',d[1])).join('')+`</div></div>`;
+    ef('指導回数/年','回数',S.回数)+ef('配置指導員数','指導員数',S.指導員数)+ef('諸経費率','諸経費率',S.諸経費率)+`</div></div>`;
+  h+=`<div class="ed-grp"><h4>事業費（直接費：費目）</h4><div class="ed-grid">`+S.直接.map((d,i)=>ef(d[0]+'〔'+d[2]+'〕','直接.'+i+'.1',d[1])).join('')+`</div></div>`;
+  h+=`<div class="ed-grp"><h4>管理費（間接費：費目）</h4><div class="ed-grid">`+S.間接.map((d,i)=>ef(d[0],'間接.'+i+'.1',d[1])).join('')+`</div></div>`;
   document.getElementById('editor').innerHTML=h;
 }
-function setPath(o,path,val){if(path==='参加者')val=Math.max(0,Math.min(400,val));const k=path.split('.');let x=o;for(let i=0;i<k.length-1;i++)x=x[k[i]];x[k[k.length-1]]=val;}
+function setPath(o,path,val){const k=path.split('.');let x=o;for(let i=0;i<k.length-1;i++)x=x[k[i]];x[k[k.length-1]]=val;}
 
-/* URL state (共有リンク) */
+/* URL/CSV */
 function saveHash(){try{history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(S)));}catch(e){}}
-function loadHash(){if(location.hash.length>1){try{const p=JSON.parse(decodeURIComponent(location.hash.slice(1)));S=Object.assign(base(),p);}catch(e){}}}
+function loadHash(){if(location.hash.length>1){try{S=Object.assign(base(),JSON.parse(decodeURIComponent(location.hash.slice(1))));}catch(e){}}}
 function toast(btn,msg){const o=btn.textContent;btn.textContent=msg;setTimeout(()=>btn.textContent=o,1400);}
 function csvExport(){
-  const r=calc(S),rows=[];
-  rows.push(['やとみ放課後アカデミー 収支シミュレーション']);
-  rows.push(['前提','参加者',S.参加者,'採用案',S.採用,'提出案',S.提出,'月数',S.月数,'協賛',S.協賛,'寄付',S.寄付]);
-  rows.push([]);rows.push(['03_収支サマリー','金額']);
-  [['参加者連動収入',r.連動],['固定収入',r.固定],['協賛金',S.協賛],['寄付金',S.寄付],['歳入計',r.歳入],['総事業費',r.総],['収支(返還前)',r.収支],['返還見込',r.返還],['返還後収支',r.返還後],['必要協賛金',r.必要協賛]].forEach(x=>rows.push(x));
-  rows.push([]);rows.push(['02_支出 費目','区分','金額']);
-  rows.push(['指導者謝金(採用'+S.採用+')','直接',r.謝金]);
-  S.直接.forEach(d=>rows.push([d[0],'直接',d[1]]));S.間接.forEach(d=>rows.push([d[0],'間接',d[1]]));
-  [['直接事業費',r.直接],['間接事業費',r.間接],['諸経費',r.諸経費],['総事業費',r.総]].forEach(x=>rows.push([x[0],'',x[1]]));
-  rows.push([]);rows.push(['01_収入 参加者別','100','150','200','250','300']);
-  const cols=[100,150,200,250,300],u={利:S.単価.利用会員入会金,参:S.単価.参加費月額*S.月数,保:S.単価.保険,ア:S.単価.アプリ};
-  const ir=[['正会員入会金',()=>S.会費.正会員入会金],['賛助個人',()=>S.会費.賛助個人],['賛助法人',()=>S.会費.賛助法人],['利用会員入会金',c=>u.利*c],['参加費',c=>u.参*c],['保険',c=>u.保*c],['アプリ',c=>u.ア*c],['市委託料',()=>S.委託料]];
-  ir.forEach(x=>rows.push([x[0],...cols.map(c=>x[1](c))]));
-  rows.push(['歳入計',...cols.map(c=>ir.reduce((a,x)=>a+x[1](c),0))]);
+  const r=calc(S),rows=[];rows.push(['やとみ放課後アカデミー 収支予算書（会計要項）']);
+  rows.push(['対象年度',S.成長[S.対象][0],'参加者',r.参加者,'採用',S.採用,'提出',S.提出,'月数',S.月数]);
+  rows.push([]);rows.push(['科目','予算額']);
+  rows.push(['【収入の部】','']);
+  rows.push(['正会員入会金',S.会費.正会員入会金]);rows.push(['賛助会員会費(個人)',S.会費.賛助個人]);rows.push(['賛助会員会費(法人)',S.会費.賛助法人]);rows.push(['利用会員入会金',r.参加者*S.単価.利用会員入会金]);
+  rows.push(['参加費収入',r.参加者*S.単価.参加費月額*S.月数]);rows.push(['スポーツ安全保険料',r.参加者*S.単価.保険]);rows.push(['アプリ使用料収入',r.参加者*S.単価.アプリ]);
+  rows.push(['市委託料',S.委託料]);rows.push(['協賛金収入',S.協賛]);rows.push(['寄付金収入',S.寄付]);rows.push(['収入合計',r.歳入]);
+  rows.push(['【支出の部】','']);rows.push(['指導者謝金('+S.採用+')',r.謝金]);
+  S.直接.forEach(d=>rows.push([d[0]+'('+d[2]+')',d[1]]));rows.push(['諸経費',r.諸経費]);
+  S.間接.forEach(d=>rows.push([d[0]+'(管理費)',d[1]]));
+  rows.push(['支出合計',r.総]);rows.push(['当期収支差額',r.収支]);rows.push(['返還見込',r.返還]);rows.push(['返還後収支差額',r.返還後]);
+  rows.push([]);rows.push(['成長カーブ']);rows.push(['年度',...S.成長.map(g=>g[0])]);rows.push(['参加者',...S.成長.map(g=>g[1])]);
+  rows.push(['当期収支差額',...S.成長.map(g=>calc(S,g[1]).収支)]);rows.push(['返還後',...S.成長.map(g=>calc(S,g[1]).返還後)]);
   const csv='﻿'+rows.map(rw=>rw.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',')).join('\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yatomi_sim.csv';a.click();URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='yatomi_budget.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
-/* render */
 function render(){
   const r=calc(S);
-  verdict(r,S);kpis(r,S);chartLine(S);
-  document.getElementById('inc-total').textContent=F(r.歳入);
-  document.getElementById('exp-total').textContent=F(r.総);
-  stacked('chartInc','lgdInc',[{n:'参加者連動',v:r.連動,c:'var(--inc1)'},{n:'固定(会費+委託料)',v:r.固定,c:'var(--inc2)'},{n:'協賛金',v:S.協賛,c:'var(--inc3)'},{n:'寄付金',v:S.寄付,c:'var(--inc4)'}]);
-  stacked('chartExp','lgdExp',[{n:'指導員謝金',v:r.謝金,c:'var(--exp1)'},{n:'その他直接費',v:r.非謝金直接,c:'var(--exp2)'},{n:'間接費',v:r.間接,c:'var(--exp3)'},{n:'諸経費',v:r.諸経費,c:'var(--exp4)'}]);
-  chart3(r,S);tbl01(S);tbl02(r,S);tbl03(r,S);tbl04(S);tbl13(r,S);saveHash();
+  verdict(r,S);kpis(r);growthChart(S);
+  donut('donutInc','lgdInc',[
+    {n:'会費収入',v:r.会費収入,c:'var(--inc1)'},{n:'事業収入',v:r.事業収入,c:'var(--inc2)'},
+    {n:'補助金(委託料)',v:S.委託料,c:'var(--inc3)'},{n:'協賛金',v:S.協賛,c:'var(--inc4)'},{n:'寄付金',v:S.寄付,c:'var(--inc5)'}],
+    {t:'収入計',v:(r.歳入/1e6).toFixed(1)+'M'});
+  donut('donutExp','lgdExp',[
+    {n:'事業費・人件費',v:r.人件費,c:'var(--exp1)'},{n:'事業費・その他',v:r.その他事業,c:'var(--exp2)'},
+    {n:'諸経費(30%)',v:r.諸経費,c:'var(--exp3)'},{n:'管理費(間接)',v:r.管理費,c:'var(--exp4)'}],
+    {t:'支出計',v:(r.総/1e6).toFixed(1)+'M'});
+  chart3(r,S);tblBudget(r,S);tbl01(S);tbl02(r,S);tbl04(S);tbl13(r,S);saveHash();
 }
 function syncControls(){
-  document.getElementById('c_p').value=S.参加者;document.getElementById('v_p').textContent=S.参加者;
-  document.getElementById('c_s').value=S.協賛;document.getElementById('v_s').textContent=F(S.協賛);
+  document.getElementById('c_p').value=partOf(S);document.getElementById('v_p').textContent=partOf(S);
   [...document.getElementById('c_adopt').children].forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===S.採用));
 }
 
-/* presets */
-const PRESETS={
-  標準:s=>{Object.assign(s,{参加者:200,採用:'C',提出:'A',月数:7,協賛:0,寄付:0,返還:'全額'});},
-  国庫:s=>{Object.assign(s,{採用:'A',提出:'A'});},
-  協賛:s=>{const need=Math.max(0,s.間接.reduce((a,b)=>a+b[1],0)-(s.会費.正会員入会金+s.会費.賛助個人+s.会費.賛助法人)-s.寄付);s.協賛=need;},
-  平年:s=>{s.月数=12;},
-  満員:s=>{s.参加者=300;}
-};
+const PRESETS={標準:s=>{},国庫:s=>{s.採用='A';s.提出='A';},協賛:s=>{s.協賛=Math.max(0,s.間接.reduce((a,b)=>a+b[1],0)-(s.会費.正会員入会金+s.会費.賛助個人+s.会費.賛助法人)-s.寄付);},平年:s=>{s.月数=12;}};
 document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;
-  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
-  S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
-
-/* primary controls */
-document.getElementById('c_p').addEventListener('input',e=>{S.参加者=+e.target.value;document.getElementById('v_p').textContent=S.参加者;render();});
-document.getElementById('c_s').addEventListener('input',e=>{S.協賛=+e.target.value;document.getElementById('v_s').textContent=F(S.協賛);render();});
+  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
+document.getElementById('c_p').addEventListener('input',e=>{S.成長[S.対象][1]=+e.target.value;document.getElementById('v_p').textContent=+e.target.value;render();});
 document.getElementById('c_adopt').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));S.採用=b.dataset.v;render();});
 
-/* editor input (delegated) */
-document.getElementById('editor').addEventListener('input',e=>{const el=e.target.closest('input[data-p]');if(!el)return;
-  let v=parseFloat(el.value);if(isNaN(v))v=0;setPath(S,el.dataset.p,v);syncControls();render();});
-document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();
-  [...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
+/* growth table: edit + select row */
+document.getElementById('growthTbl').addEventListener('input',e=>{const el=e.target.closest('input[data-gi]');if(!el)return;
+  const i=+el.dataset.gi,k=+el.dataset.gk;S.成長[i][k]=(k===1?(parseFloat(el.value)||0):el.value);syncControls();render();
+  // keep focus
+  setTimeout(()=>{const n=document.querySelector(`#growthTbl input[data-gi="${i}"][data-gk="${k}"]`);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);});
+document.getElementById('growthTbl').addEventListener('click',e=>{if(e.target.closest('input'))return;const tr=e.target.closest('tr[data-i]');if(!tr)return;S.対象=+tr.dataset.i;syncControls();render();});
 
-/* tabs */
+document.getElementById('editor').addEventListener('input',e=>{const el=e.target.closest('input[data-p]');if(!el)return;let v=parseFloat(el.value);if(isNaN(v))v=0;setPath(S,el.dataset.p,v);render();});
+document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();[...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
+
 const tabs=document.getElementById('tabs');
-tabs.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
-  tabs.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===b));
-  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==b.dataset.t);});
+tabs.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;tabs.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===b));document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==b.dataset.t);});
 tabs.addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const l=[...tabs.querySelectorAll('.tab')],i=l.findIndex(t=>t.getAttribute('aria-selected')==='true'),j=(i+(e.key==='ArrowRight'?1:l.length-1))%l.length;l[j].click();l[j].focus();});
-
 document.getElementById('print').addEventListener('click',()=>window.print());
 document.getElementById('csv').addEventListener('click',()=>csvExport());
-document.getElementById('share').addEventListener('click',e=>{saveHash();const u=location.href;
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>toast(e.target,'✓ コピー済'),()=>toast(e.target,'コピー不可'));}
-  else toast(e.target,'URL上部に反映');});
-const root=document.documentElement;
-document.getElementById('tg').addEventListener('click',()=>{const c=root.getAttribute('data-theme');root.setAttribute('data-theme',c?(c==='dark'?'light':'dark'):(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark'));render();});
+document.getElementById('share').addEventListener('click',e=>{saveHash();const u=location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>toast(e.target,'✓ コピー済'),()=>toast(e.target,'コピー不可'));}else toast(e.target,'URL反映');});
+const root=document.documentElement;document.getElementById('tg').addEventListener('click',()=>{const c=root.getAttribute('data-theme');root.setAttribute('data-theme',c?(c==='dark'?'light':'dark'):(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark'));render();});
 
 loadHash();editor();syncControls();render();
 </script>
