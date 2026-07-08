@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { lazy, Suspense } from "react";
 import { LayoutProvider } from "./contexts/layout-context";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -125,7 +125,42 @@ function PageLoader() {
   );
 }
 
+// 助成金対応リスキリングLMS は独立モジュール(LINEツールのサイドバー無しで全画面表示)
+function LmsApp() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/lms" component={LmsAdminDashboard} />
+        <Route path="/lms/roles" component={LmsRoles} />
+        <Route path="/lms/projects" component={LmsProjects} />
+        <Route path="/lms/companies" component={LmsCompanies} />
+        <Route path="/lms/courses" component={LmsCourses} />
+        <Route path="/lms/notifications" component={LmsNotifications} />
+        <Route path="/lms/partners" component={LmsPartners} />
+        <Route path="/lms/checklist" component={LmsChecklist} />
+        <Route path="/lms/advisor" component={LmsAdvisor} />
+        <Route path="/lms/integrations" component={LmsIntegrations} />
+        <Route path="/lms/exports" component={LmsExports} />
+        <Route path="/lms/audit" component={LmsAuditLog} />
+        <Route path="/lms/certificate/:enrollmentId" component={LmsCertificate} />
+        <Route path="/lms/register" component={LmsRegister} />
+        <Route path="/lms/learn" component={LmsLearnEntry} />
+        <Route path="/lms/learn/enrollment/:enrollmentId" component={LmsLearnCourse} />
+        <Route path="/lms/learn/:learnerId" component={LmsLearnHome} />
+      </Switch>
+    </Suspense>
+  );
+}
+
 function App() {
+  const [location] = useLocation();
+  if (location.startsWith("/lms")) {
+    return (
+      <AuthProvider>
+        <LmsApp />
+      </AuthProvider>
+    );
+  }
   return (
     <AuthProvider>
       <LayoutProvider>
