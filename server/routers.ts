@@ -229,6 +229,10 @@ export const appRouter = router({
       }
       return lms.getDashboardStats(input?.companyId, scope);
     }),
+    dashboardDetail: lmsProcedure.query(async ({ ctx }) => {
+      const scope = await lms.accessibleCompanyIdsForIdentity(ctx.lms);
+      return lms.getDashboardDetail(scope);
+    }),
 
     // --- 協業先 (FR-17) ---
     partners: router({

@@ -1775,3 +1775,46 @@ export async function getCourseSummaries() {
   }
   return out;
 }
+
+// ============================================================
+// ダッシュボード詳細(Lカートデザイン: 受講者ステータス一覧 + 会社別比較)
+// ============================================================
+
+export async function getDashboardDetail(scopeCompanyIds?: number[] | null, limit = 12) {
+  const db = await getDb();
+  const empty = { learners: [] as Array<{ id: number; name: string; company: string; progress: number; status: string; due: string | null }>, companyComparison: [] as Array<{ id: number; name: string; avgProgress: number }> };
+  if (!db) return empty;
+
+  let companyRows;
+  if (scopeCompanyIds && scopeCompanyIds.length > 0) companyRows = await db.select().from(companies).where(inArray(companies.id, scopeCompanyIds));
+  else if (scopeCompanyIds === null || scopeCompanyIds === undefined) companyRows = await db.select().from(companies);
+  else return empty;
+  const companyName = new Map(companyRows.map(c => [c.id, c.name] as const));
+  const compIds = companyRows.map(c => c.id);
+  if (compIds.length === 0) return empty;
+
+  const learnerRows = await db.select().from(learners).where(inArray(learners.companyId, compIds));
+  const learnerIds = learnerRows.map(l => l.id);
+  const enrollmentRows = learnerIds.length > 0 ? await db.select().from(enrollments).where(inArray(enrollments.learnerId, learnerIds)) : [];
+
+  // 受講者ステータス一覧(代表的な1割当を表示)
+  const byLearner = new Map<number, typeof enrollmentRows[number]>();
+  for (const e of enrollmentRows) if (!byLearner.has(e.learnerId)) byLearner.set(e.learnerId, e);
+  const list = learnerRows.map(l => {
+    const e = byLearner.get(l.id);
+    return { id: l.id, name: l.name, company: companyName.get(l.companyId) ?? "", progress: e?.progressRate ?? 0, status: e?.status ?? "not_started", due: e?.dueDate ?? null };
+  });
+  // 進捗遅延/未開始/期限切れを上に
+  const priority: Record<string, number> = { expired: 0, not_started: 1, delayed: 1, in_progress: 2, completed: 3 };
+  list.sort((a, b) => (priority[a.status] ?? 2) - (priority[b.status] ?? 2) || a.progress - b.progress);
+
+  // 会社別 平均進捗
+  const companyComparison = companyRows.map(c => {
+    const cl = learnerRows.filter(l => l.companyId === c.id).map(l => l.id);
+    const enr = enrollmentRows.filter(e => cl.includes(e.learnerId));
+    const avg = enr.length === 0 ? 0 : Math.round(enr.reduce((s, e) => s + e.progressRate, 0) / enr.length);
+    return { id: c.id, name: c.name, avgProgress: avg };
+  }).sort((a, b) => b.avgProgress - a.avgProgress);
+
+  return { learners: list.slice(0, limit), companyComparison };
+}
