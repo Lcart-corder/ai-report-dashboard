@@ -1658,7 +1658,7 @@ export async function resolveLmsIdentity(user: { email?: string | null; name?: s
       name,
       email,
       learnerId: role === "employee" ? Number(process.env.LMS_DEV_LEARNER_ID ?? "1") : undefined,
-      projectId: null,
+      projectId: (role === "project_manager" || role === "advisor") && process.env.LMS_DEV_PROJECT_ID ? Number(process.env.LMS_DEV_PROJECT_ID) : null,
       companyId: role === "company_rep" ? Number(process.env.LMS_DEV_COMPANY_ID ?? "1") : null,
       partnerId: role === "partner_admin" ? Number(process.env.LMS_DEV_PARTNER_ID ?? "1") : null,
     };
