@@ -4,19 +4,29 @@ import { LmsLayout } from "./LmsLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ShieldCheck, Building2, CheckCircle2, XCircle, FileText, Printer } from "lucide-react";
+import { ShieldCheck, Building2, CheckCircle2, XCircle, FileText, Printer, GraduationCap, Award } from "lucide-react";
+import { KpiCard } from "./ui";
 
 export default function LmsAdvisor() {
   const overview = trpc.lms.advisor.companyOverview.useQuery();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const selected = overview.data?.find(c => c.id === companyId) ?? overview.data?.[0] ?? null;
+  const all = overview.data ?? [];
+  const totalEnr = all.reduce((s, c) => s + c.enrollments, 0);
+  const totalCompleted = all.reduce((s, c) => s + c.completed, 0);
+  const totalCerts = all.reduce((s, c) => s + c.certificates, 0);
 
   return (
     <LmsLayout title="社労士・申請確認者" description="企業ごとの受講証跡・修了証・申請準備状況を確認し、差戻しコメントを残せます。">
+      <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KpiCard label="確認対象企業" value={all.length} unit="社" icon={Building2} tone="blue" />
+        <KpiCard label="受講登録" value={totalEnr} unit="件" icon={GraduationCap} tone="teal" />
+        <KpiCard label="修了者" value={totalCompleted} unit="名" icon={CheckCircle2} tone="emerald" />
+        <KpiCard label="発行済み修了証" value={totalCerts} unit="件" icon={Award} tone="amber" />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">確認対象企業（{overview.data?.length ?? 0}）</CardTitle></CardHeader>
