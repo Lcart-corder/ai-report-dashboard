@@ -23,11 +23,11 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:14.5px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:980px;margin:0 auto;padding:0 20px 90px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 90px}
   h1,h2,h3,h4{text-wrap:balance;margin:0}
 
   .bar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .bar-in{max-width:980px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bar-in{max-width:1180px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .logo{font-weight:800;font-size:14px;color:var(--accent-ink);white-space:nowrap}
   .logo small{color:var(--faint);font-weight:600;margin-left:5px;font-size:11px}
   .presets{display:flex;gap:5px;flex-wrap:wrap}
@@ -41,6 +41,19 @@
   header.hd{padding:22px 0 2px}
   header.hd .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
   header.hd h1{font-size:19px;margin-top:3px;line-height:1.4;font-weight:700}
+
+  /* ===== split layout: 左=設定入力 / 右=結果 ===== */
+  .split{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;margin-top:16px}
+  .side-left{position:sticky;top:70px;max-height:calc(100vh - 90px);overflow-y:auto;padding-right:4px;
+    display:flex;flex-direction:column;gap:14px}
+  .side-left .hero,.side-left .chart{margin:0}
+  .side-left .heroLbl:first-child{margin-top:0}
+  .side-right{min-width:0}
+  .side-right .kpis{margin-top:0}
+  @media(max-width:900px){
+    .split{grid-template-columns:1fr;gap:16px}
+    .side-left{position:static;max-height:none;overflow-y:visible;padding-right:0}
+  }
 
   /* ===== hero ===== */
   .hero{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px 18px;margin:16px 0}
@@ -167,7 +180,7 @@
   .noteBox{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
   .noteBox b{color:var(--ink)}
   footer{color:var(--faint);font-size:11.5px;margin-top:24px;text-align:center}
-  @media print{.bar,.tabs,.ib,.toggle,.monthScroll,input[type=range],.seg,.subtoggle,.inputGrid{display:none!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
+  @media print{.bar,.tabs,.ib,.toggle,.side-left,input[type=range],.seg,.subtoggle{display:none!important}.split{grid-template-columns:1fr!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
 </style>
 
 <div class="tip" id="tip"></div>
@@ -193,24 +206,35 @@
     <h1>売上・粗利・営業利益を月次で確認。新規事業のため参加者は初月からマックスでは集まらない前提です</h1>
   </header>
 
-  <!-- ===== HERO：月カード＋ランプアップ入力グリッド ===== -->
-  <div class="hero">
-    <div class="heroLbl">① 月ごとの「累計参加者数」を個別に入力（初月は少なく、徐々に増える想定）</div>
-    <div class="monthScroll" id="monthCards"></div>
-    <p class="selMonth" id="selMonth"></p>
+  <div class="split">
+  <aside class="side-left">
+    <!-- ===== 左：設定入力欄（月カード＋ランプアップ入力グリッド＋前提編集） ===== -->
+    <div class="hero">
+      <div class="heroLbl">① 月ごとの「累計参加者数」を個別に入力（初月は少なく、徐々に増える想定）</div>
+      <div class="monthScroll" id="monthCards"></div>
+      <p class="selMonth" id="selMonth"></p>
 
-    <div class="inputGrid">
-      <div class="igTitle">② 開催回数・協賛金も月ごとに個別入力できます</div>
-      <div class="igScroll"><table class="igTable" id="igTable"></table></div>
-      <p class="igNote" id="igWarn"></p>
+      <div class="inputGrid">
+        <div class="igTitle">② 開催回数・協賛金も月ごとに個別入力できます</div>
+        <div class="igScroll"><table class="igTable" id="igTable"></table></div>
+        <p class="igNote" id="igWarn"></p>
+      </div>
+
+      <div class="adoptWrap">
+        <label>③ 指導員への謝金（実際の支払い水準）</label>
+        <div class="seg" id="c_adopt"><button data-v="A">安い(A)</button><button data-v="B">中間(B)</button><button data-v="C" aria-pressed="true">実勢(C)</button></div>
+      </div>
     </div>
 
-    <div class="adoptWrap">
-      <label>③ 指導員への謝金（実際の支払い水準）</label>
-      <div class="seg" id="c_adopt"><button data-v="A">安い(A)</button><button data-v="B">中間(B)</button><button data-v="C" aria-pressed="true">実勢(C)</button></div>
+    <div class="chart">
+      <h3>✎ 前提を編集（詳細設定）</h3>
+      <p class="ch-sub">単価・謝金パラメータ・費目はすべて実勢値に差し替えられます。月次損益・公式予算の両方に反映されます。</p>
+      <div id="editor"></div>
+      <button class="ib" id="edReset" style="margin-top:10px">↺ 既定（資料値）に戻す</button>
     </div>
-  </div>
+  </aside>
 
+  <main class="side-right">
   <div class="kpis" id="kpis"></div>
 
   <div class="chart">
@@ -236,7 +260,6 @@
     <button class="tab" role="tab" aria-selected="false" data-t="tDetail">支出・収入の詳細</button>
     <button class="tab" role="tab" aria-selected="false" data-t="tGov">指導員・行政提出</button>
     <button class="tab" role="tab" aria-selected="false" data-t="t3an">謝金3案の比較</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="tEdit">✎ 前提を編集</button>
     <button class="tab" role="tab" aria-selected="false" data-t="tHelp">？使い方</button>
   </div>
 
@@ -304,13 +327,6 @@
     <div id="chart3"></div>
   </section>
 
-  <section class="panel" id="tEdit" role="tabpanel" hidden>
-    <h2>前提を編集</h2>
-    <p class="cap">単価・謝金パラメータ・費目はすべて実勢値に差し替えられます。月次損益・公式予算の<b>両方</b>に反映されます（費用構造は共通、参加者の増え方だけが別々）。</p>
-    <div id="editor"></div>
-    <button class="ib" id="edReset" style="margin-top:6px">↺ 既定（資料値）に戻す</button>
-  </section>
-
   <section class="panel" id="tHelp" role="tabpanel" hidden>
     <h2>使い方</h2>
     <div class="helpList">
@@ -319,10 +335,12 @@
       <div class="helpItem"><span class="ico">3️⃣</span><span>KPIの「黒字化した月」は、単月の営業利益が初めてプラスになる月です。</span></div>
       <div class="helpItem"><span class="ico">4️⃣</span><span>「行政提出・正式予算」タブは資料①〜④に基づく<b>公式の200人モデル</b>で、月次ランプアップとは独立して常に一定です。行政・理事会向けにはこちらを使ってください。</span></div>
       <div class="helpItem"><span class="ico">5️⃣</span><span>「支出・収入の詳細」「指導員・行政提出」「謝金3案」はすべて公式モデルに基づく参考情報です。</span></div>
-      <div class="helpItem"><span class="ico">6️⃣</span><span>「✎ 前提を編集」で単価・謝金・費目を変更すると、月次損益・公式予算の両方に反映されます。</span></div>
+      <div class="helpItem"><span class="ico">6️⃣</span><span>左側の「✎ 前提を編集」で単価・謝金・費目を変更すると、月次損益・公式予算の両方に反映されます。</span></div>
       <div class="helpItem"><span class="ico">🔗</span><span>「共有」で今の設定のままURLをコピーでき、「CSV」でExcel/スプレッドシートに貼り付けられます。「印刷」で理事会・市提出用のPDFになります。</span></div>
     </div>
   </section>
+  </main>
+  </div>
 
   <footer>月次損益は新規事業のランプアップ試算（参考値）／行政提出・正式予算は資料①〜④に一致（200人・単年度：直接16,039,600・間接744,800・諸経費4,811,880・総21,596,280・歳入24,272,480）</footer>
 </div>
