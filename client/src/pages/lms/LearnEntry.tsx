@@ -24,7 +24,7 @@ export default function LmsLearnEntry() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-col items-center gap-3 text-slate-400">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
           <GraduationCap className="h-6 w-6 animate-pulse" />
         </div>
         <span className="text-sm">読み込み中…</span>

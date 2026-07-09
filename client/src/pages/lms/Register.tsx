@@ -50,7 +50,7 @@ export default function LmsRegister() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
             <GraduationCap className="h-6 w-6" />
           </div>
           <CardTitle className="text-lg">リスキリング研修 初回登録</CardTitle>
@@ -69,7 +69,7 @@ export default function LmsRegister() {
             {keyCode.trim().length >= 6 && (
               <div className="mt-1 text-xs">
                 {validate.isFetching ? <span className="text-slate-400">確認中…</span>
-                  : keyValid ? <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> 有効なキーです</span>
+                  : keyValid ? <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" /> 有効なキーです</span> /* 有効=緑は意味色として維持 */
                   : <span className="flex items-center gap-1 text-rose-500"><XCircle className="h-3.5 w-3.5" /> {keyReason}</span>}
               </div>
             )}
@@ -85,7 +85,7 @@ export default function LmsRegister() {
           </div>
 
           <Button
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700"
             disabled={!keyValid || submit.isPending}
             onClick={() => submit.mutate({ keyCode, name: form.name || undefined, employeeNumber: form.employeeNumber || undefined, department: form.department || undefined })}
           >
