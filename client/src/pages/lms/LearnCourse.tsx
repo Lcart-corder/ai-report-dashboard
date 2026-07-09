@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target } from "lucide-react";
 import { Donut } from "./ui";
+import { LessonPlayer } from "./LessonPlayer";
 
 export default function LmsLearnCourse() {
   const params = useParams();
@@ -33,11 +34,11 @@ export default function LmsLearnCourse() {
     utils.lms.enrollments.progressLogs.invalidate({ enrollmentId });
   };
 
-  const recordProgress = trpc.lms.recordProgress.useMutation({ onSuccess: refreshAll });
   const recordCheck = trpc.lms.recordCheck.useMutation({
-    onSuccess: () => { toast.success("視聴完了を記録しました"); refreshAll(); },
+    onSuccess: () => { toast.success("確認チェックを記録しました"); refreshAll(); },
     onError: e => toast.error(e.message),
   });
+  const [playerLesson, setPlayerLesson] = useState<null | { id: number; title: string; chapter?: string | null; videoUrl?: string | null; durationMinutes: number }>(null);
   const issueCert = trpc.lms.certificates.issue.useMutation({
     onSuccess: () => { toast.success("修了証を発行しました"); utils.lms.certificates.getByEnrollment.invalidate({ enrollmentId }); refreshAll(); },
     onError: e => toast.error(e.message),
@@ -45,12 +46,9 @@ export default function LmsLearnCourse() {
 
   const checkedLessonIds = new Set(checks.data?.map(c => c.lessonId) ?? []);
   const watchedLessonIds = new Set((progressLogs.data ?? []).filter(l => l.completedAt != null).map(l => l.lessonId));
-
-  function watchAndComplete(lessonId: number) {
-    // デモ: 動画を最後まで視聴した想定で視聴率100%・完了を記録
-    recordProgress.mutate({ enrollmentId, lessonId, watchRate: 100, completed: true, lastPositionSec: 0, playbackRate: "1.0" });
-    toast.info("動画を視聴しました（視聴ログを保存）");
-  }
+  // レッスンID → 視聴ログ(続きから再開・視聴率の初期値に使用)
+  const logByLesson = new Map<number, { watchRate: number; lastPositionSec: number; completed: boolean }>();
+  for (const l of progressLogs.data ?? []) logByLesson.set(l.lessonId, { watchRate: l.watchRate, lastPositionSec: l.lastPositionSec ?? 0, completed: l.completedAt != null });
 
   const e = enrollment.data;
   const allLessons = lessons.data ?? [];
@@ -99,21 +97,28 @@ export default function LmsLearnCourse() {
             <CardHeader className="pb-2"><CardTitle className="text-base">チャプター一覧</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {allLessons.map(l => {
+                const log = logByLesson.get(l.id);
                 const watched = watchedLessonIds.has(l.id);
                 const checked = checkedLessonIds.has(l.id);
+                const wr = log?.watchRate ?? 0;
                 return (
                   <div key={l.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <PlayCircle className={`h-5 w-5 shrink-0 ${watched ? "text-blue-600" : "text-slate-300"}`} />
+                    <PlayCircle className={`h-5 w-5 shrink-0 ${watched ? "text-blue-600" : wr > 0 ? "text-blue-400" : "text-slate-300"}`} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{l.chapter ? `${l.chapter} ` : ""}{l.title}</div>
-                      <div className="text-xs text-slate-400">{l.durationMinutes}分</div>
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <span>{l.durationMinutes}分</span>
+                        {wr > 0 && !watched && <span className="text-blue-500">視聴率 {wr}%</span>}
+                      </div>
                     </div>
                     {checked
                       ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">視聴済み</span>
                       : watched
                         ? <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">視聴中</span>
                         : <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800">未視聴</span>}
-                    <Button size="sm" variant="ghost" className="h-7" onClick={() => watchAndComplete(l.id)} disabled={recordProgress.isPending}>視聴</Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-blue-600 hover:text-blue-700" onClick={() => setPlayerLesson(l)}>
+                      <PlayCircle className="mr-1 h-4 w-4" /> {wr > 0 && !watched ? "続きから" : "視聴"}
+                    </Button>
                     <Button size="sm" className="h-7" variant={checked ? "secondary" : "default"} disabled={!watched || checked || recordCheck.isPending} onClick={() => recordCheck.mutate({ enrollmentId, lessonId: l.id, learnerId })}>
                       {checked ? "済" : "視聴完了"}
                     </Button>
@@ -180,6 +185,23 @@ export default function LmsLearnCourse() {
             </CardContent>
           </Card>
         </div>
+
+        {/* レッスン動画プレイヤー */}
+        {playerLesson && (
+          <LessonPlayer
+            open={!!playerLesson}
+            onOpenChange={o => { if (!o) setPlayerLesson(null); }}
+            enrollmentId={enrollmentId}
+            lessonId={playerLesson.id}
+            learnerId={learnerId}
+            title={playerLesson.title}
+            chapter={playerLesson.chapter}
+            videoUrl={playerLesson.videoUrl}
+            durationMinutes={playerLesson.durationMinutes}
+            initial={logByLesson.get(playerLesson.id) ?? { watchRate: 0, lastPositionSec: 0, completed: false }}
+            onProgress={refreshAll}
+          />
+        )}
       </main>
     </div>
   );
