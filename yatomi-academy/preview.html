@@ -138,10 +138,10 @@
   .legendMini i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
 
   /* ===== budget tree (accounting statement, visual) ===== */
-  .btree .row{display:grid;grid-template-columns:1fr 84px 108px;align-items:center;gap:8px;padding:4px 2px;font-size:12.5px}
+  .btree .row{display:grid;grid-template-columns:1fr 66px 42px 108px;align-items:center;gap:6px 8px;padding:4px 2px;font-size:12.5px}
   .btree .row.i1{padding-left:20px;color:var(--muted)}
   .btree .row.grp{background:var(--accent-soft);font-weight:700;padding:7px 8px;border-radius:7px;margin:10px 0 4px;color:var(--accent-ink)}
-  .btree .row.grp .track,.btree .row.grp .val{visibility:hidden}
+  .btree .row.grp .track,.btree .row.grp .pct,.btree .row.grp .val{visibility:hidden}
   .btree .row.sub{font-weight:700;border-top:1px solid var(--line2);margin-top:2px;padding-top:6px}
   .btree .row.total{background:var(--good-soft);font-weight:800;border-radius:7px;padding:6px 8px;margin-top:6px}
   .btree .row.bal{background:var(--warn-soft);font-weight:800;border-radius:7px;padding:6px 8px;margin-top:6px}
@@ -149,8 +149,14 @@
   .btree .fill{height:100%;border-radius:5px;background:var(--accent)}
   .btree .row.total .fill{background:var(--good)}
   .btree .row.bal .fill{background:var(--warn)}
+  .btree .pct{text-align:right;font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--muted)}
   .btree .val{text-align:right;font-variant-numeric:tabular-nums}
   .btree .val.neg{color:var(--bad)}.btree .val.pos{color:var(--good)}
+  .btree .val.editval{padding:0}
+  .btree .val.editval input{width:100%;font-family:var(--sans);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;
+    border:1px solid var(--input-line);background:var(--input);color:var(--ink);border-radius:6px;padding:3px 6px}
+  .btree .val.editval input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+  @media(max-width:520px){.btree .row{grid-template-columns:1fr 44px 100px}.btree .pct{display:none}}
 
   table.sheet{border-collapse:collapse;width:100%;font-size:12.5px;min-width:460px}
   table.sheet th,table.sheet td{border-bottom:1px solid var(--line2);padding:6px 10px;text-align:left;vertical-align:top}
@@ -544,14 +550,14 @@ function tblMid(s){
 function budgetTree(r,s){
   const IN=r.歳入,EXP=r.総;
   const rows=[];
-  const push=(label,val,indent,cls,base)=>rows.push({label,val,indent,cls,base});
+  const push=(label,val,indent,cls,base,editKey)=>rows.push({label,val,indent,cls,base,editKey});
   push('収入の部','',0,'grp');
   push('会費収入',r.会費収入,0,'sub',IN);
   push('内訳：正会員・賛助会員・利用会員の入会金/会費',r.会費収入,1,'',IN);
   push('事業収入（参加費・保険・アプリ）',r.事業収入,0,'sub',IN);
-  push('補助金等収入（市委託料）',s.委託料,0,'sub',IN);
-  push('協賛金収入',s.協賛,0,'sub',IN);
-  push('寄付金収入',s.寄付,0,'sub',IN);
+  push('補助金等収入（市委託料）',s.委託料,0,'sub',IN,'委託料');
+  push('協賛金収入',s.協賛,0,'sub',IN,'協賛');
+  push('寄付金収入',s.寄付,0,'sub',IN,'寄付');
   push('収入合計',IN,0,'total',IN);
   push('支出の部','',0,'grp');
   push('事業費（人件費＋その他＋諸経費）',r.事業費,0,'sub',EXP);
@@ -569,9 +575,13 @@ function budgetTree(r,s){
     const pct=row.base?Math.min(100,Math.abs(row.val)/row.base*100):0;
     const vcls=row.val<0?'neg':(row.cls==='total'||row.cls==='bal'?'pos':'');
     const indentCls=row.indent?' i1':'';
+    const valHtml=row.editKey
+      ? `<div class="val editval"><input type="number" min="0" step="1000" class="btreeEdit" data-p="${row.editKey}" value="${row.val}"></div>`
+      : `<div class="val ${vcls}">${F(row.val)}</div>`;
     return `<div class="row ${row.cls}${indentCls}"><div>${row.label}</div>`+
       `<div class="track"><div class="fill" style="width:${pct.toFixed(1)}%"></div></div>`+
-      `<div class="val ${vcls}">${F(row.val)}</div></div>`;
+      `<div class="pct">${row.base?pct.toFixed(1)+'%':''}</div>`+
+      valHtml+`</div>`;
   }).join('');
   document.getElementById('btree').innerHTML=html;
 }
@@ -728,6 +738,10 @@ document.getElementById('editor').addEventListener('input',e=>{const el=e.target
   if(el.dataset.p==='成長.1.1'){const base200=S.成長[0][1];S.成長=S.成長.map((g,i)=>[g[0],base200+v*i]);}
   else setPath(S,el.dataset.p,v);render();});
 document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();[...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
+
+document.getElementById('btree').addEventListener('input',e=>{const el=e.target.closest('input.btreeEdit');if(!el)return;
+  let v=parseFloat(el.value);if(isNaN(v)||v<0)v=0;setPath(S,el.dataset.p,v);editor();render();
+  setTimeout(()=>{const n=document.querySelector(`#btree input.btreeEdit[data-p="${el.dataset.p}"]`);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);});
 
 /* 上位タブ */
 const tabs=document.getElementById('tabs');
