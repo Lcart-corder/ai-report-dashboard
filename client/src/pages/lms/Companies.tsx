@@ -6,16 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Building2, KeyRound, Plus, Upload, UserPlus, Copy } from "lucide-react";
-
-const STATUS_LABEL: Record<string, string> = {
-  invited: "招待済", active: "受講中", delayed: "遅延", completed: "修了", expired: "期限切れ", suspended: "停止",
-};
+import { StatusPill } from "./ui";
+import { cn } from "@/lib/utils";
 
 export default function LmsCompanies() {
   const utils = trpc.useUtils();
@@ -39,7 +36,7 @@ export default function LmsCompanies() {
         <div className="space-y-4">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-full"><Plus className="mr-1.5 h-4 w-4" /> 導入企業を登録</Button>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700"><Plus className="mr-1.5 h-4 w-4" /> 導入企業を登録</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>導入企業の登録</DialogTitle></DialogHeader>
@@ -79,7 +76,7 @@ export default function LmsCompanies() {
                 <button
                   key={c.id}
                   onClick={() => setSelectedId(c.id)}
-                  className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${companyId === c.id ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950" : "hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                  className={cn("flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors", companyId === c.id ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-800")}
                 >
                   <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
                   <span className="truncate">{c.name}</span>
@@ -147,7 +144,7 @@ function CompanyDetail({ companyId, companyName }: { companyId: number; companyN
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="flex items-center gap-2 text-base"><KeyRound className="h-4 w-4" /> マスターキー（登録制限）</CardTitle>
-          <Button size="sm" onClick={() => issueKey.mutate({ companyId, maxUses: null })} disabled={issueKey.isPending}>
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => issueKey.mutate({ companyId, maxUses: null })} disabled={issueKey.isPending}>
             <Plus className="mr-1 h-4 w-4" /> 発行
           </Button>
         </CardHeader>
@@ -164,7 +161,7 @@ function CompanyDetail({ companyId, companyName }: { companyId: number; companyN
                     <button className="ml-2 text-slate-400 hover:text-slate-600" onClick={() => { navigator.clipboard.writeText(k.keyCode); toast.success("コピーしました"); }}><Copy className="inline h-3.5 w-3.5" /></button>
                   </TableCell>
                   <TableCell className="text-sm">{k.usedCount}{k.maxUses != null ? ` / ${k.maxUses}` : ""}</TableCell>
-                  <TableCell>{k.isActive ? <Badge className="bg-emerald-600">有効</Badge> : <Badge variant="secondary">停止</Badge>}</TableCell>
+                  <TableCell><span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", k.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400")}>{k.isActive ? "有効" : "停止"}</span></TableCell>
                   <TableCell>{k.isActive && <Button size="sm" variant="ghost" onClick={() => deactivateKey.mutate({ id: k.id })}>停止</Button>}</TableCell>
                 </TableRow>
               ))}
@@ -234,8 +231,8 @@ function CompanyDetail({ companyId, companyName }: { companyId: number; companyN
                   <TableCell className="font-medium">{l.name}</TableCell>
                   <TableCell className="text-sm text-slate-500">{l.employeeNumber}</TableCell>
                   <TableCell className="text-sm text-slate-500">{l.department}</TableCell>
-                  <TableCell><Badge variant={l.status === "completed" ? "default" : "secondary"} className={l.status === "completed" ? "bg-emerald-600" : ""}>{STATUS_LABEL[l.status] ?? l.status}</Badge></TableCell>
-                  <TableCell><a className="text-sm text-emerald-600 hover:underline" href={`/lms/learn/${l.id}`}>受講画面を開く →</a></TableCell>
+                  <TableCell><StatusPill status={l.status} /></TableCell>
+                  <TableCell><a className="text-sm text-blue-600 hover:underline" href={`/lms/learn/${l.id}`}>受講画面を開く →</a></TableCell>
                 </TableRow>
               ))}
             </TableBody>

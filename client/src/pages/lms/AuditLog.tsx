@@ -4,7 +4,6 @@ import { LmsLayout } from "./LmsLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -13,6 +12,18 @@ import { Download, Search } from "lucide-react";
 const CATEGORY_LABEL: Record<string, string> = {
   login: "ログイン", progress: "受講", check: "チェック", quiz: "テスト",
   completion: "修了", export: "証跡出力", user_change: "ユーザー変更", admin: "管理者操作",
+};
+
+// 分類ごとの控えめな配色(視認性向上)。
+const CATEGORY_TONE: Record<string, string> = {
+  login: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  progress: "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  check: "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  quiz: "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+  completion: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  export: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  user_change: "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  admin: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
 };
 
 function downloadCsv(filename: string, csv: string) {
@@ -75,7 +86,7 @@ export default function LmsAuditLog() {
               {logs.data?.map(l => (
                 <TableRow key={l.id}>
                   <TableCell className="text-xs text-slate-500">{new Date(l.createdAt).toLocaleString("ja-JP")}</TableCell>
-                  <TableCell><Badge variant="secondary">{CATEGORY_LABEL[l.category] ?? l.category}</Badge></TableCell>
+                  <TableCell><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_TONE[l.category] ?? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{CATEGORY_LABEL[l.category] ?? l.category}</span></TableCell>
                   <TableCell className="font-mono text-xs">{l.action}</TableCell>
                   <TableCell className="text-xs text-slate-500">{l.targetType}{l.targetId != null ? `#${l.targetId}` : ""}</TableCell>
                   <TableCell className="text-xs text-slate-500">{l.actor ?? "system"}</TableCell>

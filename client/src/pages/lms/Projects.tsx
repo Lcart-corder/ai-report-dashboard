@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FolderKanban, Plus, Building2, UserCog, Trash2 } from "lucide-react";
 import { ROLE_LABEL, type RoleCode } from "./roles-data";
+import { cn } from "@/lib/utils";
 
 /** メンバー(管理アカウント)に割当可能なロール(会社員=受講者を除く)。 */
 type MemberRole = Exclude<RoleCode, "employee">;
@@ -35,7 +35,7 @@ export default function LmsProjects() {
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <div className="space-y-4">
           <Dialog>
-            <DialogTrigger asChild><Button className="w-full"><Plus className="mr-1.5 h-4 w-4" /> プロジェクト作成</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className="w-full bg-blue-600 hover:bg-blue-700"><Plus className="mr-1.5 h-4 w-4" /> プロジェクト作成</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>プロジェクト作成</DialogTitle></DialogHeader>
               <div className="space-y-3">
@@ -58,9 +58,9 @@ export default function LmsProjects() {
             <CardContent className="space-y-1 p-2">
               {projects.data?.length === 0 && <p className="p-3 text-sm text-slate-400">プロジェクトがありません。</p>}
               {projects.data?.map(p => (
-                <button key={p.id} onClick={() => setSelectedId(p.id)} className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selected?.id === p.id ? "bg-amber-50 text-amber-800 dark:bg-amber-950" : "hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                <button key={p.id} onClick={() => setSelectedId(p.id)} className={cn("flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm", selected?.id === p.id ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-800")}>
                   <FolderKanban className="h-4 w-4 shrink-0 text-slate-400" /><span className="truncate">{p.name}</span>
-                  {p.status === "closed" && <Badge variant="secondary" className="ml-auto">終了</Badge>}
+                  {p.status === "closed" && <span className="ml-auto inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">終了</span>}
                 </button>
               ))}
             </CardContent>
@@ -192,9 +192,9 @@ function MembersSection() {
               <TableRow key={mm.id}>
                 <TableCell className="font-medium">{mm.name}</TableCell>
                 <TableCell className="text-sm text-slate-500">{mm.email}</TableCell>
-                <TableCell><Badge variant="secondary">{ROLE_LABEL[mm.role as RoleCode] ?? mm.role}</Badge></TableCell>
+                <TableCell><span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{ROLE_LABEL[mm.role as RoleCode] ?? mm.role}</span></TableCell>
                 <TableCell className="text-sm text-slate-500">{scopeLabel(mm.role, mm.projectId, mm.companyId, mm.partnerId)}</TableCell>
-                <TableCell>{mm.isActive ? <Badge className="bg-emerald-600">有効</Badge> : <Badge variant="secondary">停止</Badge>}</TableCell>
+                <TableCell><span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", mm.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400")}>{mm.isActive ? "有効" : "停止"}</span></TableCell>
                 <TableCell><Button size="sm" variant="ghost" onClick={() => del.mutate({ id: mm.id })}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
               </TableRow>
             ))}

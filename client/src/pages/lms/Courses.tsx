@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { BookOpen, Plus, Clock, Download, CheckCircle2, XCircle, Video, FileQuestion } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function downloadCsv(filename: string, csv: string) {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -38,7 +38,7 @@ export default function LmsCourses() {
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           <Dialog>
-            <DialogTrigger asChild><Button className="w-full"><Plus className="mr-1.5 h-4 w-4" /> コースを作成</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className="w-full bg-blue-600 hover:bg-blue-700"><Plus className="mr-1.5 h-4 w-4" /> コースを作成</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>コース作成</DialogTitle></DialogHeader>
               <div className="space-y-3">
@@ -65,7 +65,7 @@ export default function LmsCourses() {
             <CardContent className="space-y-1 p-2">
               {courses.data?.length === 0 && <p className="p-3 text-sm text-slate-400">コースがありません。</p>}
               {courses.data?.map(c => (
-                <button key={c.id} onClick={() => setSelectedId(c.id)} className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${(selected?.id === c.id) ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950" : "hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                <button key={c.id} onClick={() => setSelectedId(c.id)} className={cn("flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm", (selected?.id === c.id) ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "hover:bg-slate-100 dark:hover:bg-slate-800")}>
                   <BookOpen className="h-4 w-4 shrink-0 text-slate-400" /><span className="truncate">{c.name}</span>
                 </button>
               ))}
@@ -123,8 +123,8 @@ function CourseDetail({ courseId, courseName, onExport }: { courseId: number; co
             </div>
             <div className="ml-auto">
               {meets
-                ? <Badge className="bg-emerald-600"><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> 10時間以上（助成金要件を満たす）</Badge>
-                : <Badge variant="destructive"><XCircle className="mr-1 h-3.5 w-3.5" /> 10時間未満</Badge>}
+                ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /> 10時間以上（助成金要件を満たす）</span>
+                : <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-950 dark:text-rose-300"><XCircle className="h-3.5 w-3.5" /> 10時間未満</span>}
             </div>
           </div>
         </CardContent>
@@ -150,7 +150,7 @@ function CourseDetail({ courseId, courseName, onExport }: { courseId: number; co
                   <TableCell className="text-sm text-slate-500">{l.chapter}</TableCell>
                   <TableCell className="font-medium">{l.title}</TableCell>
                   <TableCell>{l.durationMinutes}分</TableCell>
-                  <TableCell>{l.isRequired ? <Badge variant="secondary">必須</Badge> : <span className="text-xs text-slate-400">任意</span>}</TableCell>
+                  <TableCell>{l.isRequired ? <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">必須</span> : <span className="text-xs text-slate-400">任意</span>}</TableCell>
                   <TableCell><Button size="sm" variant="ghost" onClick={() => deleteLesson.mutate({ id: l.id })}>削除</Button></TableCell>
                 </TableRow>
               ))}
@@ -187,7 +187,7 @@ function QuizEditor({ quizId, title, passingScore }: { quizId: number; title: st
     <div className="rounded-lg border p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className="font-medium">{title}</span>
-        <Badge variant="secondary">合格 {passingScore}%</Badge>
+        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">合格 {passingScore}%</span>
         <span className="text-xs text-slate-400">設問 {quiz.data?.questions.length ?? 0}</span>
       </div>
       <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
