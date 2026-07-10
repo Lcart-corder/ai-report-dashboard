@@ -31,7 +31,12 @@ services:
       # 無料マネージドMySQLはTLS必須。require で接続にTLSを付与する
       - key: DATABASE_SSL
         value: require
-      # 認証(Manus OAuth)。ログインを使う場合に設定
+      # ゲスト閲覧モード: ログイン不要でデモを閲覧できる（顧客への内容確認用）。
+      # 起動時にデモデータを自動投入する。本番運用では "0" にするか削除すること
+      # （公開URLを知る誰でも閲覧・操作できるため）。
+      - key: LMS_PREVIEW_MODE
+        value: "1"
+      # 認証(Manus OAuth)。ログインを使う本番運用時に設定（閲覧デモでは不要）
       - key: OAUTH_SERVER_URL
         sync: false
       - key: VITE_APP_ID

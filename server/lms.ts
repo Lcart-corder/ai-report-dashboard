@@ -1283,9 +1283,61 @@ export async function seedDemoData() {
   await createQuizQuestion({ quizId: quiz.id, questionText: "リスキリング研修で証跡として残すべき項目を選べ(複数)", questionType: "multiple", options: ["視聴ログ", "確認チェック", "テスト結果", "私的なメモ"] as never, correctAnswers: [0, 1, 2] as never, points: 2, sortOrder: 2 });
 
   const learner = await createLearner({ companyId: company.id, name: "受講 一郎", email: "learner@example.com", employeeNumber: "EMP001", department: "営業部", status: "active" });
-  await assignEnrollment(learner.id, course.id, null);
+  const firstEnr = await assignEnrollment(learner.id, course.id, seedAddDays(20));
+  await driveDemoProgress(firstEnr.id, learner.id, course.id, quiz.id, 3, {});
+
+  // --- 閲覧デモを見栄えさせる追加データ(複数企業・多様な進捗・修了者) ---
+  const company2 = await createCompany({ partnerId: partner.id, name: "株式会社ミナト製作所", corporateNumber: "2000000000002", contactName: "港 健一", contractStartDate: today() });
+  const company3 = await createCompany({ partnerId: partner.id, name: "さくらリテール株式会社", corporateNumber: "3000000000003", contactName: "桜井 美咲", contractStartDate: today() });
+  await issueMasterKey(company2.id, { maxUses: 50 });
+  await issueMasterKey(company3.id, { maxUses: 50 });
+
+  const roster: Array<{ c: number; name: string; emp: string; dept: string; watched: number; done: boolean; due: string }> = [
+    { c: company.id, name: "田中 亜美", emp: "E1002", dept: "営業部", watched: 4, done: false, due: seedAddDays(12) },
+    { c: company.id, name: "佐藤 拓也", emp: "E1003", dept: "企画部", watched: 6, done: true, due: seedAddDays(28) },
+    { c: company2.id, name: "鈴木 一花", emp: "E2001", dept: "製造部", watched: 2, done: false, due: seedAddDays(5) },
+    { c: company2.id, name: "高橋 健", emp: "E2002", dept: "製造部", watched: 3, done: false, due: seedAddDays(18) },
+    { c: company3.id, name: "渡辺 涼", emp: "E3001", dept: "販売部", watched: 5, done: false, due: seedAddDays(22) },
+    { c: company3.id, name: "山本 美穂", emp: "E3002", dept: "販売部", watched: 6, done: true, due: seedAddDays(26) },
+    { c: company3.id, name: "中村 大和", emp: "E3003", dept: "店舗運営", watched: 0, done: false, due: seedAddDays(40) },
+  ];
+  let idx = 2;
+  for (const r of roster) {
+    const l = await createLearner({ companyId: r.c, name: r.name, email: `demo${idx}@example.co.jp`, employeeNumber: r.emp, department: r.dept, status: "active" });
+    const enr = await assignEnrollment(l.id, course.id, r.due);
+    if (r.done) await driveDemoProgress(enr.id, l.id, course.id, quiz.id, 6, { quiz: true, report: true });
+    else if (r.watched > 0) await driveDemoProgress(enr.id, l.id, course.id, quiz.id, r.watched, {});
+    idx++;
+  }
+
+  // 通知ルール(コミュニケーションセンターの見栄え用)
+  await createNotification({ name: "期限7日前リマインド", trigger: "due_7d", channel: "email", template: "{name}様 受講期限が近づいています。" });
+  await createNotification({ name: "未ログイン3日リマインド", trigger: "no_login_3d", channel: "email", template: "{name}様 学習を始めましょう。" });
+  await createNotification({ name: "修了おめでとうメール", trigger: "completed", channel: "email", template: "{name}様 修了おめでとうございます。" });
 
   return { seeded: true, companyId: company.id, courseId: course.id, learnerId: learner.id, masterKey: key.keyCode };
+}
+
+// seed用: 現在日からn日後のYYYY-MM-DD
+function seedAddDays(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// seed用: 受講証跡を投入(視聴+チェック、任意でテスト合格+レポート提出→修了判定/修了証は自動)
+async function driveDemoProgress(enrollmentId: number, learnerId: number, courseId: number, quizId: number, watchedCount: number, opts: { quiz?: boolean; report?: boolean }) {
+  const db = await getDb();
+  if (!db) return;
+  const lessonRows = await db.select().from(lessons).where(eq(lessons.courseId, courseId));
+  const ids = lessonRows.map(l => l.id);
+  for (let i = 0; i < watchedCount && i < ids.length; i++) {
+    await recordProgress({ enrollmentId, lessonId: ids[i], watchRate: 100, completed: true, lastPositionSec: 6000, playbackRate: "1.0" });
+    await recordCheck(enrollmentId, ids[i], learnerId);
+  }
+  if (opts.quiz) await db.insert(quizResults).values({ quizId, enrollmentId, learnerId, score: 90, passed: true, attemptNumber: 1 });
+  // レポート提出を最後に行うと、その中の再判定で全条件充足→修了+修了証の自動発行が走る
+  if (opts.report) await upsertLearningReport({ enrollmentId, learnerId, whatLearned: "生成AI活用の基礎を理解した", howToApply: "日々の業務改善に活用する", submit: true });
 }
 
 // ============================================================

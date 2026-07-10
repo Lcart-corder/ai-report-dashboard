@@ -31,6 +31,28 @@ function devBypassUser(): User | null {
   };
 }
 
+/**
+ * ゲスト閲覧モード(本番でも有効化できる／既定は無効)。
+ * 環境変数 LMS_PREVIEW_MODE=1 のとき、未認証の訪問者に「運営(閲覧)」の合成ユーザーを付与し、
+ * ログインなしでデモを閲覧できるようにする。顧客への内容確認用の公開デモを想定。
+ * ※ 公開URLを知る誰でもデモデータを閲覧・操作できる。使い捨てのデモDBでのみ使用すること。
+ */
+function previewUser(): User | null {
+  if (process.env.LMS_PREVIEW_MODE !== "1") return null;
+  const now = new Date();
+  return {
+    id: 0,
+    openId: "preview-guest",
+    name: "ゲスト（閲覧）",
+    email: "guest@preview.local",
+    loginMethod: "preview",
+    role: "admin",
+    createdAt: now,
+    updatedAt: now,
+    lastSignedIn: now,
+  };
+}
+
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
@@ -43,9 +65,9 @@ export async function createContext(
     user = null;
   }
 
-  // 未認証かつ開発バイパスが有効なら合成ユーザーを使用(本番無効)
+  // 未認証なら、開発バイパス(本番無効) → ゲスト閲覧モード(本番可) の順にフォールバック
   if (!user) {
-    user = devBypassUser();
+    user = devBypassUser() ?? previewUser();
   }
 
   return {

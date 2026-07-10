@@ -112,6 +112,11 @@ export function LmsLayout({ children, title, description, actions }: { children:
           </div>
         </header>
 
+        {me.data?.email === "guest@preview.local" && (
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-center text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+            これは内容確認用の<strong>閲覧デモ</strong>です。サンプルデータを表示しています（ログイン不要）。
+          </div>
+        )}
         <main className="flex-1 overflow-x-hidden p-6">{children}</main>
       </div>
     </div>

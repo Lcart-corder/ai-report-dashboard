@@ -64,6 +64,16 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // ゲスト閲覧モードでは、デモが空なら初回だけデモデータを自動投入(ベストエフォート)
+  if (process.env.LMS_PREVIEW_MODE === "1") {
+    import("../lms")
+      .then(async lms => {
+        const r = await lms.seedDemoData();
+        if (r.seeded) console.log("[preview] デモデータを自動投入しました");
+      })
+      .catch(err => console.warn("[preview] デモデータ投入をスキップ:", err?.message ?? err));
+  }
 }
 
 startServer().catch(console.error);
