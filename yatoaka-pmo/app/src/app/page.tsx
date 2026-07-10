@@ -1,12 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import {
-  dashboardStats as s,
-  todayTasks,
-  weekMeetings,
-  aiSuggestions,
-  bukaiProgress,
-  recentDocs,
-} from "@/lib/mock";
+import { useEffect, useMemo, useState } from "react";
+import { aiSuggestions, bukaiProgress, recentDocs, todayTasks } from "@/lib/mock";
+import { useStore, childrenOf, effectiveProgress, type Task } from "@/lib/store";
 import {
   Card,
   CardHeader,
@@ -15,7 +12,6 @@ import {
   StatusBadge,
   PriorityBadge,
   Avatar,
-  Tag,
 } from "@/components/ui";
 import { FileIcon } from "@/components/FileIcon";
 import {
@@ -27,18 +23,32 @@ import {
   IconDoc,
 } from "@/components/icons";
 
+/** 試作版の基準日（サンプルデータの期限が 2025 年のため、この日付を「今日」とみなして集計する）。 */
+const APP_TODAY = new Date("2025-05-19");
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function parseDate(v: string): Date | null {
+  if (!v) return null;
+  const d = new Date(v.replace(/\//g, "-"));
+  return isNaN(d.getTime()) ? null : d;
+}
+const isHigh = (t: Task) => t.priority === "高" || t.priority === "最高";
+const isOpen = (t: Task) => t.status !== "完了" && t.status !== "中止";
+
 function StatDonut({
   label,
   value,
   done,
   total,
   color,
+  href,
 }: {
   label: string;
   value: number;
   done: number;
   total: number;
   color?: string;
+  href: string;
 }) {
   return (
     <Card className="p-5">
@@ -58,7 +68,7 @@ function StatDonut({
           </p>
         </div>
       </div>
-      <Link href="/tasks" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600">
+      <Link href={href} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600">
         詳細を見る <IconChevronRight width={15} height={15} />
       </Link>
     </Card>
@@ -68,7 +78,6 @@ function StatDonut({
 function StatCount({
   label,
   value,
-  unit,
   sub,
   subValue,
   tone,
@@ -76,7 +85,6 @@ function StatCount({
 }: {
   label: string;
   value: number;
-  unit: string;
   sub: string;
   subValue: number;
   tone: "blue" | "red";
@@ -95,7 +103,7 @@ function StatCount({
         </div>
         <div>
           <p className="text-3xl font-bold text-slate-800">
-            {value} <span className="text-base font-medium text-slate-400">{unit}</span>
+            {value} <span className="text-base font-medium text-slate-400">件</span>
           </p>
           <p className="mt-1 text-sm text-slate-500">
             {sub} <span className="font-bold text-red-500">{subValue} 件</span>
@@ -116,37 +124,90 @@ const AI_ICON: Record<string, React.ReactNode> = {
 };
 
 export default function DashboardPage() {
+  const store = useStore();
+
+  const stats = useMemo(() => {
+    const leaves = store.tasks.filter((t) => childrenOf(store.tasks, t.id).length === 0);
+    const tops = store.tasks.filter((t) => !t.parentId);
+    const total = leaves.length;
+    const done = leaves.filter((t) => t.status === "完了").length;
+    const overall =
+      tops.length === 0 ? 0 : Math.round(tops.reduce((a, t) => a + effectiveProgress(store.tasks, t), 0) / tops.length);
+    const completion = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    const overdue = leaves.filter((t) => {
+      const d = parseDate(t.due);
+      return d && d < APP_TODAY && isOpen(t);
+    });
+    const thisWeek = leaves.filter((t) => {
+      const d = parseDate(t.due);
+      return d && d >= APP_TODAY && d.getTime() <= APP_TODAY.getTime() + WEEK_MS && isOpen(t);
+    });
+    return {
+      overall,
+      completion,
+      done,
+      total,
+      overdue: overdue.length,
+      overdueHigh: overdue.filter(isHigh).length,
+      week: thisWeek.length,
+      weekHigh: thisWeek.filter(isHigh).length,
+    };
+  }, [store.tasks]);
+
+  // 今日やること: チェック状態をブラウザに保持
+  const [checks, setChecks] = useState<boolean[]>(todayTasks.map(() => false));
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("yatoaka-today-checks");
+      if (raw) setChecks(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const toggle = (i: number) =>
+    setChecks((prev) => {
+      const next = prev.map((v, j) => (j === i ? !v : v));
+      try {
+        localStorage.setItem("yatoaka-today-checks", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+
+  const upcomingMeetings = store.meetings.slice(0, 3);
+
   return (
     <div className="mx-auto max-w-[1500px] p-4 md:p-6">
       <div className="mb-5 flex items-center gap-3">
         <h1 className="text-xl font-bold text-slate-800">ダッシュボード（ホーム）</h1>
+        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-400">
+          基準日 2025/05/19（試作）
+        </span>
       </div>
 
-      {/* KPI row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatDonut label="全体進捗率" value={s.overallProgress} done={s.overallDone} total={s.overallTotal} />
-        <StatDonut label="イベント部会進捗率" value={s.eventProgress} done={s.eventDone} total={s.eventTotal} color="#2563eb" />
+        <StatDonut label="全体進捗率" value={stats.overall} done={stats.done} total={stats.total} href="/tasks" />
+        <StatDonut label="タスク完了率" value={stats.completion} done={stats.done} total={stats.total} color="#2563eb" href="/tasks" />
         <StatCount
           label="今週の期限タスク数"
-          value={s.dueThisWeek}
-          unit="件"
+          value={stats.week}
           sub="うち高優先度"
-          subValue={s.dueThisWeekHigh}
+          subValue={stats.weekHigh}
           tone="blue"
           icon={<IconCalendar width={26} height={26} />}
         />
         <StatCount
           label="期限超過タスク数"
-          value={s.overdue}
-          unit="件"
+          value={stats.overdue}
           sub="うち高優先度"
-          subValue={s.overdueHigh}
+          subValue={stats.overdueHigh}
           tone="red"
           icon={<IconAlert width={26} height={26} />}
         />
       </div>
 
-      {/* middle row */}
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* 今日やること */}
         <Card className="pb-4">
@@ -154,10 +215,17 @@ export default function DashboardPage() {
           <div className="mt-3 divide-y divide-slate-100">
             {todayTasks.map((t, i) => (
               <div key={i} className="flex items-center gap-3 px-5 py-2.5">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300"
+                  checked={checks[i] ?? false}
+                  onChange={() => toggle(i)}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-slate-800">{t.title}</span>
+                    <span className={`truncate text-sm font-medium ${checks[i] ? "text-slate-400 line-through" : "text-slate-800"}`}>
+                      {t.title}
+                    </span>
                     <PriorityBadge level={t.priority} />
                   </div>
                   <div className="text-xs text-slate-400">{t.bukai}</div>
@@ -175,24 +243,27 @@ export default function DashboardPage() {
           </Link>
         </Card>
 
-        {/* 今週の会議 */}
+        {/* 今週の会議予定（ストア連動） */}
         <Card className="pb-4">
-          <CardHeader title="今週の会議予定" />
+          <CardHeader
+            title="今週の会議予定"
+            action={<span className="text-xs text-slate-400">{store.meetings.length} 件</span>}
+          />
           <div className="mt-3 space-y-1 px-5">
-            {weekMeetings.map((m, i) => (
-              <div key={i} className="border-b border-slate-100 py-3 last:border-0">
+            {upcomingMeetings.map((m) => (
+              <div key={m.id} className="border-b border-slate-100 py-3 last:border-0">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">{m.date}</span>
-                  <StatusBadge status={m.tag} />
-                </div>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-sm text-slate-800">{m.title}</span>
+                  <span className="text-sm font-semibold text-slate-800">{m.title}</span>
+                  <StatusBadge status={m.status} />
                 </div>
                 <div className="text-xs text-slate-400">
-                  {m.time}　{m.place}
+                  {m.date}　{m.place}
                 </div>
               </div>
             ))}
+            {upcomingMeetings.length === 0 && (
+              <p className="py-6 text-center text-sm text-slate-400">会議予定はありません</p>
+            )}
           </div>
           <Link href="/meetings" className="mt-2 flex items-center gap-1 px-5 text-sm font-medium text-blue-600">
             すべての会議予定を見る <IconChevronRight width={15} height={15} />
@@ -232,7 +303,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* bottom row */}
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="pb-4">
           <CardHeader title="部会別進捗状況" />
