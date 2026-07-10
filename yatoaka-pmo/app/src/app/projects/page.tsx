@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import type { Project, ProjectStatus, Priority } from "@/lib/mock";
+import type { Project, ProjectStatus } from "@/lib/mock";
 import {
   Card,
   PageTitle,
@@ -14,26 +14,10 @@ import {
   PrimaryButton,
   GhostButton,
 } from "@/components/ui";
-import { Modal } from "@/components/Modal";
-import { Field, Input, FormSelect } from "@/components/forms";
+import { ProjectFormModal, emptyProject } from "@/components/ProjectFormModal";
 import { IconPlus, IconDownload, IconDots, IconSettings, IconEdit, IconTrash } from "@/components/icons";
 
 const STATUSES: ProjectStatus[] = ["未着手", "計画中", "進行中", "保留", "完了", "中止"];
-const PRIORITIES: Priority[] = ["最高", "高", "中", "低"];
-
-const emptyProject = (id: string): Project => ({
-  id,
-  name: "",
-  bukai: "イベント部会",
-  owner: "",
-  start: "",
-  due: "",
-  progress: 0,
-  priority: "中",
-  status: "計画中",
-  meetings: 0,
-  docs: 0,
-});
 
 export default function ProjectsPage() {
   const store = useStore();
@@ -57,15 +41,6 @@ export default function ProjectsPage() {
   const openEdit = (p: Project) => {
     setMenuOpen(null);
     setEditing({ ...p });
-  };
-
-  const save = () => {
-    if (!editing) return;
-    if (!editing.name.trim()) return;
-    const exists = store.projects.some((p) => p.id === editing.id);
-    if (exists) store.updateProject(editing);
-    else store.addProject(editing);
-    setEditing(null);
   };
 
   return (
@@ -224,73 +199,7 @@ export default function ProjectsPage() {
       </Card>
 
       {/* Create / Edit modal */}
-      <Modal
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        title={editing && store.projects.some((p) => p.id === editing.id) ? "プロジェクトを編集" : "プロジェクトを作成"}
-        footer={
-          <>
-            <GhostButton onClick={() => setEditing(null)}>キャンセル</GhostButton>
-            <PrimaryButton onClick={save}>保存</PrimaryButton>
-          </>
-        }
-      >
-        {editing && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="プロジェクト名 *" className="sm:col-span-2">
-              <Input
-                value={editing.name}
-                onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                placeholder="例：キックオフイベント運営"
-              />
-            </Field>
-            <Field label="所属部会">
-              <Input value={editing.bukai} onChange={(e) => setEditing({ ...editing, bukai: e.target.value })} />
-            </Field>
-            <Field label="責任者">
-              <Input value={editing.owner} onChange={(e) => setEditing({ ...editing, owner: e.target.value })} placeholder="例：山田 太郎" />
-            </Field>
-            <Field label="開始日">
-              <Input type="date" value={toDateInput(editing.start)} onChange={(e) => setEditing({ ...editing, start: fromDateInput(e.target.value) })} />
-            </Field>
-            <Field label="期限">
-              <Input type="date" value={toDateInput(editing.due)} onChange={(e) => setEditing({ ...editing, due: fromDateInput(e.target.value) })} />
-            </Field>
-            <Field label="優先度">
-              <FormSelect value={editing.priority} onChange={(e) => setEditing({ ...editing, priority: e.target.value as Priority })}>
-                {PRIORITIES.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </FormSelect>
-            </Field>
-            <Field label="ステータス">
-              <FormSelect value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value as ProjectStatus })}>
-                {STATUSES.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </FormSelect>
-            </Field>
-            <Field label={`進捗率（${editing.progress}%）`} className="sm:col-span-2">
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={editing.progress}
-                onChange={(e) => setEditing({ ...editing, progress: Number(e.target.value) })}
-                className="w-full accent-blue-600"
-              />
-            </Field>
-          </div>
-        )}
-      </Modal>
+      <ProjectFormModal open={!!editing} initial={editing} onClose={() => setEditing(null)} />
     </div>
   );
-}
-
-/* date helpers: mock uses YYYY/MM/DD, <input type=date> uses YYYY-MM-DD */
-function toDateInput(v: string): string {
-  return v ? v.replace(/\//g, "-") : "";
-}
-function fromDateInput(v: string): string {
-  return v ? v.replace(/-/g, "/") : "";
 }
