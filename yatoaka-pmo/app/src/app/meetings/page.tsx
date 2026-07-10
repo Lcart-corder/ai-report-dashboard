@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useStore, type Meeting } from "@/lib/store";
+import { useStore, type Meeting, type Task } from "@/lib/store";
 import { meetingDetail as m } from "@/lib/mock";
+import type { Priority } from "@/lib/mock";
+import { useToast } from "@/components/Toast";
 import {
   Card,
   StatusBadge,
@@ -28,6 +30,7 @@ import {
   IconThumbUp,
   IconThumbDown,
   IconChevronDown,
+  IconCheck,
 } from "@/components/icons";
 
 const FILTERS = ["すべて", "予定", "開催中", "完了"] as const;
@@ -45,6 +48,7 @@ const emptyMeeting = (id: string): Meeting => ({
 
 export default function MeetingsPage() {
   const store = useStore();
+  const toast = useToast();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("すべて");
   const [selectedId, setSelectedId] = useState(store.meetings[0]?.id ?? "");
   const [query, setQuery] = useState("");
@@ -281,7 +285,12 @@ export default function MeetingsPage() {
             </span>
           </div>
 
-          <AiBlock title="次回アジェンダ案" reason={m.aiNextAgenda.reason} action="アジェンダに追加">
+          <AiBlock
+            title="次回アジェンダ案"
+            reason={m.aiNextAgenda.reason}
+            action="アジェンダに追加"
+            onAction={() => toast("次回アジェンダに追加しました")}
+          >
             <ol className="list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
               {m.aiNextAgenda.items.map((a) => (
                 <li key={a}>{a}</li>
@@ -289,20 +298,14 @@ export default function MeetingsPage() {
             </ol>
           </AiBlock>
 
-          <AiBlock title="未完了タスク案" reason={m.aiIncompleteTasks.reason} action="タスクに登録">
-            <div className="space-y-2">
-              {m.aiIncompleteTasks.items.map((it) => (
-                <div key={it.task} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300" />
-                  <span className="flex-1 text-slate-700">{it.task}</span>
-                  <PriorityBadge level={it.priority} />
-                  <span className="whitespace-nowrap text-xs text-red-500">{it.note}</span>
-                </div>
-              ))}
-            </div>
-          </AiBlock>
+          <IncompleteTasksBlock />
 
-          <AiBlock title="確認すべき論点" reason={m.aiCheckpoints.reason} action="論点を共有">
+          <AiBlock
+            title="確認すべき論点"
+            reason={m.aiCheckpoints.reason}
+            action="論点を共有"
+            onAction={() => toast("論点を共有しました")}
+          >
             <ul className="space-y-1.5 text-sm text-slate-600">
               {m.aiCheckpoints.items.map((c) => (
                 <li key={c} className="flex gap-2">
@@ -376,11 +379,13 @@ function AiBlock({
   title,
   reason,
   action,
+  onAction,
   children,
 }: {
   title: string;
   reason: string;
   action: string;
+  onAction?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -389,7 +394,10 @@ function AiBlock({
       <p className="mt-0.5 text-xs text-violet-500">提案理由：{reason}</p>
       <div className="mt-3">{children}</div>
       <div className="mt-3 flex items-center justify-between">
-        <button className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50">
+        <button
+          onClick={onAction}
+          className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+        >
           {action}
         </button>
         <div className="flex gap-1 text-slate-300">
@@ -400,6 +408,80 @@ function AiBlock({
             <IconThumbDown width={15} height={15} />
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** AIの未完了タスク案を確認し、選択したものをWBSへ登録する。 */
+function IncompleteTasksBlock() {
+  const store = useStore();
+  const toast = useToast();
+  const [chk, setChk] = useState<boolean[]>(m.aiIncompleteTasks.items.map(() => true));
+  const [done, setDone] = useState(false);
+
+  const register = () => {
+    const targets = m.aiIncompleteTasks.items.filter((_, i) => chk[i]);
+    if (targets.length === 0) {
+      toast("登録するタスクを選択してください");
+      return;
+    }
+    const tops = store.tasks.filter((t) => !t.parentId);
+    let base = tops.reduce((mx, t) => Math.max(mx, Number(t.code) || 0), 0);
+    targets.forEach((it) => {
+      base += 1;
+      const task: Task = {
+        id: store.newId("t"),
+        code: String(base),
+        name: it.task,
+        level: 0,
+        owner: "",
+        start: "",
+        due: "",
+        priority: it.priority as Priority,
+        status: "未着手",
+        progress: 0,
+        comments: 0,
+      };
+      store.addTask(task);
+    });
+    setDone(true);
+    toast(`${targets.length}件のタスクをWBSに登録しました`);
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border border-slate-100 p-4">
+      <h4 className="text-sm font-bold text-slate-800">未完了タスク案</h4>
+      <p className="mt-0.5 text-xs text-violet-500">提案理由：{m.aiIncompleteTasks.reason}</p>
+      <div className="mt-3 space-y-2">
+        {m.aiIncompleteTasks.items.map((it, i) => (
+          <div key={it.task} className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 rounded border-slate-300"
+              checked={chk[i]}
+              disabled={done}
+              onChange={(e) => setChk((prev) => prev.map((v, j) => (j === i ? e.target.checked : v)))}
+            />
+            <span className="flex-1 text-slate-700">{it.task}</span>
+            <PriorityBadge level={it.priority} />
+            <span className="whitespace-nowrap text-xs text-red-500">{it.note}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3">
+        {done ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700">
+            <IconCheck width={13} height={13} /> WBSへ登録済み
+          </span>
+        ) : (
+          <button
+            onClick={register}
+            className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+          >
+            タスクに登録
+          </button>
+        )}
       </div>
     </div>
   );
