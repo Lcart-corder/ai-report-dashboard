@@ -175,7 +175,7 @@ export default function LmsLearnCourse() {
                 </div>
               ) : (
                 <div className="text-sm text-slate-500">
-                  <p>全レッスンの視聴完了・確認チェック・テスト合格・レポート提出が揃うと発行できます。</p>
+                  <p>全レッスンの視聴完了・確認チェック・テスト合格・レポート提出が揃うと<strong>自動的に発行</strong>されます。</p>
                   <Button className="mt-3 bg-blue-600 hover:bg-blue-700" onClick={() => issueCert.mutate({ enrollmentId })} disabled={issueCert.isPending || e?.status !== "completed"}>
                     <Award className="mr-1.5 h-4 w-4" /> 修了証を発行
                   </Button>

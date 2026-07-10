@@ -560,9 +560,11 @@ export async function recalcEnrollment(enrollmentId: number) {
 
   await db.update(enrollments).set(setValues).where(eq(enrollments.id, enrollmentId));
 
-  // 受講者ステータス連動
+  // 受講者ステータス連動 + 修了証の自動発行
   if (isCompleted) {
     await db.update(learners).set({ status: "completed" }).where(eq(learners.id, enrollment.learnerId));
+    // 全条件を満たした時点で修了証を自動発行(冪等)。発行失敗は進捗記録を妨げない。
+    try { await createCertificateIfAbsent(enrollmentId); } catch { /* ベストエフォート */ }
   }
 
   return {
@@ -803,12 +805,23 @@ export async function reviewLearningReport(reportId: number, action: "approve" |
 // ============================================================
 
 export async function issueCertificate(enrollmentId: number, issuer = "Lカート運営事務局") {
-  const db = await getDb();
-  if (!db) throw new Error(REQUIRE_DB);
   const enrollment = await getEnrollmentById(enrollmentId);
   if (!enrollment) throw new Error("enrollment not found");
   const recalc = await recalcEnrollment(enrollmentId);
   if (!recalc.isCompleted) throw new Error("修了条件を満たしていないため修了証を発行できません");
+  return createCertificateIfAbsent(enrollmentId, issuer);
+}
+
+/**
+ * 修了証レコードを作成する(既に存在すれば既存を返す=冪等)。
+ * 修了判定(recalcEnrollment)は呼ばない — 自動発行時の再帰を避けるため、
+ * 呼び出し側が「修了済み」であることを保証すること。
+ */
+async function createCertificateIfAbsent(enrollmentId: number, issuer = "Lカート運営事務局") {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const enrollment = await getEnrollmentById(enrollmentId);
+  if (!enrollment) throw new Error("enrollment not found");
 
   const existing = await db.select().from(certificates).where(eq(certificates.enrollmentId, enrollmentId)).limit(1);
   if (existing[0]) return existing[0];
