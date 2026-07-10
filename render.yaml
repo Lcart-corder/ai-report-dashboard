@@ -19,7 +19,10 @@ services:
     runtime: node
     plan: free
     # 環境変数をビルドに反映するため、VITE_ 変数はビルド時にも読まれる
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    # 注意: corepack enable は呼ばない。Renderのビルドイメージには /usr/bin/pnpm が
+    # 読み取り専用ファイルシステム上に既に用意されており、corepack enable が
+    # それを上書きしようとして EROFS で失敗するため。
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     # 起動前にスキーマを反映(冪等・空DB/既存DBどちらでも安全)してからアプリを起動
     startCommand: node scripts/db-push.mjs --force && pnpm start
     healthCheckPath: /healthz
