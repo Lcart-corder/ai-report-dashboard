@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { wbsRows, wbsDetail } from "@/lib/mock";
+import { useMemo, useState } from "react";
+import { useStore, effectiveProgress, childrenOf, type Task } from "@/lib/store";
+import type { Priority } from "@/lib/mock";
 import {
   Card,
   ProgressBar,
@@ -12,6 +13,8 @@ import {
   PrimaryButton,
   GhostButton,
 } from "@/components/ui";
+import { Modal } from "@/components/Modal";
+import { Field, Input, FormSelect } from "@/components/forms";
 import {
   IconPlus,
   IconDownload,
@@ -22,14 +25,45 @@ import {
   IconChat,
   IconFolder,
   IconChevronDown,
-  IconChevronRight,
+  IconTrash,
 } from "@/components/icons";
 
 const TABS = ["一覧", "ガント", "担当者別"] as const;
+const PRIORITIES: Priority[] = ["最高", "高", "中", "低"];
+const STATUSES = ["未着手", "対応中", "確認待ち", "承認待ち", "保留", "完了", "中止"];
+
+function segCompare(a: string, b: string) {
+  const as = a.split(".").map(Number);
+  const bs = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(as.length, bs.length); i++) {
+    const d = (as[i] ?? -1) - (bs[i] ?? -1);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
 
 export default function TasksPage() {
+  const store = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("一覧");
-  const [selected, setSelected] = useState("1.1.2");
+  const [selectedId, setSelectedId] = useState("1.1.2");
+  const [statusFilter, setStatusFilter] = useState("すべてのステータス");
+  const [priorityFilter, setPriorityFilter] = useState("優先度すべて");
+  const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const ordered = useMemo(
+    () => [...store.tasks].sort((a, b) => segCompare(a.code, b.code)),
+    [store.tasks]
+  );
+
+  const visible = ordered.filter(
+    (t) =>
+      (statusFilter === "すべてのステータス" || t.status === statusFilter) &&
+      (priorityFilter === "優先度すべて" || t.priority === priorityFilter) &&
+      (query === "" || t.name.includes(query) || t.code.includes(query))
+  );
+
+  const selected = store.tasks.find((t) => t.id === selectedId) ?? ordered[0];
 
   return (
     <div className="mx-auto max-w-[1600px] p-4 md:p-6">
@@ -47,13 +81,12 @@ export default function TasksPage() {
           <GhostButton>
             <IconDownload width={16} height={16} /> エクスポート
           </GhostButton>
-          <PrimaryButton>
+          <PrimaryButton onClick={() => setAdding(true)}>
             <IconPlus width={16} height={16} /> タスク追加
           </PrimaryButton>
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="mb-4 inline-flex rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
           <button
@@ -69,25 +102,23 @@ export default function TasksPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
-        {/* main table */}
         <Card className="overflow-hidden">
-          {/* filter */}
           <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4">
-            <Select className="!h-10 !w-40">
-              <option>すべてのステータス</option>
-              <option>進行中</option>
-              <option>未着手</option>
-              <option>完了</option>
+            <Select className="!h-10 !w-40" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              {["すべてのステータス", ...STATUSES].map((s) => (
+                <option key={s}>{s}</option>
+              ))}
             </Select>
-            <Select className="!h-10 !w-36">
-              <option>優先度すべて</option>
-              <option>高</option>
-              <option>中</option>
-              <option>低</option>
+            <Select className="!h-10 !w-36" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+              {["優先度すべて", ...PRIORITIES].map((s) => (
+                <option key={s}>{s}</option>
+              ))}
             </Select>
             <div className="relative min-w-[200px] flex-1">
               <IconSearch width={16} height={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="タスク名で検索"
                 className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-blue-400"
               />
@@ -117,170 +148,319 @@ export default function TasksPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {wbsRows.map((r) => (
-                    <tr
-                      key={r.code}
-                      onClick={() => setSelected(r.code)}
-                      className={`cursor-pointer border-b border-slate-50 hover:bg-blue-50/40 ${
-                        selected === r.code ? "bg-blue-50/60" : ""
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <div
-                          className="flex items-center gap-1.5"
-                          style={{ paddingLeft: r.level * 20 }}
-                        >
-                          {r.level < 2 ? (
-                            <IconChevronDown width={14} height={14} className="text-slate-400" />
-                          ) : (
-                            <span className="w-3.5 text-slate-300">└</span>
-                          )}
-                          {r.level < 2 && <IconFolder width={15} height={15} className="text-amber-500" />}
-                          <span className={`${r.level === 0 ? "font-semibold" : ""} text-slate-700`}>
-                            {r.code} {r.name}
+                  {visible.map((r) => {
+                    const level = r.code.split(".").length - 1;
+                    const isParent = childrenOf(store.tasks, r.id).length > 0;
+                    const prog = effectiveProgress(store.tasks, r);
+                    return (
+                      <tr
+                        key={r.id}
+                        onClick={() => setSelectedId(r.id)}
+                        className={`cursor-pointer border-b border-slate-50 hover:bg-blue-50/40 ${
+                          selected?.id === r.id ? "bg-blue-50/60" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5" style={{ paddingLeft: level * 20 }}>
+                            {isParent ? (
+                              <IconChevronDown width={14} height={14} className="text-slate-400" />
+                            ) : (
+                              <span className="w-3.5 text-slate-300">└</span>
+                            )}
+                            {isParent && <IconFolder width={15} height={15} className="text-amber-500" />}
+                            <span className={`${level === 0 ? "font-semibold" : ""} text-slate-700`}>
+                              {r.code} {r.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="flex items-center gap-1.5">
+                            <Avatar name={r.owner || "?"} size={22} />
+                            <span className="whitespace-nowrap text-slate-600">{r.owner || "—"}</span>
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="flex items-center gap-1.5">
-                          <Avatar name={r.owner} size={22} />
-                          <span className="whitespace-nowrap text-slate-600">{r.owner}</span>
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-slate-500">{r.start}</td>
-                      <td className="px-3 py-3 text-slate-500">{r.due}</td>
-                      <td className="px-3 py-3">
-                        <PriorityBadge level={r.priority} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <StatusBadge status={r.status} />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-8 text-xs font-semibold text-slate-600">{r.progress}%</span>
-                          <ProgressBar value={r.progress} className="w-16" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-slate-400">
-                          <IconChat width={14} height={14} /> {r.comments}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-blue-600">{r.depends ?? "-"}</td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-3 py-3 text-slate-500">{r.start || "—"}</td>
+                        <td className="px-3 py-3 text-slate-500">{r.due || "—"}</td>
+                        <td className="px-3 py-3">
+                          <PriorityBadge level={r.priority} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <StatusBadge status={r.status} />
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-8 text-xs font-semibold text-slate-600">{prog}%</span>
+                            <ProgressBar value={prog} className="w-16" />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span className="inline-flex items-center gap-1 text-slate-400">
+                            <IconChat width={14} height={14} /> {r.comments}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-blue-600">{r.depends ?? "-"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
 
-          {tab === "ガント" && <GanttView />}
-          {tab === "担当者別" && <AssigneeView />}
+          {tab === "ガント" && <GanttView tasks={ordered} />}
+          {tab === "担当者別" && <AssigneeView tasks={ordered} allTasks={store.tasks} />}
 
           <div className="flex items-center justify-between px-4 py-3 text-sm text-slate-500">
-            <span>全 {wbsRows.length} 件中 1 - {wbsRows.length} 件を表示</span>
-            <div className="flex items-center gap-2">
-              <button className="rounded-lg border border-slate-200 px-2.5 py-1 hover:bg-slate-50">‹</button>
-              <button className="rounded-lg bg-blue-600 px-3 py-1 font-medium text-white">1</button>
-              <button className="rounded-lg border border-slate-200 px-2.5 py-1 hover:bg-slate-50">›</button>
-            </div>
+            <span>全 {visible.length} 件を表示</span>
           </div>
         </Card>
 
-        {/* detail panel */}
-        <TaskDetail />
+        {selected ? (
+          <TaskDetail key={selected.id} task={selected} />
+        ) : (
+          <Card className="p-5 text-sm text-slate-400">タスクを選択してください</Card>
+        )}
       </div>
+
+      <AddTaskModal open={adding} onClose={() => setAdding(false)} onCreated={(id) => setSelectedId(id)} />
     </div>
   );
 }
 
-function TaskDetail() {
-  const d = wbsDetail;
+/* ---------------- Editable detail ---------------- */
+function TaskDetail({ task }: { task: Task }) {
+  const store = useStore();
+  const isParent = childrenOf(store.tasks, task.id).length > 0;
+  const prog = effectiveProgress(store.tasks, task);
+
+  const update = (patch: Partial<Task>) => store.updateTask({ ...task, ...patch });
+
   return (
     <Card className="h-fit p-5">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-slate-800">タスク詳細</h3>
+        <button
+          onClick={() => store.deleteTask(task.id)}
+          className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+        >
+          <IconTrash width={14} height={14} /> 削除
+        </button>
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <IconFolder width={18} height={18} className="text-amber-500" />
-          <span className="font-semibold text-slate-800">{d.code} {d.name}</span>
-        </div>
-        <StatusBadge status={d.status} />
-      </div>
-      <p className="mt-1 text-xs text-slate-400">WBS</p>
-      <p className="text-xs text-slate-500">{d.path}</p>
 
-      <dl className="mt-4 space-y-3 text-sm">
+      <div className="mt-4 flex items-center gap-2">
+        <IconFolder width={18} height={18} className="text-amber-500" />
+        <span className="font-semibold text-slate-800">{task.code}</span>
+      </div>
+
+      <div className="mt-4 space-y-3 text-sm">
+        <Field label="タスク名">
+          <Input value={task.name} onChange={(e) => update({ name: e.target.value })} />
+        </Field>
         <Field label="担当者">
-          <span className="flex items-center gap-1.5">
-            <Avatar name={d.owner} size={22} /> {d.owner}
-          </span>
+          <Input value={task.owner} onChange={(e) => update({ owner: e.target.value })} />
         </Field>
-        <Field label="開始日">{d.start}</Field>
-        <Field label="期限">
-          <span>
-            {d.due} <span className="font-medium text-red-500">{d.dueLeft}</span>
-          </span>
-        </Field>
-        <Field label="優先度">
-          <PriorityBadge level={d.priority} />
-        </Field>
-        <Field label="進捗率">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600">{d.progress}%</span>
-            <ProgressBar value={d.progress} className="w-24" />
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="開始日">
+            <Input type="date" value={task.start.replace(/\//g, "-")} onChange={(e) => update({ start: e.target.value.replace(/-/g, "/") })} />
+          </Field>
+          <Field label="期限">
+            <Input type="date" value={task.due.replace(/\//g, "-")} onChange={(e) => update({ due: e.target.value.replace(/-/g, "/") })} />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="優先度">
+            <FormSelect value={task.priority} onChange={(e) => update({ priority: e.target.value as Priority })}>
+              {PRIORITIES.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </FormSelect>
+          </Field>
+          <Field label="ステータス">
+            <FormSelect value={task.status} onChange={(e) => update({ status: e.target.value })}>
+              {STATUSES.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </FormSelect>
+          </Field>
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>進捗率</span>
+            <span className="font-bold text-slate-700">{prog}%</span>
           </div>
-        </Field>
-        <Field label="依存タスク">{d.depends}</Field>
-        <Field label="工数(予定/実績)">{d.effort}</Field>
-      </dl>
+          {isParent ? (
+            <>
+              <ProgressBar value={prog} />
+              <p className="mt-1 text-xs text-slate-400">子タスクから自動計算されます</p>
+            </>
+          ) : (
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={task.progress}
+              onChange={(e) => update({ progress: Number(e.target.value) })}
+              className="w-full accent-blue-600"
+            />
+          )}
+        </div>
+      </div>
 
       <div className="mt-4 border-t border-slate-100 pt-4">
         <p className="text-sm font-semibold text-slate-600">説明</p>
-        <p className="mt-1 text-sm leading-relaxed text-slate-600">{d.desc}</p>
-      </div>
-
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <p className="text-sm font-semibold text-slate-600">コメント（{d.comments.length}）</p>
-        {d.comments.map((c, i) => (
-          <div key={i} className="mt-3 flex gap-2">
-            <Avatar name={c.author} size={26} />
-            <div>
-              <p className="text-xs text-slate-400">
-                <span className="font-semibold text-slate-600">{c.author}</span> {c.at}
-              </p>
-              <p className="text-sm text-slate-700">{c.body}</p>
-            </div>
-          </div>
-        ))}
-        <div className="mt-3 flex gap-2">
-          <input
-            placeholder="コメントを入力..."
-            className="h-10 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-400"
-          />
-          <PrimaryButton className="!px-4">投稿</PrimaryButton>
-        </div>
+        <textarea
+          value={task.desc ?? ""}
+          onChange={(e) => update({ desc: e.target.value })}
+          rows={3}
+          placeholder="タスクの説明を入力"
+          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-400"
+        />
       </div>
     </Card>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/* ---------------- Add modal ---------------- */
+function AddTaskModal({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (id: string) => void;
+}) {
+  const store = useStore();
+  const [name, setName] = useState("");
+  const [parentId, setParentId] = useState("");
+  const [owner, setOwner] = useState("");
+  const [priority, setPriority] = useState<Priority>("中");
+  const [status, setStatus] = useState("未着手");
+  const [start, setStart] = useState("");
+  const [due, setDue] = useState("");
+
+  const reset = () => {
+    setName("");
+    setParentId("");
+    setOwner("");
+    setPriority("中");
+    setStatus("未着手");
+    setStart("");
+    setDue("");
+  };
+
+  const nextCode = (): string => {
+    if (!parentId) {
+      const tops = store.tasks.filter((t) => !t.parentId);
+      const max = tops.reduce((m, t) => Math.max(m, Number(t.code) || 0), 0);
+      return String(max + 1);
+    }
+    const parent = store.tasks.find((t) => t.id === parentId)!;
+    const kids = childrenOf(store.tasks, parentId);
+    const max = kids.reduce((m, t) => {
+      const last = Number(t.code.split(".").pop());
+      return Math.max(m, isNaN(last) ? 0 : last);
+    }, 0);
+    return `${parent.code}.${max + 1}`;
+  };
+
+  const submit = () => {
+    if (!name.trim()) return;
+    const id = store.newId("t");
+    const task: Task = {
+      id,
+      code: nextCode(),
+      name: name.trim(),
+      level: parentId ? 2 : 0,
+      owner,
+      start: start.replace(/-/g, "/"),
+      due: due.replace(/-/g, "/"),
+      priority,
+      status,
+      progress: 0,
+      comments: 0,
+      parentId: parentId || undefined,
+    };
+    store.addTask(task);
+    onCreated(id);
+    reset();
+    onClose();
+  };
+
+  const parentOptions = [...store.tasks].sort((a, b) => segCompare(a.code, b.code));
+
   return (
-    <div className="grid grid-cols-[92px_1fr] items-center gap-2">
-      <dt className="text-slate-400">{label}</dt>
-      <dd className="text-slate-700">{children}</dd>
-    </div>
+    <Modal
+      open={open}
+      onClose={() => {
+        reset();
+        onClose();
+      }}
+      title="タスクを追加"
+      footer={
+        <>
+          <GhostButton
+            onClick={() => {
+              reset();
+              onClose();
+            }}
+          >
+            キャンセル
+          </GhostButton>
+          <PrimaryButton onClick={submit}>追加</PrimaryButton>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="タスク名 *" className="sm:col-span-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例：会場予約" />
+        </Field>
+        <Field label="親タスク" className="sm:col-span-2">
+          <FormSelect value={parentId} onChange={(e) => setParentId(e.target.value)}>
+            <option value="">（トップレベル）</option>
+            {parentOptions.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.code} {t.name}
+              </option>
+            ))}
+          </FormSelect>
+        </Field>
+        <Field label="担当者">
+          <Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="例：鈴木 一郎" />
+        </Field>
+        <Field label="優先度">
+          <FormSelect value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+            {PRIORITIES.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </FormSelect>
+        </Field>
+        <Field label="開始日">
+          <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+        </Field>
+        <Field label="期限">
+          <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+        </Field>
+        <Field label="ステータス" className="sm:col-span-2">
+          <FormSelect value={status} onChange={(e) => setStatus(e.target.value)}>
+            {STATUSES.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </FormSelect>
+        </Field>
+      </div>
+    </Modal>
   );
 }
 
-function GanttView() {
+/* ---------------- Gantt ---------------- */
+function GanttView({ tasks }: { tasks: Task[] }) {
   const months = ["5月", "6月", "7月", "8月"];
-  // simple positional gantt from wbsRows
   const start = new Date("2025-05-01").getTime();
   const end = new Date("2025-08-31").getTime();
   const span = end - start;
+  const withDates = tasks.filter((t) => t.start && t.due);
   return (
     <div className="overflow-x-auto p-4">
       <div className="min-w-[760px]">
@@ -289,27 +469,20 @@ function GanttView() {
             <div key={m}>{m}</div>
           ))}
         </div>
-        {wbsRows.map((r) => {
+        {withDates.map((r) => {
           const s = ((new Date(r.start.replace(/\//g, "-")).getTime() - start) / span) * 100;
           const w =
-            ((new Date(r.due.replace(/\//g, "-")).getTime() -
-              new Date(r.start.replace(/\//g, "-")).getTime()) /
-              span) *
-            100;
+            ((new Date(r.due.replace(/\//g, "-")).getTime() - new Date(r.start.replace(/\//g, "-")).getTime()) / span) * 100;
+          const level = r.code.split(".").length - 1;
           return (
-            <div key={r.code} className="flex items-center border-b border-slate-50 py-1.5">
-              <div
-                className="w-56 truncate pr-2 text-sm text-slate-600"
-                style={{ paddingLeft: r.level * 14 }}
-              >
+            <div key={r.id} className="flex items-center border-b border-slate-50 py-1.5">
+              <div className="w-56 truncate pr-2 text-sm text-slate-600" style={{ paddingLeft: level * 14 }}>
                 {r.code} {r.name}
               </div>
               <div className="relative h-5 flex-1">
                 <div
-                  className={`absolute top-0 h-5 rounded-md ${
-                    r.progress >= 100 ? "bg-green-400" : "bg-blue-400"
-                  }`}
-                  style={{ left: `${s}%`, width: `${Math.max(w, 2)}%` }}
+                  className={`absolute top-0 h-5 rounded-md ${r.progress >= 100 ? "bg-green-400" : "bg-blue-400"}`}
+                  style={{ left: `${Math.max(0, s)}%`, width: `${Math.max(w, 2)}%` }}
                   title={`${r.name} (${r.progress}%)`}
                 />
               </div>
@@ -321,9 +494,11 @@ function GanttView() {
   );
 }
 
-function AssigneeView() {
-  const byOwner = wbsRows.reduce<Record<string, typeof wbsRows>>((acc, r) => {
-    (acc[r.owner] ||= []).push(r);
+/* ---------------- Assignee view ---------------- */
+function AssigneeView({ tasks, allTasks }: { tasks: Task[]; allTasks: Task[] }) {
+  const byOwner = tasks.reduce<Record<string, Task[]>>((acc, r) => {
+    const key = r.owner || "未割当";
+    (acc[key] ||= []).push(r);
     return acc;
   }, {});
   return (
@@ -337,9 +512,11 @@ function AssigneeView() {
           </div>
           <div className="mt-3 space-y-2">
             {rows.map((r) => (
-              <div key={r.code} className="flex items-center gap-2 text-sm">
-                <span className="flex-1 truncate text-slate-600">{r.code} {r.name}</span>
-                <ProgressBar value={r.progress} className="w-16" />
+              <div key={r.id} className="flex items-center gap-2 text-sm">
+                <span className="flex-1 truncate text-slate-600">
+                  {r.code} {r.name}
+                </span>
+                <ProgressBar value={effectiveProgress(allTasks, r)} className="w-16" />
                 <StatusBadge status={r.status} />
               </div>
             ))}

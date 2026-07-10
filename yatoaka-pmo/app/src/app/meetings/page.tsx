@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { meetings, meetingDetail as m } from "@/lib/mock";
+import { useStore, type Meeting } from "@/lib/store";
+import { meetingDetail as m } from "@/lib/mock";
 import {
   Card,
   StatusBadge,
@@ -10,6 +11,8 @@ import {
   PrimaryButton,
   GhostButton,
 } from "@/components/ui";
+import { Modal } from "@/components/Modal";
+import { Field, Input, FormSelect, Textarea } from "@/components/forms";
 import { FileIcon } from "@/components/FileIcon";
 import {
   IconPlus,
@@ -28,12 +31,52 @@ import {
 } from "@/components/icons";
 
 const FILTERS = ["すべて", "予定", "開催中", "完了"] as const;
+const STATUSES = ["予定", "開催中", "完了"];
+
+const emptyMeeting = (id: string): Meeting => ({
+  id,
+  title: "",
+  status: "予定",
+  date: "",
+  place: "",
+  purpose: "",
+  extra: "",
+});
 
 export default function MeetingsPage() {
+  const store = useStore();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("すべて");
-  const [selected, setSelected] = useState(0);
+  const [selectedId, setSelectedId] = useState(store.meetings[0]?.id ?? "");
+  const [query, setQuery] = useState("");
+  const [editing, setEditing] = useState<Meeting | null>(null);
 
-  const list = meetings.filter((mt) => filter === "すべて" || mt.status === filter);
+  const list = store.meetings.filter(
+    (mt) =>
+      (filter === "すべて" || mt.status === filter) &&
+      (query === "" || mt.title.includes(query))
+  );
+  const selected = store.meetings.find((mt) => mt.id === selectedId) ?? store.meetings[0];
+
+  const openCreate = () => setEditing(emptyMeeting(store.newId("MTG")));
+  const openEdit = () => selected && setEditing({ ...selected });
+
+  const save = () => {
+    if (!editing || !editing.title.trim()) return;
+    const exists = store.meetings.some((mt) => mt.id === editing.id);
+    if (exists) store.updateMeeting(editing);
+    else {
+      store.addMeeting(editing);
+      setSelectedId(editing.id);
+    }
+    setEditing(null);
+  };
+
+  const remove = () => {
+    if (!selected) return;
+    store.deleteMeeting(selected.id);
+    const remaining = store.meetings.filter((mt) => mt.id !== selected.id);
+    setSelectedId(remaining[0]?.id ?? "");
+  };
 
   return (
     <div className="mx-auto max-w-[1600px] p-4 md:p-6">
@@ -43,7 +86,7 @@ export default function MeetingsPage() {
           <p className="mt-1 text-sm text-slate-500">会議の計画・実施・フォローアップを管理します</p>
         </div>
         <div className="flex gap-2">
-          <PrimaryButton>
+          <PrimaryButton onClick={openCreate}>
             <IconPlus width={16} height={16} /> 新規会議を作成
           </PrimaryButton>
           <GhostButton>
@@ -53,12 +96,14 @@ export default function MeetingsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[300px_1fr_320px]">
-        {/* meeting list */}
+        {/* list */}
         <Card className="p-4">
           <h3 className="font-bold text-slate-800">会議一覧</h3>
           <div className="relative mt-3">
             <IconSearch width={16} height={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="会議名・目的で検索"
               className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-9 text-sm outline-none focus:border-blue-400"
             />
@@ -80,12 +125,12 @@ export default function MeetingsPage() {
           </div>
 
           <div className="mt-3 space-y-2">
-            {list.map((mt, i) => (
+            {list.map((mt) => (
               <button
-                key={i}
-                onClick={() => setSelected(meetings.indexOf(mt))}
+                key={mt.id}
+                onClick={() => setSelectedId(mt.id)}
                 className={`w-full rounded-xl border p-3 text-left transition ${
-                  meetings.indexOf(mt) === selected
+                  mt.id === selected?.id
                     ? "border-blue-300 bg-blue-50/50 ring-1 ring-blue-200"
                     : "border-slate-100 hover:bg-slate-50"
                 }`}
@@ -95,128 +140,137 @@ export default function MeetingsPage() {
                   <StatusBadge status={mt.status} />
                 </div>
                 <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
-                  <IconCalendar width={12} height={12} /> {mt.date}
+                  <IconCalendar width={12} height={12} /> {mt.date || "日時未設定"}
                 </p>
                 <p className="text-xs text-slate-400">{mt.place}</p>
-                <div className="mt-1.5 flex items-center gap-1">
-                  <Avatar name="A B C" size={20} />
-                  <span className="text-xs text-slate-400">{mt.extra}</span>
-                </div>
               </button>
             ))}
+            {list.length === 0 && (
+              <p className="py-8 text-center text-sm text-slate-400">会議がありません</p>
+            )}
           </div>
-          <button className="mt-3 w-full text-center text-sm font-medium text-blue-600">
-            全15件を表示 ›
-          </button>
         </Card>
 
-        {/* meeting detail */}
-        <Card className="p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-bold text-slate-800">{m.title}</h2>
-            <StatusBadge status={m.status} />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <GhostButton className="!py-1.5 !text-blue-600">
-              <IconEdit width={15} height={15} /> 編集
-            </GhostButton>
-            <GhostButton className="!py-1.5">
-              <IconCopy width={15} height={15} /> 複製
-            </GhostButton>
-            <GhostButton className="!py-1.5">
-              <IconTrash width={15} height={15} /> 削除
-            </GhostButton>
-            <GhostButton className="!py-1.5">
-              <IconDoc width={15} height={15} /> 議事録テンプレート
-            </GhostButton>
-          </div>
+        {/* detail */}
+        {selected ? (
+          <Card className="p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-800">{selected.title}</h2>
+              <StatusBadge status={selected.status} />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <GhostButton className="!py-1.5 !text-blue-600" onClick={openEdit}>
+                <IconEdit width={15} height={15} /> 編集
+              </GhostButton>
+              <GhostButton
+                className="!py-1.5"
+                onClick={() => {
+                  const copy = { ...selected, id: store.newId("MTG"), title: `${selected.title}（複製）` };
+                  store.addMeeting(copy);
+                  setSelectedId(copy.id);
+                }}
+              >
+                <IconCopy width={15} height={15} /> 複製
+              </GhostButton>
+              <GhostButton className="!py-1.5 !text-red-600" onClick={remove}>
+                <IconTrash width={15} height={15} /> 削除
+              </GhostButton>
+              <GhostButton className="!py-1.5">
+                <IconDoc width={15} height={15} /> 議事録テンプレート
+              </GhostButton>
+            </div>
 
-          <dl className="mt-4 space-y-3 border-y border-slate-100 py-4 text-sm">
-            <div className="flex gap-3">
-              <dt className="flex w-24 shrink-0 items-center gap-1.5 text-slate-400">
-                <IconCalendar width={15} height={15} /> 開催日時
-              </dt>
-              <dd className="font-medium text-slate-700">{m.date}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="w-24 shrink-0 text-slate-400">開催場所</dt>
-              <dd className="text-slate-700">{m.place}</dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="w-24 shrink-0 text-slate-400">参加者</dt>
-              <dd className="flex flex-wrap gap-3">
-                {m.attendees.map((a) => (
-                  <span key={a.name} className="flex items-center gap-1.5">
-                    <Avatar name={a.name} size={26} />
-                    <span className="text-slate-700">
-                      {a.name}
-                      <span className="text-xs text-slate-400"> ({a.role})</span>
-                    </span>
-                  </span>
-                ))}
-                <span className="flex items-center gap-1 text-xs text-slate-400">
-                  {m.extra} <IconChevronDown width={14} height={14} />
-                </span>
-              </dd>
-            </div>
-            <div className="flex gap-3">
-              <dt className="w-24 shrink-0 text-slate-400">開催目的</dt>
-              <dd className="text-slate-700">{m.purpose}</dd>
-            </div>
-          </dl>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Panel title="前回議事録 (2025/06/03)" badge="議事録を表示">
-              <ul className="space-y-1.5 text-sm text-slate-600">
-                {m.prevMinutes.map((p) => (
-                  <li key={p} className="flex gap-2">
-                    <span className="text-slate-300">•</span>
-                    {p}
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-            <Panel title="未完了事項" badge={`${m.incomplete.length}件`}>
-              <div className="space-y-2.5">
-                {m.incomplete.map((it) => (
-                  <div key={it.task} className="text-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2 text-slate-700">
-                        <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300" />
-                        {it.task}
+            <dl className="mt-4 space-y-3 border-y border-slate-100 py-4 text-sm">
+              <div className="flex gap-3">
+                <dt className="flex w-24 shrink-0 items-center gap-1.5 text-slate-400">
+                  <IconCalendar width={15} height={15} /> 開催日時
+                </dt>
+                <dd className="font-medium text-slate-700">{selected.date || "未設定"}</dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="w-24 shrink-0 text-slate-400">開催場所</dt>
+                <dd className="text-slate-700">{selected.place || "未設定"}</dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="w-24 shrink-0 text-slate-400">参加者</dt>
+                <dd className="flex flex-wrap gap-3">
+                  {m.attendees.map((a) => (
+                    <span key={a.name} className="flex items-center gap-1.5">
+                      <Avatar name={a.name} size={26} />
+                      <span className="text-slate-700">
+                        {a.name}
+                        <span className="text-xs text-slate-400"> ({a.role})</span>
                       </span>
-                      <StatusBadge status={it.status} />
+                    </span>
+                  ))}
+                  <span className="flex items-center gap-1 text-xs text-slate-400">
+                    {selected.extra || "+3名"} <IconChevronDown width={14} height={14} />
+                  </span>
+                </dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="w-24 shrink-0 text-slate-400">開催目的</dt>
+                <dd className="text-slate-700">{selected.purpose || m.purpose}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Panel title="前回議事録 (2025/06/03)" badge="議事録を表示">
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  {m.prevMinutes.map((p) => (
+                    <li key={p} className="flex gap-2">
+                      <span className="text-slate-300">•</span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+              <Panel title="未完了事項" badge={`${m.incomplete.length}件`}>
+                <div className="space-y-2.5">
+                  {m.incomplete.map((it) => (
+                    <div key={it.task} className="text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 text-slate-700">
+                          <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300" />
+                          {it.task}
+                        </span>
+                        <StatusBadge status={it.status} />
+                      </div>
+                      <p className="pl-5 text-xs text-slate-400">
+                        担当: {it.owner}　期限: {it.due}
+                      </p>
                     </div>
-                    <p className="pl-5 text-xs text-slate-400">
-                      担当: {it.owner}　期限: {it.due}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-            <Panel title="次回アジェンダ (予定)" badge={`${m.nextAgenda.length}件`}>
-              <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-600">
-                {m.nextAgenda.map((a) => (
-                  <li key={a}>{a}</li>
-                ))}
-              </ol>
-            </Panel>
-            <Panel title="配布資料" badge={`${m.materials.length}件`}>
-              <div className="space-y-2">
-                {m.materials.map((f) => (
-                  <div key={f.name} className="flex items-center gap-2">
-                    <FileIcon kind={f.kind} size={26} />
-                    <span className="flex-1 truncate text-sm text-slate-700">{f.name}</span>
-                    <span className="text-xs text-slate-400">{f.size}</span>
-                  </div>
-                ))}
-              </div>
-              <button className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-blue-600">
-                <IconDownload width={15} height={15} /> すべてダウンロード
-              </button>
-            </Panel>
-          </div>
-        </Card>
+                  ))}
+                </div>
+              </Panel>
+              <Panel title="次回アジェンダ (予定)" badge={`${m.nextAgenda.length}件`}>
+                <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-600">
+                  {m.nextAgenda.map((a) => (
+                    <li key={a}>{a}</li>
+                  ))}
+                </ol>
+              </Panel>
+              <Panel title="配布資料" badge={`${m.materials.length}件`}>
+                <div className="space-y-2">
+                  {m.materials.map((f) => (
+                    <div key={f.name} className="flex items-center gap-2">
+                      <FileIcon kind={f.kind} size={26} />
+                      <span className="flex-1 truncate text-sm text-slate-700">{f.name}</span>
+                      <span className="text-xs text-slate-400">{f.size}</span>
+                    </div>
+                  ))}
+                </div>
+                <button className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-blue-600">
+                  <IconDownload width={15} height={15} /> すべてダウンロード
+                </button>
+              </Panel>
+            </div>
+          </Card>
+        ) : (
+          <Card className="flex items-center justify-center p-10 text-sm text-slate-400">
+            会議を選択、または新規作成してください
+          </Card>
+        )}
 
         {/* AI panel */}
         <Card className="p-5">
@@ -260,19 +314,53 @@ export default function MeetingsPage() {
           </AiBlock>
         </Card>
       </div>
+
+      {/* modal */}
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing && store.meetings.some((mt) => mt.id === editing.id) ? "会議を編集" : "新規会議を作成"}
+        footer={
+          <>
+            <GhostButton onClick={() => setEditing(null)}>キャンセル</GhostButton>
+            <PrimaryButton onClick={save}>保存</PrimaryButton>
+          </>
+        }
+      >
+        {editing && (
+          <div className="grid grid-cols-1 gap-4">
+            <Field label="会議名 *">
+              <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="例：イベント部会 定例会議" />
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="ステータス">
+                <FormSelect value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })}>
+                  {STATUSES.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </FormSelect>
+              </Field>
+              <Field label="参加者数（表示）">
+                <Input value={editing.extra ?? ""} onChange={(e) => setEditing({ ...editing, extra: e.target.value })} placeholder="例：+3" />
+              </Field>
+            </div>
+            <Field label="開催日時">
+              <Input value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} placeholder="例：2025/06/10 (火) 10:00 - 11:30" />
+            </Field>
+            <Field label="開催場所">
+              <Input value={editing.place} onChange={(e) => setEditing({ ...editing, place: e.target.value })} placeholder="例：会議室A / オンライン" />
+            </Field>
+            <Field label="開催目的">
+              <Textarea value={editing.purpose ?? ""} onChange={(e) => setEditing({ ...editing, purpose: e.target.value })} rows={3} placeholder="会議の目的を入力" />
+            </Field>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
 
-function Panel({
-  title,
-  badge,
-  children,
-}: {
-  title: string;
-  badge?: string;
-  children: React.ReactNode;
-}) {
+function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4">
       <div className="mb-2 flex items-center justify-between">

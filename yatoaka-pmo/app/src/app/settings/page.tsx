@@ -1,5 +1,6 @@
 import { Card, PageTitle } from "@/components/ui";
 import { IconSettings, IconUsers, IconShield, IconList } from "@/components/icons";
+import ResetData from "@/components/ResetData";
 
 const groups = [
   { icon: <IconUsers width={20} height={20} />, title: "ユーザー・権限管理", desc: "利用者の登録、役職、部会兼任、閲覧・編集・承認権限を管理します。" },
@@ -25,6 +26,16 @@ export default function SettingsPage() {
           </Card>
         ))}
       </div>
+      <Card className="mt-4 p-5">
+        <h3 className="font-bold text-slate-800">データ管理（試作版）</h3>
+        <p className="mt-1 text-sm text-slate-500">
+          プロジェクト・タスク・会議の編集内容はブラウザに保存されます。初期状態に戻すには以下から初期化してください。
+        </p>
+        <div className="mt-3">
+          <ResetData />
+        </div>
+      </Card>
+
       <p className="mt-6 text-center text-xs text-slate-400">
         ※ 本画面は試作版のプレースホルダーです。要件定義書 10章「権限管理」・11.5「保守性」に対応します。
       </p>

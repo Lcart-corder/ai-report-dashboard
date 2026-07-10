@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Shell from "@/components/Shell";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "やとアカ運営 AI-PMOシステム",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <Shell>{children}</Shell>
+        <Providers>
+          <Shell>{children}</Shell>
+        </Providers>
       </body>
     </html>
   );
