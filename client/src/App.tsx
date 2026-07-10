@@ -87,6 +87,7 @@ const AIDashboard = lazy(() => import("./pages/ai/index"));
 const AIReportsPage = lazy(() => import("./pages/ai/AIReports"));
 const GenerationHistoryPage = lazy(() => import("./pages/ai/GenerationHistory"));
 const ModelSettingsPage = lazy(() => import("./pages/ai/ModelSettings"));
+const AgentConsolePage = lazy(() => import("./pages/ai/AgentConsole"));
 const IntegrationsPage = lazy(() => import("./pages/integrations/index"));
 const IntegrationHub = lazy(() => import("./pages/admin/integrations/IntegrationHub"));
 const ShopifyIntegrationPage = lazy(() => import("./pages/admin/integrations/ShopifyIntegration"));
@@ -208,6 +209,7 @@ function App() {
             <Route path="/ai/reports/:id" component={AIReportDetailPage} />
             <Route path="/ai/history" component={GenerationHistoryPage} />
             <Route path="/ai/settings" component={ModelSettingsPage} />
+            <Route path="/ai/agent" component={AgentConsolePage} />
 
             {/* Integrations */}
             <Route path="/integrations" component={IntegrationsPage} />

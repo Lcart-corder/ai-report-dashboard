@@ -188,6 +188,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       href: "/ai",
       subItems: [
         { label: "分析レポート", href: "/ai/reports", icon: FileBarChart },
+        { label: "自己改善エージェント", href: "/ai/agent", icon: Sparkles },
         { label: "生成履歴", href: "/ai/history", icon: History },
         { label: "モデル設定", href: "/ai/settings", icon: Sliders }
       ]

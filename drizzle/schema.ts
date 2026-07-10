@@ -458,3 +458,94 @@ export const staffPermissions = mysqlTable("staff_permissions", {
 
 export type StaffPermission = typeof staffPermissions.$inferSelect;
 export type InsertStaffPermission = typeof staffPermissions.$inferInsert;
+
+// ============================================================
+// Self-Improving AI Agent System (自己改善型AIエージェント)
+// ============================================================
+
+/** エージェント実行(1タスク = 1 run)。長時間実行の状態をDBに永続化する。 */
+export const agentRuns = mysqlTable("agent_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  task: text("task").notNull(),
+  taskType: mysqlEnum("taskType", ["report", "copywriting", "analysis", "general"]).default("general").notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "budget_exceeded", "cancelled"]).default("pending").notNull(),
+  // モデルルーティング結果
+  complexity: mysqlEnum("complexity", ["light", "standard", "heavy"]),
+  model: varchar("model", { length: 64 }),
+  // 自己修正ループ
+  maxIterations: int("maxIterations").default(3).notNull(),
+  currentIteration: int("currentIteration").default(0).notNull(),
+  targetScore: int("targetScore").default(85).notNull(),
+  finalScore: int("finalScore"),
+  output: text("output"),
+  error: text("error"),
+  // コスト最適化
+  budgetUsd: varchar("budgetUsd", { length: 32 }).default("0.50").notNull(),
+  costUsd: varchar("costUsd", { length: 32 }).default("0").notNull(),
+  inputTokens: int("inputTokens").default(0).notNull(),
+  outputTokens: int("outputTokens").default(0).notNull(),
+  // 自己改善
+  usedSkillIds: json("usedSkillIds"),
+  usedMemoryIds: json("usedMemoryIds"),
+  generatedSkillId: int("generatedSkillId"),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentRun = typeof agentRuns.$inferSelect;
+export type InsertAgentRun = typeof agentRuns.$inferInsert;
+
+/** 実行内の各ステップ(route / generate / critique / revise / distill)。再開・監査用の状態ログ。 */
+export const agentRunSteps = mysqlTable("agent_run_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  runId: int("runId").notNull(),
+  iteration: int("iteration").default(0).notNull(),
+  stepType: mysqlEnum("stepType", ["route", "recall", "generate", "critique", "revise", "distill"]).notNull(),
+  model: varchar("model", { length: 64 }),
+  output: text("output"),
+  score: int("score"),
+  inputTokens: int("inputTokens").default(0).notNull(),
+  outputTokens: int("outputTokens").default(0).notNull(),
+  costUsd: varchar("costUsd", { length: 32 }).default("0").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AgentRunStep = typeof agentRunSteps.$inferSelect;
+export type InsertAgentRunStep = typeof agentRunSteps.$inferInsert;
+
+/** 永続化メモリ。実行をまたいで学習内容を保持する。 */
+export const agentMemories = mysqlTable("agent_memories", {
+  id: int("id").autoincrement().primaryKey(),
+  category: mysqlEnum("category", ["lesson", "preference", "fact"]).default("lesson").notNull(),
+  taskType: mysqlEnum("taskType", ["report", "copywriting", "analysis", "general"]).default("general").notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  content: text("content").notNull(),
+  sourceRunId: int("sourceRunId"),
+  useCount: int("useCount").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentMemory = typeof agentMemories.$inferSelect;
+export type InsertAgentMemory = typeof agentMemories.$inferInsert;
+
+/** 自動生成スキル。高評価だった実行から手順を蒸留し、以降の同種タスクに注入する。 */
+export const agentSkills = mysqlTable("agent_skills", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description").notNull(),
+  instructions: text("instructions").notNull(),
+  taskType: mysqlEnum("taskType", ["report", "copywriting", "analysis", "general"]).default("general").notNull(),
+  sourceRunId: int("sourceRunId"),
+  useCount: int("useCount").default(0).notNull(),
+  avgScore: int("avgScore"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentSkill = typeof agentSkills.$inferSelect;
+export type InsertAgentSkill = typeof agentSkills.$inferInsert;

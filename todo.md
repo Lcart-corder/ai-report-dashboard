@@ -472,3 +472,15 @@
 - [x] コードスプリッティング実装（メインチャンク3.2MB→482KBに85%削減）
 - [x] 問題を修正して再ビルド
 - [ ] チェックポイント保存と再デプロイ
+
+## 自己改善型AIエージェントシステムの実装
+- [x] Claude API連携 (@anthropic-ai/sdk、モデルルーティング: Haiku 4.5 / Opus 4.8 / Fable 5)
+- [x] 自己修正ループ (generate → critique → revise、目標スコア到達で終了)
+- [x] 永続化メモリ (agent_memories テーブル、実行時に自動注入)
+- [x] スキル自動生成 (高評価実行から蒸留、agent_skills テーブル)
+- [x] 長時間実行のState管理 (agent_runs / agent_run_steps、ポーリングで進捗追跡)
+- [x] コスト自動最適化 (ステップ単位のコスト記録、予算上限で打ち切り)
+- [x] エージェントコンソールUI (/ai/agent)
+- [x] ユニットテスト (parseCritique / MODEL_TIERS)
+- [ ] DBマイグレーション適用 (`pnpm db:push`、DATABASE_URL必要)
+- [ ] ANTHROPIC_API_KEY を本番環境に設定
