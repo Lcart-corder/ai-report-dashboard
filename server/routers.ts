@@ -409,6 +409,7 @@ export const appRouter = router({
         subsidyCategory: z.string().optional(),
         passingScore: z.number().int().min(0).max(100).default(80),
         requireReport: z.boolean().default(true),
+        requirePracticalTest: z.boolean().default(false),
         tuitionFee: z.number().int().min(0).default(0),
         lmsFee: z.number().int().min(0).default(0),
         supportFee: z.number().int().min(0).default(0),
@@ -422,6 +423,8 @@ export const appRouter = router({
         trainingStartDate: z.string().optional(),
         trainingEndDate: z.string().optional(),
         passingScore: z.number().int().min(0).max(100).optional(),
+        requireReport: z.boolean().optional(),
+        requirePracticalTest: z.boolean().optional(),
         visibility: z.enum(["public", "private", "company_limited"]).optional(),
       })).mutation(async ({ input }) => lms.updateCourse(input.id, input)),
       lessons: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getLessonsByCourse(input.courseId)),
@@ -540,6 +543,33 @@ export const appRouter = router({
         const ok = ctx.lms.role === "operator_admin" || ctx.lms.role === "advisor" || ctx.lms.role === "project_manager" || ctx.lms.role === "company_rep";
         if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "レポートを差戻し・承認する権限がありません" });
         return lms.reviewLearningReport(input.reportId, input.action, input.comment);
+      }),
+    }),
+
+    // --- 実務課題(実技テスト) ---
+    practical: router({
+      get: protectedProcedure.input(z.object({ enrollmentId: z.number() })).query(async ({ input }) => lms.getPracticalSubmission(input.enrollmentId)),
+      upsert: lmsProcedure.input(z.object({
+        enrollmentId: z.number(),
+        learnerId: z.number(),
+        title: z.string().optional(),
+        content: z.string().optional(),
+        fileUrl: z.string().optional(),
+        submit: z.boolean().default(false),
+      })).mutation(async ({ ctx, input }) => {
+        // 受講者は自分の受講のみ、管理系はアクセス可能な受講のみ
+        if (!(await lms.canAccessEnrollmentIdentity(ctx.lms, input.enrollmentId))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講の実務課題を編集できません" });
+        return lms.upsertPracticalSubmission(input);
+      }),
+      review: lmsProcedure.input(z.object({
+        enrollmentId: z.number(),
+        approved: z.boolean(),
+        comment: z.string().optional(),
+      })).mutation(async ({ ctx, input }) => {
+        const ok = ctx.lms.role === "operator_admin" || ctx.lms.role === "instructor" || ctx.lms.role === "project_manager" || ctx.lms.role === "advisor";
+        if (!ok) throw new TRPCError({ code: "FORBIDDEN", message: "実務課題を承認・差戻しする権限がありません" });
+        if (!(await lms.canAccessEnrollmentIdentity(ctx.lms, input.enrollmentId))) throw new TRPCError({ code: "FORBIDDEN", message: "この受講にアクセスできません" });
+        return lms.reviewPracticalSubmission({ ...input, reviewer: ctx.lms.email });
       }),
     }),
 

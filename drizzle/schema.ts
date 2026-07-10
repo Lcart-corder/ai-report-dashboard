@@ -575,6 +575,8 @@ export const courses = mysqlTable("courses", {
   /** 修了に必要な合格点(%) */
   passingScore: int("passingScore").default(80).notNull(),
   requireReport: boolean("requireReport").default(true).notNull(),
+  /** 修了条件に「実務課題(実技テスト)の提出」を含めるか */
+  requirePracticalTest: boolean("requirePracticalTest").default(false).notNull(),
   /** 価格情報(研修費/LMS利用料/運用支援費等を分離登録) */
   tuitionFee: int("tuitionFee").default(0).notNull(),
   lmsFee: int("lmsFee").default(0).notNull(),
@@ -735,6 +737,33 @@ export const learningReports = mysqlTable("learning_reports", {
 });
 export type LearningReport = typeof learningReports.$inferSelect;
 export type InsertLearningReport = typeof learningReports.$inferInsert;
+
+/**
+ * 実務課題(実技テスト)の提出。受講後に業務での実践結果を提出し、
+ * 提出をもって(必要に応じて講師承認をもって)修了条件を満たす。
+ */
+export const practicalSubmissions = mysqlTable("practical_submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  enrollmentId: int("enrollmentId").notNull(),
+  learnerId: int("learnerId").notNull(),
+  /** 課題タイトル(コース側で提示した課題名) */
+  title: varchar("title", { length: 255 }),
+  /** 提出本文(実施内容・成果の記述) */
+  content: text("content"),
+  /** 添付資料URL(任意。成果物ファイル等) */
+  fileUrl: varchar("fileUrl", { length: 1024 }),
+  status: mysqlEnum("status", ["draft", "submitted", "returned", "approved"]).default("draft").notNull(),
+  /** レビューコメント(講師・運営の承認/差戻し理由) */
+  reviewComment: text("reviewComment"),
+  /** レビュー担当(メール等) */
+  reviewedBy: varchar("reviewedBy", { length: 320 }),
+  submittedAt: timestamp("submittedAt"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PracticalSubmission = typeof practicalSubmissions.$inferSelect;
+export type InsertPracticalSubmission = typeof practicalSubmissions.$inferInsert;
 
 /** 修了証(FR-12)。 */
 export const certificates = mysqlTable("certificates", {

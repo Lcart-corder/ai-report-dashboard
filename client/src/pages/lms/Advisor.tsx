@@ -129,6 +129,7 @@ function EvidenceDetail({ enrollmentId }: { enrollmentId: number }) {
         <Item ok={!!j && j.checked === j.requiredLessons && j.requiredLessons > 0} label={`チェック ${j?.checked ?? 0}/${j?.requiredLessons ?? 0}`} />
         <Item ok={!!j?.quizPassed} label="テスト合格" />
         <Item ok={!!j?.reportOk} label="レポート提出" />
+        <Item ok={!!j?.practicalOk} label="実務課題提出" />
         <Item ok={!!j?.withinPeriod} label="期間内" />
         <Item ok={!!d.certificate} label="修了証発行" />
       </div>

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { BookOpen, Plus, Clock, Download, CheckCircle2, XCircle, Video, FileQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -81,9 +82,15 @@ export default function LmsCourses() {
 
 function CourseDetail({ courseId, courseName, onExport }: { courseId: number; courseName: string; onExport: (csv: string) => void }) {
   const utils = trpc.useUtils();
+  const course = trpc.lms.courses.getById.useQuery({ id: courseId });
   const lessons = trpc.lms.courses.lessons.useQuery({ courseId });
   const duration = trpc.lms.courses.duration.useQuery({ id: courseId });
   const quizzes = trpc.lms.quizzes.byCourse.useQuery({ courseId });
+
+  const updateCourse = trpc.lms.courses.update.useMutation({
+    onSuccess: () => { toast.success("修了条件を更新しました"); utils.lms.courses.getById.invalidate({ id: courseId }); },
+    onError: e => toast.error(e.message),
+  });
 
   const [nl, setNl] = useState({ title: "", chapter: "", videoUrl: "", durationMinutes: 100 });
   const createLesson = trpc.lms.courses.createLesson.useMutation({
@@ -126,6 +133,20 @@ function CourseDetail({ courseId, courseName, onExport }: { courseId: number; co
                 ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /> 10時間以上（助成金要件を満たす）</span>
                 : <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-950 dark:text-rose-300"><XCircle className="h-3.5 w-3.5" /> 10時間未満</span>}
             </div>
+          </div>
+
+          {/* 修了条件の設定 */}
+          <div className="mt-3 space-y-2 rounded-lg border p-3 dark:border-slate-800">
+            <div className="text-xs font-medium text-slate-500">修了条件</div>
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span>学習レポートの提出を必須にする</span>
+              <Switch checked={course.data?.requireReport ?? true} onCheckedChange={v => updateCourse.mutate({ id: courseId, requireReport: v })} disabled={updateCourse.isPending} />
+            </label>
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span>実務課題（実技テスト）の提出を必須にする</span>
+              <Switch checked={course.data?.requirePracticalTest ?? false} onCheckedChange={v => updateCourse.mutate({ id: courseId, requirePracticalTest: v })} disabled={updateCourse.isPending} />
+            </label>
+            <p className="text-[11px] text-slate-400">※ 有効にすると、受講者は該当項目を提出しないと修了になりません。</p>
           </div>
         </CardContent>
       </Card>

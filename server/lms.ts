@@ -37,6 +37,7 @@ import {
   internalWebhooks,
   learners,
   learningReports,
+  practicalSubmissions,
   lessons,
   lmsMembers,
   masterKeys,
@@ -543,11 +544,18 @@ export async function recalcEnrollment(enrollmentId: number) {
     reportOk = reports.some(r => r.status === "submitted" || r.status === "approved");
   }
 
+  // 実務課題(実技テスト)判定: 提出済み or 承認済みで充足(差戻し=未充足)
+  let practicalOk = true;
+  if (course?.requirePracticalTest) {
+    const subs = await db.select().from(practicalSubmissions).where(eq(practicalSubmissions.enrollmentId, enrollmentId));
+    practicalOk = subs.some(s => s.status === "submitted" || s.status === "approved");
+  }
+
   const allWatched = requiredIds.length > 0 && watchedRequired.length === requiredIds.length;
   const allChecked = requiredIds.length > 0 && checkedRequired.length === requiredIds.length;
   const withinPeriod = !enrollment.dueDate || today() <= enrollment.dueDate;
 
-  const isCompleted = allWatched && allChecked && quizPassed && reportOk && withinPeriod;
+  const isCompleted = allWatched && allChecked && quizPassed && reportOk && practicalOk && withinPeriod;
 
   let status: typeof enrollment.status = "in_progress";
   if (isCompleted) status = "completed";
@@ -577,6 +585,7 @@ export async function recalcEnrollment(enrollmentId: number) {
       checked: checkedRequired.length,
       quizPassed,
       reportOk,
+      practicalOk,
       withinPeriod,
     },
   };
@@ -789,6 +798,76 @@ export async function getLearningReport(enrollmentId: number) {
   if (!db) return null;
   const rows = await db.select().from(learningReports).where(eq(learningReports.enrollmentId, enrollmentId)).limit(1);
   return rows[0] ?? null;
+}
+
+// ============================================================
+// 実務課題(実技テスト)の提出・レビュー
+// ============================================================
+
+export async function getPracticalSubmission(enrollmentId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(practicalSubmissions).where(eq(practicalSubmissions.enrollmentId, enrollmentId)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** 受講者による実務課題の下書き保存/提出。提出で修了判定を再計算。 */
+export async function upsertPracticalSubmission(input: {
+  enrollmentId: number;
+  learnerId: number;
+  title?: string;
+  content?: string;
+  fileUrl?: string;
+  submit?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const existing = await db.select().from(practicalSubmissions).where(eq(practicalSubmissions.enrollmentId, input.enrollmentId)).limit(1);
+  const status = input.submit ? ("submitted" as const) : ("draft" as const);
+  if (existing[0]) {
+    await db
+      .update(practicalSubmissions)
+      .set({
+        title: input.title ?? existing[0].title,
+        content: input.content ?? existing[0].content,
+        fileUrl: input.fileUrl ?? existing[0].fileUrl,
+        // 差戻し後の再提出も submitted に更新
+        status: input.submit ? "submitted" : existing[0].status,
+        submittedAt: input.submit ? new Date() : existing[0].submittedAt,
+      })
+      .where(eq(practicalSubmissions.id, existing[0].id));
+  } else {
+    await db.insert(practicalSubmissions).values({
+      enrollmentId: input.enrollmentId,
+      learnerId: input.learnerId,
+      title: input.title ?? null,
+      content: input.content ?? null,
+      fileUrl: input.fileUrl ?? null,
+      status,
+      submittedAt: input.submit ? new Date() : null,
+    });
+  }
+  await writeAuditLog({ category: "progress", action: input.submit ? "practical.submit" : "practical.save", actor: String(input.learnerId), targetType: "enrollment", targetId: input.enrollmentId });
+  return recalcEnrollment(input.enrollmentId);
+}
+
+/** 講師・運営による実務課題の承認/差戻し。修了判定を再計算。 */
+export async function reviewPracticalSubmission(input: {
+  enrollmentId: number;
+  approved: boolean;
+  comment?: string;
+  reviewer?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const existing = await db.select().from(practicalSubmissions).where(eq(practicalSubmissions.enrollmentId, input.enrollmentId)).limit(1);
+  if (!existing[0]) throw new Error("提出がありません");
+  await db
+    .update(practicalSubmissions)
+    .set({ status: input.approved ? "approved" : "returned", reviewComment: input.comment ?? null, reviewedBy: input.reviewer ?? null, reviewedAt: new Date() })
+    .where(eq(practicalSubmissions.id, existing[0].id));
+  await writeAuditLog({ category: "completion", action: input.approved ? "practical.approve" : "practical.return", actor: input.reviewer ?? null, targetType: "enrollment", targetId: input.enrollmentId });
+  return recalcEnrollment(input.enrollmentId);
 }
 
 /** 差戻し(管理者・社労士)。 */

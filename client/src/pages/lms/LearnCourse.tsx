@@ -4,9 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target } from "lucide-react";
+import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target, ClipboardCheck } from "lucide-react";
 import { Donut } from "./ui";
 import { LessonPlayer } from "./LessonPlayer";
 
@@ -26,6 +27,7 @@ export default function LmsLearnCourse() {
   const quizzes = trpc.lms.quizzes.byCourse.useQuery({ courseId: courseId! }, { enabled: !!courseId });
   const quizResults = trpc.lms.quizzes.results.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const report = trpc.lms.reports.get.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
+  const practical = trpc.lms.practical.get.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const certificate = trpc.lms.certificates.getByEnrollment.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
 
   const refreshAll = () => {
@@ -58,6 +60,8 @@ export default function LmsLearnCourse() {
   const checkedCount = requiredLessons.filter(l => checkedLessonIds.has(l.id)).length;
   const quizPassed = (quizzes.data?.length ?? 0) > 0 && quizzes.data!.every(q => quizResults.data?.some(r => r.quizId === q.id && r.passed));
   const reportSubmitted = report.data?.status === "submitted" || report.data?.status === "approved";
+  const practicalRequired = !!course.data?.requirePracticalTest;
+  const practicalDone = practical.data?.status === "submitted" || practical.data?.status === "approved";
   const remainVideos = Math.max(0, requiredTotal - watchedCount);
   const remainChecks = Math.max(0, requiredTotal - checkedCount);
   const quizTaken = (quizResults.data?.length ?? 0) > 0;
@@ -138,6 +142,7 @@ export default function LmsLearnCourse() {
                 <TaskRow label="確認チェックを行う" sub={`残り${remainChecks}回`} count={remainChecks} done={remainChecks === 0} />
                 <TaskRow label="確認テストを受験する" sub={quizPassed ? "合格済" : quizTaken ? "再受験可" : "未受験"} count={quizPassed ? 0 : (quizzes.data?.length ?? 0)} done={quizPassed} />
                 {course.data?.requireReport && <TaskRow label="学習レポートを提出する" sub={reportSubmitted ? "提出済" : "未提出"} count={reportSubmitted ? 0 : 1} done={!!reportSubmitted} />}
+                {practicalRequired && <TaskRow label="実務課題を提出する" sub={practical.data?.status === "approved" ? "承認済" : practical.data?.status === "returned" ? "差戻し" : practicalDone ? "提出済" : "未提出"} count={practicalDone ? 0 : 1} done={practicalDone} />}
               </CardContent>
             </Card>
 
@@ -148,6 +153,7 @@ export default function LmsLearnCourse() {
                 <CondRow ok={requiredTotal > 0 && checkedCount === requiredTotal} label="確認チェックを完了" value={`${checkedCount}/${requiredTotal}`} />
                 <CondRow ok={quizPassed} label="確認テストに合格" value={quizPassed ? "合格" : `${quizTaken ? "未合格" : "-"}/${quizzes.data?.length ?? 0}`} />
                 {course.data?.requireReport && <CondRow ok={!!reportSubmitted} label="学習レポートを提出" value={reportSubmitted ? "済" : "未"} />}
+                {practicalRequired && <CondRow ok={practicalDone} label="実務課題を提出" value={practical.data?.status === "approved" ? "承認" : practicalDone ? "済" : "未"} />}
                 <p className="pt-1 text-[11px] text-slate-400">※ すべての条件を満たすと修了となります。</p>
               </CardContent>
             </Card>
@@ -158,6 +164,7 @@ export default function LmsLearnCourse() {
         <div className="mt-5 space-y-5">
           {quizzes.data?.map(q => <QuizTaker key={q.id} quizId={q.id} enrollmentId={enrollmentId} learnerId={learnerId} onDone={refreshAll} />)}
           <ReportForm enrollmentId={enrollmentId} learnerId={learnerId} initial={report.data} onDone={() => { utils.lms.reports.get.invalidate({ enrollmentId }); refreshAll(); }} />
+          {practicalRequired && <PracticalForm enrollmentId={enrollmentId} learnerId={learnerId} initial={practical.data} onDone={() => { utils.lms.practical.get.invalidate({ enrollmentId }); refreshAll(); }} />}
 
           {/* 修了証 */}
           <Card className="border-slate-200 dark:border-slate-800">
@@ -334,6 +341,50 @@ function ReportForm({ enrollmentId, learnerId, initial, onDone }: { enrollmentId
           <Button variant="outline" onClick={() => upsert.mutate({ enrollmentId, learnerId, whatLearned, howToApply, submit: false })} disabled={upsert.isPending}>下書き保存</Button>
           <Button onClick={() => upsert.mutate({ enrollmentId, learnerId, whatLearned, howToApply, submit: true })} disabled={upsert.isPending || !whatLearned || !howToApply}>提出</Button>
           {submitted && <Badge className="bg-emerald-600">提出済</Badge>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 実務課題(実技テスト)の提出フォーム。提出で修了条件を満たす(講師承認/差戻しにも対応)。
+function PracticalForm({ enrollmentId, learnerId, initial, onDone }: {
+  enrollmentId: number; learnerId: number;
+  initial: { title?: string | null; content?: string | null; fileUrl?: string | null; status?: string; reviewComment?: string | null } | null | undefined;
+  onDone: () => void;
+}) {
+  const [content, setContent] = useState(initial?.content ?? "");
+  const [fileUrl, setFileUrl] = useState(initial?.fileUrl ?? "");
+
+  const upsert = trpc.lms.practical.upsert.useMutation({
+    onSuccess: () => { toast.success("実務課題を保存しました"); onDone(); },
+    onError: e => toast.error(e.message),
+  });
+
+  const status = initial?.status;
+  const submitted = status === "submitted" || status === "approved";
+
+  return (
+    <Card className="border-blue-200 dark:border-blue-950">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base"><ClipboardCheck className="h-4 w-4 text-blue-600" /> 実務課題（実技テスト）</CardTitle>
+        <p className="text-xs text-slate-500">受講内容を実務で実践した結果を提出してください。提出をもって修了条件を満たします。</p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {status === "approved" && <div className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">講師が承認しました。</div>}
+        {status === "returned" && <div className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300">差戻しされました。修正のうえ再提出してください。{initial?.reviewComment ? `（${initial.reviewComment}）` : ""}</div>}
+        <div>
+          <div className="mb-1 text-sm font-medium">実施内容・成果</div>
+          <Textarea rows={4} value={content} onChange={e => setContent(e.target.value)} placeholder="学んだ内容を実務でどのように適用し、どんな成果が出たかを具体的に記入してください" />
+        </div>
+        <div>
+          <div className="mb-1 text-sm font-medium">成果物URL（任意）</div>
+          <Input value={fileUrl} onChange={e => setFileUrl(e.target.value)} placeholder="https://… 資料・スクリーンショット等の共有リンク" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => upsert.mutate({ enrollmentId, learnerId, content, fileUrl: fileUrl || undefined, submit: false })} disabled={upsert.isPending}>下書き保存</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => upsert.mutate({ enrollmentId, learnerId, content, fileUrl: fileUrl || undefined, submit: true })} disabled={upsert.isPending || !content}>提出して完了にする</Button>
+          {submitted && <Badge className="bg-emerald-600">{status === "approved" ? "承認済" : "提出済"}</Badge>}
         </div>
       </CardContent>
     </Card>
