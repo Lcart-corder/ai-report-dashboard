@@ -61,6 +61,53 @@ export async function listAgentRunSteps(runId: number): Promise<AgentRunStep[]> 
     .orderBy(agentRunSteps.id);
 }
 
+// ---- Router自己最適化 (エピソード記憶からの学習) ----
+
+export type ModelStats = { model: string; count: number; avgScore: number };
+
+/**
+ * タスク種別ごとの完了実行をモデル別に集計する。
+ * Routerはこの統計から「過去に高成功率だったモデル」を学習して優先する。
+ */
+export async function getModelStatsForTaskType(taskType: string): Promise<ModelStats[]> {
+  const db = await requireDb();
+  const rows = await db
+    .select({
+      model: agentRuns.model,
+      count: sql<number>`count(*)`,
+      avgScore: sql<number>`avg(${agentRuns.finalScore})`,
+    })
+    .from(agentRuns)
+    .where(
+      and(
+        eq(agentRuns.taskType, taskType as never),
+        eq(agentRuns.status, "completed"),
+        sql`${agentRuns.finalScore} IS NOT NULL`,
+        sql`${agentRuns.model} IS NOT NULL`
+      )
+    )
+    .groupBy(agentRuns.model);
+  return rows
+    .filter((r): r is { model: string; count: number; avgScore: number } => r.model !== null)
+    .map(r => ({ model: r.model, count: Number(r.count), avgScore: Number(r.avgScore) }));
+}
+
+/** 同種タスクの成功回数(スキル自動生成の閾値ゲート用)。 */
+export async function countSuccessfulRuns(taskType: string, minScore: number): Promise<number> {
+  const db = await requireDb();
+  const rows = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(agentRuns)
+    .where(
+      and(
+        eq(agentRuns.taskType, taskType as never),
+        eq(agentRuns.status, "completed"),
+        sql`${agentRuns.finalScore} >= ${minScore}`
+      )
+    );
+  return Number(rows[0]?.count ?? 0);
+}
+
 // ---- Memories (永続化メモリ) ----
 
 export async function addAgentMemory(memory: InsertAgentMemory): Promise<void> {

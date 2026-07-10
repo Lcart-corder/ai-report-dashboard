@@ -170,6 +170,29 @@ export const appRouter = router({
       );
       return { runId };
     }),
+    // チェックポイント再開: 失敗/予算超過/エスカレーション後に途中状態から続行する
+    resume: protectedProcedure.input(z.object({
+      id: z.number(),
+      additionalBudgetUsd: z.number().min(0).max(20).default(0),
+      additionalIterations: z.number().int().min(0).max(10).default(0),
+    })).mutation(async ({ input }) => {
+      const run = await agentStore.getAgentRun(input.id);
+      if (!run) throw new Error("実行が見つかりません");
+      if (!["failed", "budget_exceeded", "escalated"].includes(run.status)) {
+        throw new Error(`ステータス ${run.status} の実行は再開できません`);
+      }
+      await agentStore.updateAgentRun(input.id, {
+        status: "pending",
+        error: null,
+        completedAt: null,
+        budgetUsd: (parseFloat(run.budgetUsd) + input.additionalBudgetUsd).toFixed(2),
+        maxIterations: run.maxIterations + input.additionalIterations,
+      });
+      void executeAgentRun(input.id).catch(err =>
+        console.error(`[Agent] background resume ${input.id} crashed:`, err)
+      );
+      return { runId: input.id };
+    }),
     getRun: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       const [run, steps] = await Promise.all([
         agentStore.getAgentRun(input.id),

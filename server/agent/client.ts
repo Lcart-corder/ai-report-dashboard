@@ -22,6 +22,14 @@ export const MODEL_TIERS: Record<
 
 const FALLBACK_MODEL = "claude-opus-4-8";
 
+/** モデルIDから複雑度ティアを逆引きする(Router自己最適化で学習済みモデルを適用する際に使用)。 */
+export function complexityForModel(model: string): Complexity | null {
+  for (const [complexity, tier] of Object.entries(MODEL_TIERS)) {
+    if (tier.model === model) return complexity as Complexity;
+  }
+  return null;
+}
+
 let _client: Anthropic | null = null;
 
 export function getAnthropicClient(): Anthropic {

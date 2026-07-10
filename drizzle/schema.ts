@@ -468,7 +468,7 @@ export const agentRuns = mysqlTable("agent_runs", {
   id: int("id").autoincrement().primaryKey(),
   task: text("task").notNull(),
   taskType: mysqlEnum("taskType", ["report", "copywriting", "analysis", "general"]).default("general").notNull(),
-  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "budget_exceeded", "cancelled"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "budget_exceeded", "escalated", "cancelled"]).default("pending").notNull(),
   // モデルルーティング結果
   complexity: mysqlEnum("complexity", ["light", "standard", "heavy"]),
   model: varchar("model", { length: 64 }),

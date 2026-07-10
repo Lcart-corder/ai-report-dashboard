@@ -36,8 +36,18 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   completed: { label: "完了", className: "bg-green-100 text-green-700" },
   failed: { label: "失敗", className: "bg-red-100 text-red-700" },
   budget_exceeded: { label: "予算上限", className: "bg-amber-100 text-amber-700" },
+  escalated: { label: "要確認", className: "bg-orange-100 text-orange-700" },
   cancelled: { label: "キャンセル", className: "bg-gray-100 text-gray-500" },
 };
+
+// 品質ゲートプリセット(草稿 → レビュー → 本番)
+const QUALITY_GATES = [
+  { value: 70, label: "草稿 (70点)" },
+  { value: 85, label: "レビュー (85点)" },
+  { value: 93, label: "本番 (93点)" },
+];
+
+const RESUMABLE_STATUSES = ["failed", "budget_exceeded", "escalated"];
 
 const STEP_LABELS: Record<string, string> = {
   route: "モデルルーティング",
@@ -86,6 +96,14 @@ export default function AgentConsolePage() {
       },
     }
   );
+
+  const resumeMutation = trpc.agent.resume.useMutation({
+    onSuccess: data => {
+      setActiveRunId(data.runId);
+      utils.agent.getRun.invalidate({ id: data.runId });
+      utils.agent.listRuns.invalidate();
+    },
+  });
 
   const runsQuery = trpc.agent.listRuns.useQuery();
   const memoriesQuery = trpc.agent.listMemories.useQuery();
@@ -152,14 +170,22 @@ export default function AgentConsolePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">目標スコア</Label>
-                <Input
-                  type="number"
-                  min={50}
-                  max={100}
-                  value={targetScore}
-                  onChange={e => setTargetScore(Number(e.target.value) || 85)}
-                />
+                <Label className="text-xs">品質ゲート</Label>
+                <Select
+                  value={String(targetScore)}
+                  onValueChange={v => setTargetScore(Number(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUALITY_GATES.map(gate => (
+                      <SelectItem key={gate.value} value={String(gate.value)}>
+                        {gate.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">予算 (USD)</Label>
@@ -274,6 +300,34 @@ export default function AgentConsolePage() {
 
                 {run.error && (
                   <div className="bg-red-50 text-red-700 rounded-lg p-3 text-sm">{run.error}</div>
+                )}
+                {RESUMABLE_STATUSES.includes(run.status) && (
+                  <div className="flex items-center gap-3 bg-orange-50 rounded-lg p-3">
+                    <p className="text-sm text-orange-700 flex-1">
+                      {run.status === "escalated"
+                        ? "目標スコア未達のため人間の確認待ちです。内容を確認のうえ、反復を追加して再開できます。"
+                        : "チェックポイントから途中再開できます。"}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={resumeMutation.isPending}
+                      onClick={() =>
+                        resumeMutation.mutate({
+                          id: run.id,
+                          additionalBudgetUsd: run.status === "budget_exceeded" ? 0.5 : 0,
+                          additionalIterations: 2,
+                        })
+                      }
+                    >
+                      {resumeMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-1" />
+                      )}
+                      再開 (+2反復{run.status === "budget_exceeded" ? " / +$0.50" : ""})
+                    </Button>
+                  </div>
                 )}
                 {run.output && (
                   <div className="space-y-1">
