@@ -48,15 +48,23 @@ Google Apps Script の Web App をバックエンド（REST 風 API）、Google 
 ## デプロイ手順（clasp / CLI）
 
 ```bash
-npm install -g @google/clasp
-clasp login
-# 既存 Apps Script を使う場合は scriptId を控えて .clasp.json を作成
+# 1) 一度だけ Google 認証（ブラウザが開く）
+npx @google/clasp login
+
+# 2a) 新規 Apps Script を作成してデプロイ
+./deploy.sh --create
+
+# 2b) 既存 Apps Script を使う場合は scriptId を設定してから
 cp .clasp.json.example .clasp.json   # scriptId を記入
-clasp push                            # gas/ の内容をアップロード
-clasp deploy --description "yatoaka-pmo api"
+./deploy.sh
 ```
 
+`deploy.sh` は `clasp push`（`.claspignore` により `.gs` と `appsscript.json` のみ）→ `clasp deploy` を実行します。
 `.clasp.json`（実体）はコミットしない想定です。`.clasp.json.example` を雛形として使ってください。
+
+> **補足**: `clasp login` はブラウザでの Google 認証（対象アカウントの権限）が必要なため、
+> この工程は各自の環境で実行してください（第三者が代行することはできません）。
+> ログイン後の `push`/`deploy` は `./deploy.sh` で自動化されます。
 
 ## 動作確認
 

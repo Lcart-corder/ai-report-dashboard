@@ -61,6 +61,29 @@ cp .env.local.example .env.local
 GAS バックエンドの構築・デプロイ手順は [`../gas/README.md`](../gas/README.md) を参照してください。
 API クライアントは `src/lib/api.ts`。
 
+## 認証（NextAuth / Auth.js v5）
+
+Google アカウントログインに対応します（`src/lib/auth.ts`）。**内部利用者のみ**ログイン可能で、
+`AUTH_ALLOWED_EMAILS`（メール完全一致）／`AUTH_ALLOWED_DOMAIN`（ドメイン）で許可対象を制御します
+（両方空なら全 Google アカウント許可＝試作の初期値）。
+
+- `AUTH_ENABLED=true` のときのみログインを要求（`src/middleware.ts` が未ログインを `/login` へリダイレクト）。
+- 既定（未設定）では**認証バイパス**で動作し、資格情報なしでも試作を確認できます。
+- ログイン画面は `src/app/login/page.tsx`、ヘッダー右上からログアウトできます。
+
+セットアップ（`.env.local`）:
+
+```
+AUTH_ENABLED=true
+AUTH_SECRET=<npx auth secret で生成>
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+AUTH_ALLOWED_DOMAIN=yatoaka.example.jp   # または AUTH_ALLOWED_EMAILS=a@x,b@y
+```
+
+Google Cloud Console の OAuth クライアント（ウェブ）で、承認済みリダイレクト URI に
+`<アプリURL>/api/auth/callback/google` を登録してください。
+
 ## 開発コマンド
 
 ```bash

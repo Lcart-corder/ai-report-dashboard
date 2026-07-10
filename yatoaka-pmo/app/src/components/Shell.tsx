@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { navItems, currentUser } from "@/lib/mock";
 import {
   IconHome,
@@ -38,6 +39,14 @@ const ICONS: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const { data: session } = useSession();
+
+  // ログイン画面ではアプリのシェル（サイドバー等）を表示しない
+  if (pathname === "/login") return <>{children}</>;
+
+  const displayName = session?.user?.name ?? currentUser.name;
+  const displayRole = session?.user?.email ?? currentUser.role;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -151,21 +160,51 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
               <IconHelp />
             </button>
-            <div className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 hover:bg-slate-100">
-              <Avatar name={currentUser.name} size={34} />
-              <div className="hidden leading-tight sm:block">
-                <div className="text-[13px] font-semibold text-slate-700">
-                  {currentUser.name}
+            <div className="relative">
+              <button
+                onClick={() => setUserMenu((v) => !v)}
+                className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 hover:bg-slate-100"
+              >
+                <Avatar name={displayName} size={34} />
+                <div className="hidden max-w-[160px] leading-tight sm:block">
+                  <div className="truncate text-[13px] font-semibold text-slate-700">
+                    {displayName}
+                  </div>
+                  <div className="truncate text-[11px] text-slate-400">{displayRole}</div>
                 </div>
-                <div className="text-[11px] text-slate-400">
-                  {currentUser.role}
-                </div>
-              </div>
-              <IconChevronDown
-                width={16}
-                height={16}
-                className="hidden text-slate-400 sm:block"
-              />
+                <IconChevronDown
+                  width={16}
+                  height={16}
+                  className="hidden text-slate-400 sm:block"
+                />
+              </button>
+              {userMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setUserMenu(false)} />
+                  <div className="absolute right-0 top-12 z-20 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                    <div className="border-b border-slate-100 px-4 py-3">
+                      <p className="truncate text-sm font-semibold text-slate-700">{displayName}</p>
+                      <p className="truncate text-xs text-slate-400">{displayRole}</p>
+                    </div>
+                    {session ? (
+                      <button
+                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        ログアウト
+                      </button>
+                    ) : (
+                      <Link
+                        href="/login"
+                        className="block px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setUserMenu(false)}
+                      >
+                        ログイン
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>

@@ -1,0 +1,4 @@
+# clasp push には .gs と appsscript.json のみを含める
+**/**
+!appsscript.json
+!*.gs
