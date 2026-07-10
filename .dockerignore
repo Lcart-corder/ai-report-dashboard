@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.github
+scratchpad
+*.log
+.env
+.env.*
+!.env.example
+coverage
+.DS_Store
+reskilling-lms/*.md
+**/*.test.ts
+playwright-report
+test-results

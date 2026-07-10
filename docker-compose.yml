@@ -1,0 +1,58 @@
+# ============================================================
+# 助成金対応リスキリングLMS — セルフホスト/ステージング用 compose
+#   docker compose up --build
+# 起動順: db(healthy) → migrate(スキーマ反映) → app
+# 本番の認証・通知の値は .env に設定(未設定でもUI/デモは起動する)。
+# ============================================================
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-lms_root_pw}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-reskilling_lms}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-lms_root_pw}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # スキーマ反映(一度だけ実行し正常終了する)。db:push はdevDepsが必要なため build ステージを使用。
+  migrate:
+    build:
+      context: .
+      target: build
+    environment:
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-lms_root_pw}@db:3306/${MYSQL_DATABASE:-reskilling_lms}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["pnpm", "db:push:force"]
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-lms_root_pw}@db:3306/${MYSQL_DATABASE:-reskilling_lms}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  db_data:

@@ -19,6 +19,27 @@
 
 ホスティングは Node.js を実行できる環境（Vercel / Render / Fly.io / 自前VM 等）と、外部の MySQL（PlanetScale / Amazon RDS / Cloud SQL 等）を想定する。
 
+## デプロイ用の成果物（このリポジトリに同梱）
+
+| ファイル | 役割 |
+|---|---|
+| `Dockerfile` | 本番用マルチステージビルド（Vite + esbuild → 本番依存のみの軽量イメージ、非root、HEALTHCHECK付き） |
+| `docker-compose.yml` | セルフホスト/ステージング一式（MySQL 8 + スキーマ反映 + アプリ）。`docker compose up --build` |
+| `.dockerignore` | イメージへ含めない対象 |
+| `scripts/db-push.mjs` | `schema.ts` を単一の真実源としてDBへスキーマ反映（`pnpm db:push` / `db:push:force`） |
+| `.github/workflows/ci.yml` | push/PR で 型チェック・テスト・ビルドを実行 |
+| `GET /healthz` | 死活監視エンドポイント（`{"status":"ok"}`、DB非依存で即応答） |
+
+## クイックスタート（Docker Compose）
+
+```bash
+cp .env.example .env      # 認証・通知の値を設定（未設定でもUI/デモは起動）
+docker compose up --build # db → migrate(スキーマ反映) → app の順に起動
+# → http://localhost:3000/lms  ／ ヘルスチェック: http://localhost:3000/healthz
+```
+
+`docker compose` は MySQL 8 を起動し、`migrate` サービスが `pnpm db:push:force` で全テーブルを作成してから `app` を起動する。
+
 ---
 
 ## フェーズ1: 環境準備
@@ -37,11 +58,13 @@
 1. スキーマを反映する。
 
    ```bash
-   pnpm db:push
+   DATABASE_URL=mysql://user:pass@host:3306/db pnpm db:push        # 対話あり
+   DATABASE_URL=mysql://user:pass@host:3306/db pnpm db:push:force  # 初回構築/CI(対話なし)
    ```
 
-   - `drizzle/schema.ts` の全テーブル（LMS 27テーブルを含む）を作成する。
-   - ローカルのESM環境で `drizzle-kit` が動かない場合は、生成済みSQLをDBに直接適用する運用でも可。
+   - `scripts/db-push.mjs` が `drizzle/schema.ts` をCJSへバンドルしてから `drizzle-kit push` を実行し、
+     全テーブル（アプリ共通＋LMSテーブル）を作成する。空DBに対して確実に動作する。
+   - `drizzle-kit` を直接使うとこのツールチェーンではESM/バージョン差で失敗するため、上記スクリプトを標準とする。
 2. 初期の運営管理者を用意する。
    - 方法A: `lms_members` に `role=operator_admin` のレコードを1件登録し、そのメールでログインする。
    - 方法B: メンバー0件の初回は、ログインしたユーザーが自動的に運営管理者として扱われる（bootstrap）。最初の管理者がログイン後、正式なメンバーを登録する。
@@ -118,7 +141,7 @@
 
 正直な現状として、以下は運用規模・要件に応じて追加検討が必要である。
 
-- 動画配信の実体: 現状は動画URLを登録する方式。大規模配信では Vimeo / Cloudflare Stream 等のCDNと、視聴完了・倍速の厳密判定の連携を検討する。
+- 動画配信の実体: HTML5プレイヤーを実装済み（視聴位置・視聴率の自動記録、未視聴区間の早送り抑止、95%で視聴完了、続きから再開、倍速）。コースの各レッスンに `videoUrl` を登録すれば再生される。大規模配信では Vimeo / Cloudflare Stream 等のCDN（署名付きURL・帯域最適化）への差し替えを検討する。
 - メール送信の到達性: SESのサンドボックス解除・SPF/DKIM・バウンス処理。
 - 個人情報保護: 受講者データの保持期間・削除フロー、アクセスログの保全期間。
 - バックアップ/監視: 死活監視・エラー通知・自動バックアップの整備。
