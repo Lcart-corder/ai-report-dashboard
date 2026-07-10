@@ -56,15 +56,13 @@
 手順:
 
 1. 無料MySQL（TiDB Cloud Serverless 等）を作成し、接続URLを取得。
-2. 手元でスキーマを反映（初回のみ）:
-
-   ```bash
-   DATABASE_URL="mysql://user:pass@gateway.tidbcloud.com:4000/dbname" DATABASE_SSL=require pnpm db:push:force
-   ```
-
-3. このリポジトリを Render に接続し、**Blueprint（`render.yaml`）** でデプロイ。
+2. このリポジトリを Render に接続し、**Blueprint（`render.yaml`）** でデプロイ。
    `DATABASE_URL` と（ログインを使う場合）`OAUTH_SERVER_URL` / `VITE_APP_ID` をダッシュボードで入力。
-4. 公開URLの `/healthz` が `ok`、`/lms` が表示されればデプロイ完了。
+3. 公開URLの `/healthz` が `ok`、`/lms` が表示されればデプロイ完了。
+
+スキーマ反映は手元で実行する必要はない。`render.yaml` の起動コマンドが
+デプロイのたびに `node scripts/db-push.mjs --force && pnpm start` を実行し、
+Render のビルド環境（ネットワーク制限なし）から直接スキーマを反映してからアプリを起動する。
 
 > メモ: Render Free は Docker でなく Node ランタイムでビルドする（`render.yaml` 設定済み）。
 > 常時起動が必要なら Render の有料プラン、または自前VM＋`docker compose` に切り替える。

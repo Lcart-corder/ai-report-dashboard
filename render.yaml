@@ -7,8 +7,9 @@
 # 使い方:
 #   1. このリポジトリを Render に接続し「Blueprint」でデプロイ
 #   2. DATABASE_URL / OAUTH_SERVER_URL / VITE_APP_ID を Render のダッシュボードで入力
-#   3. 初回のみ、手元で `DATABASE_URL=... DATABASE_SSL=require pnpm db:push:force`
-#      を実行してスキーマを反映
+#   3. あとは何もしなくてよい ── 起動コマンドがデプロイのたびに
+#      スキーマ反映(db:push:force)→アプリ起動 を自動実行する
+#      (Render のビルド環境はネットワーク制限が無いため、ここでTiDB等へ到達できる)
 #
 # 注意: Freeプランはアイドル後にスリープし、次アクセス時にコールドスタート（数十秒）。
 # ============================================================
@@ -19,7 +20,8 @@ services:
     plan: free
     # 環境変数をビルドに反映するため、VITE_ 変数はビルド時にも読まれる
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start
+    # 起動前にスキーマを反映(冪等・空DB/既存DBどちらでも安全)してからアプリを起動
+    startCommand: node scripts/db-push.mjs --force && pnpm start
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
