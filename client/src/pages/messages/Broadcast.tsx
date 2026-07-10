@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PageTemplate } from "@/components/page-template";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,11 +58,55 @@ export default function BroadcastPage() {
     { id: "1", type: "text", content: "" }
   ]);
 
-  // AI生成関連
+  // AI生成関連(自己改善型AIエージェントによる文章生成)
   const [aiPrompt, setAiPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showAiDialog, setShowAiDialog] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [activeGenRunId, setActiveGenRunId] = useState<number | null>(null);
+
+  const startAgentMutation = trpc.agent.start.useMutation({
+    onSuccess: data => setActiveGenRunId(data.runId),
+    onError: () => toast.error("文章生成の開始に失敗しました"),
+  });
+  const genRunQuery = trpc.agent.getRun.useQuery(
+    { id: activeGenRunId ?? 0 },
+    {
+      enabled: activeGenRunId !== null,
+      refetchInterval: query => {
+        const status = query.state.data?.run?.status;
+        return status === "pending" || status === "running" ? 1500 : false;
+      },
+    }
+  );
+  const genRun = genRunQuery.data?.run;
+  const isGenerating = startAgentMutation.isPending || genRun?.status === "pending" || genRun?.status === "running";
+
+  // 実行完了を監視し、メッセージ欄へ結果を反映する
+  useEffect(() => {
+    if (!genRun || !activeGenRunId) return;
+    if (genRun.status === "completed" && genRun.output) {
+      if (selectedMessageId) {
+        updateMessage(selectedMessageId, genRun.output);
+      }
+      toast.success(`AI文章を生成しました(スコア ${genRun.finalScore ?? "-"}点)`);
+      setShowAiDialog(false);
+      setAiPrompt("");
+      setActiveGenRunId(null);
+    } else if (genRun.status === "escalated" && genRun.output) {
+      // 目標スコア未達でも下書きとして反映し、人間の判断に委ねる
+      if (selectedMessageId) {
+        updateMessage(selectedMessageId, genRun.output);
+      }
+      toast.warning(`目標品質に届きませんでした(最高 ${genRun.finalScore ?? "-"}点)。内容を確認・修正してください`);
+      setShowAiDialog(false);
+      setAiPrompt("");
+      setActiveGenRunId(null);
+    } else if (genRun.status === "failed" || genRun.status === "budget_exceeded") {
+      toast.error(genRun.error ?? "文章生成に失敗しました");
+      setActiveGenRunId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [genRun?.status]);
 
   // Folder Handlers
   const handleCreateFolder = (name: string) => {
@@ -115,32 +160,20 @@ export default function BroadcastPage() {
     setMessages(messages.filter(m => m.id !== id));
   };
 
-  // AI文章生成
-  const handleAiGenerate = async () => {
+  // AI文章生成: 自己改善エージェント(server/agent)に委譲する。
+  // LINE配信文は速度優先のため反復は2回まで、品質ゲートは「レビュー」(85点)に設定。
+  const handleAiGenerate = () => {
     if (!aiPrompt.trim()) {
       toast.error("生成したい内容を入力してください");
       return;
     }
-
-    setIsGenerating(true);
-    try {
-      // TODO: 実際のOpenAI API呼び出しに置き換える
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const generatedText = `【${aiPrompt}】\n\nこんにちは！\n\n${aiPrompt}に関する特別なお知らせです。\n\n期間限定で特別価格にてご提供いたします。\nこの機会をお見逃しなく！\n\n詳細はこちら↓\nhttps://example.com`;
-      
-      if (selectedMessageId) {
-        updateMessage(selectedMessageId, generatedText);
-      }
-      
-      toast.success("AI文章を生成しました");
-      setShowAiDialog(false);
-      setAiPrompt("");
-    } catch (error) {
-      toast.error("文章生成に失敗しました");
-    } finally {
-      setIsGenerating(false);
-    }
+    startAgentMutation.mutate({
+      task: `以下の目的でLINE配信メッセージを作成してください。\n\n【配信の目的・内容】\n${aiPrompt}\n\n【要件】\n- LINE公式アカウントの配信として自然な文面\n- 絵文字を適度に使い、親しみやすいトーン\n- 全角400字程度まで\n- 具体的な行動を促す一文で締める`,
+      taskType: "copywriting",
+      maxIterations: 2,
+      targetScore: 85,
+      budgetUsd: 0.3,
+    });
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -520,12 +553,17 @@ export default function BroadcastPage() {
                 <li>生成後に編集・調整が可能です</li>
               </ul>
             </div>
+            {isGenerating && genRun && (
+              <p className="text-xs text-gray-500">
+                自己改善エージェントが文章を生成・自己採点中です({genRun.currentIteration}/{genRun.maxIterations}回目)
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setShowAiDialog(false)}>キャンセル</Button>
-            <Button 
-              type="button" 
-              onClick={handleAiGenerate} 
+            <Button
+              type="button"
+              onClick={handleAiGenerate}
               disabled={isGenerating}
               className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
             >
