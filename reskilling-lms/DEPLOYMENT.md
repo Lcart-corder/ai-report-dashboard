@@ -40,6 +40,23 @@ docker compose up --build # db → migrate(スキーマ反映) → app の順に
 
 `docker compose` は MySQL 8 を起動し、`migrate` サービスが `pnpm db:push:force` で全テーブルを作成してから `app` を起動する。
 
+### 検証済みの状態（このリポジトリで実機確認）
+
+- `docker build` で本番イメージが生成できる（非root・HEALTHCHECK付き）。
+- 空のMySQLへ `pnpm db:push:force` で全54テーブルを作成できる。
+- 生成イメージをコンテナ起動 → `/healthz` が `{"status":"ok"}`、`/lms` が 200、Docker HEALTHCHECK が `healthy` になることを確認済み。
+- 本番バンドルは開発専用の `vite` を読み込まない（`vite` は動的import＋コード分割で遅延チャンク化済み）。
+
+### コンテナホストへのデプロイ（Render / Fly.io / Railway / ECS 等）
+
+1. 外部MySQL（PlanetScale / RDS / Cloud SQL 等）を用意し `DATABASE_URL` を取得。
+2. `pnpm db:push:force`（またはCIジョブ）でスキーマを反映。
+3. `docker build` したイメージをレジストリへpush、またはホスト側でビルド。
+4. 環境変数（`.env` 相当）をシークレットとして登録し、コンテナを起動。ヘルスチェックパスは `/healthz`。
+
+社内プロキシ（TLS再終端）配下でビルドする場合のみ、任意で
+`--build-arg BUILD_HTTPS_PROXY=$HTTPS_PROXY --secret id=ca,src=<CA>` を付与する（通常のクラウドビルドでは不要）。
+
 ---
 
 ## フェーズ1: 環境準備
