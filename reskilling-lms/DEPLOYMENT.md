@@ -30,6 +30,30 @@
 | `.github/workflows/ci.yml` | push/PR で 型チェック・テスト・ビルドを実行 |
 | `GET /healthz` | 死活監視エンドポイント（`{"status":"ok"}`、DB非依存で即応答） |
 
+## 無料で公開する構成（0円デプロイ）
+
+| 役割 | サービス | 無料枠の要点 |
+|---|---|---|
+| アプリ | **Render（Web Service / Free）** | 常時無料。アイドル後スリープ→次アクセスでコールドスタート（数十秒）。`render.yaml` を同梱済み |
+| DB | **TiDB Cloud Serverless**（MySQL互換）または **Aiven for MySQL（Free）** | クレカ不要枠あり。MySQLワイヤ互換。**TLS必須**（`DATABASE_SSL=require` で対応） |
+| メール | 任意（未設定でも動作。送信は記録のみ） | SESのサンドボックス内など |
+
+手順:
+
+1. 無料MySQL（TiDB Cloud Serverless 等）を作成し、接続URLを取得。
+2. 手元でスキーマを反映（初回のみ）:
+
+   ```bash
+   DATABASE_URL="mysql://user:pass@gateway.tidbcloud.com:4000/dbname" DATABASE_SSL=require pnpm db:push:force
+   ```
+
+3. このリポジトリを Render に接続し、**Blueprint（`render.yaml`）** でデプロイ。
+   `DATABASE_URL` と（ログインを使う場合）`OAUTH_SERVER_URL` / `VITE_APP_ID` をダッシュボードで入力。
+4. 公開URLの `/healthz` が `ok`、`/lms` が表示されればデプロイ完了。
+
+> メモ: Render Free は Docker でなく Node ランタイムでビルドする（`render.yaml` 設定済み）。
+> 常時起動が必要なら Render の有料プラン、または自前VM＋`docker compose` に切り替える。
+
 ## クイックスタート（Docker Compose）
 
 ```bash

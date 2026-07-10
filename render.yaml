@@ -1,0 +1,40 @@
+# ============================================================
+# Render Blueprint — 無料枠で公開するための構成
+#   アプリ: Render Web Service（Freeプラン）
+#   DB    : 無料のマネージドMySQL（TiDB Cloud Serverless / Aiven 等）を別途用意し
+#           DATABASE_URL に接続文字列を設定（TLS必須のため DATABASE_SSL=require）
+#
+# 使い方:
+#   1. このリポジトリを Render に接続し「Blueprint」でデプロイ
+#   2. DATABASE_URL / OAUTH_SERVER_URL / VITE_APP_ID を Render のダッシュボードで入力
+#   3. 初回のみ、手元で `DATABASE_URL=... DATABASE_SSL=require pnpm db:push:force`
+#      を実行してスキーマを反映
+#
+# 注意: Freeプランはアイドル後にスリープし、次アクセス時にコールドスタート（数十秒）。
+# ============================================================
+services:
+  - type: web
+    name: reskilling-lms
+    runtime: node
+    plan: free
+    # 環境変数をビルドに反映するため、VITE_ 変数はビルド時にも読まれる
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # 無料マネージドMySQLの接続URL（例: mysql://user:pass@host:4000/dbname）
+      - key: DATABASE_URL
+        sync: false
+      # 無料マネージドMySQLはTLS必須。require で接続にTLSを付与する
+      - key: DATABASE_SSL
+        value: require
+      # 認証(Manus OAuth)。ログインを使う場合に設定
+      - key: OAUTH_SERVER_URL
+        sync: false
+      - key: VITE_APP_ID
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
