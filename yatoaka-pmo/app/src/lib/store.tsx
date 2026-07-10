@@ -15,6 +15,7 @@ import {
   type Project,
   type WbsRow,
 } from "./mock";
+import { api, isRemote } from "./api";
 
 /* ---------------- Types ---------------- */
 export interface Task extends WbsRow {
@@ -152,8 +153,28 @@ const STORAGE_KEY = "yatoaka-pmo-store-v1";
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, makeSeed);
 
-  // hydrate from localStorage after mount (avoids SSR mismatch)
+  // hydrate after mount (avoids SSR mismatch)
+  // - リモートモード: GAS からブートストラップ取得
+  // - ローカルモード: localStorage から復元
   useEffect(() => {
+    if (isRemote()) {
+      api
+        .bootstrap()
+        .then((data) => {
+          dispatch({
+            type: "hydrate",
+            payload: {
+              projects: data.projects ?? [],
+              tasks: data.tasks ?? [],
+              meetings: data.meetings ?? [],
+            },
+          });
+        })
+        .catch(() => {
+          /* 取得失敗時はシードのまま */
+        });
+      return;
+    }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) dispatch({ type: "hydrate", payload: JSON.parse(raw) as State });
@@ -162,8 +183,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // persist
+  // persist to localStorage（ローカルモードのみ。リモートは GAS が真実の源）
   useEffect(() => {
+    if (isRemote()) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
@@ -179,15 +201,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<StoreValue>(
     () => ({
       ...state,
-      addProject: (p) => dispatch({ type: "project.add", payload: p }),
-      updateProject: (p) => dispatch({ type: "project.update", payload: p }),
-      deleteProject: (id) => dispatch({ type: "project.delete", id }),
-      addTask: (t) => dispatch({ type: "task.add", payload: t }),
-      updateTask: (t) => dispatch({ type: "task.update", payload: t }),
-      deleteTask: (id) => dispatch({ type: "task.delete", id }),
-      addMeeting: (m) => dispatch({ type: "meeting.add", payload: m }),
-      updateMeeting: (m) => dispatch({ type: "meeting.update", payload: m }),
-      deleteMeeting: (id) => dispatch({ type: "meeting.delete", id }),
+      addProject: (p) => {
+        dispatch({ type: "project.add", payload: p });
+        if (isRemote()) api.createProject(p).catch(() => {});
+      },
+      updateProject: (p) => {
+        dispatch({ type: "project.update", payload: p });
+        if (isRemote()) api.updateProject(p).catch(() => {});
+      },
+      deleteProject: (id) => {
+        dispatch({ type: "project.delete", id });
+        if (isRemote()) api.deleteProject(id).catch(() => {});
+      },
+      addTask: (t) => {
+        dispatch({ type: "task.add", payload: t });
+        if (isRemote()) api.createTask(t).catch(() => {});
+      },
+      updateTask: (t) => {
+        dispatch({ type: "task.update", payload: t });
+        if (isRemote()) api.updateTask(t).catch(() => {});
+      },
+      deleteTask: (id) => {
+        dispatch({ type: "task.delete", id });
+        if (isRemote()) api.deleteTask(id).catch(() => {});
+      },
+      addMeeting: (m) => {
+        dispatch({ type: "meeting.add", payload: m });
+        if (isRemote()) api.createMeeting(m).catch(() => {});
+      },
+      updateMeeting: (m) => {
+        dispatch({ type: "meeting.update", payload: m });
+        if (isRemote()) api.updateMeeting(m).catch(() => {});
+      },
+      deleteMeeting: (id) => {
+        dispatch({ type: "meeting.delete", id });
+        if (isRemote()) api.deleteMeeting(id).catch(() => {});
+      },
       reset: () => dispatch({ type: "reset" }),
       newId,
     }),

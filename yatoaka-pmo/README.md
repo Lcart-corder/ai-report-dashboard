@@ -29,6 +29,10 @@ cd app && npm install && npm run dev   # http://localhost:3000
 
 詳細は [`app/README.md`](app/README.md) を参照してください。
 
+## バックエンド（GAS + スプレッドシート）
+
+要件定義書 9.1 の初期構成に沿った Google Apps Script Web App バックエンドを [`gas/`](gas) に実装しています（スプレッドシートをDBとする列名ベースの REST 風 CRUD API）。フロントは `NEXT_PUBLIC_GAS_URL` を設定するとこの API と同期して動作します（未設定時はローカルの localStorage モード）。構築・デプロイ手順は [`gas/README.md`](gas/README.md) を参照してください。
+
 ## このドキュメントの読み方
 
 1. **全体像を掴む** → `00_要件定義書` の 1〜4章、19章（成功条件）

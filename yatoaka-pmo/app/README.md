@@ -43,7 +43,23 @@ PC は左サイドメニュー、スマートフォンは下部固定メニュ�
 - **議事録 / AI支援（画面7）→ WBS 連携**: AIが抽出した「新規タスク候補」を確認（チェック）して **WBS に確定登録**、「WBS更新候補」の反映も可能。登録したタスクは WBS / タスク画面に即時反映されます（要件定義書 5.6「更新案として表示し、人が確認後に登録」）。
 - **会議（画面6）AI提案 → WBS 連携**: AIの「未完了タスク案」を選択して WBS へ登録。
 
-状態管理は React Context + reducer（`src/lib/store.tsx`）で実装し、`localStorage` に永続化しています。この store を将来 API クライアント（Google Apps Script 等）へ差し替えることで実データ連携へ移行できます。トースト通知は `src/components/Toast.tsx`。
+状態管理は React Context + reducer（`src/lib/store.tsx`）で実装。トースト通知は `src/components/Toast.tsx`。
+
+## データモード（ローカル / リモート）
+
+`src/lib/store.tsx` は 2 モードで動作します。
+
+- **ローカルモード（既定）**: `NEXT_PUBLIC_GAS_URL` 未設定時。サンプルデータを `localStorage` に永続化。
+- **リモートモード**: `NEXT_PUBLIC_GAS_URL` を設定すると、GAS Web App（Google スプレッドシート）と同期。
+  起動時に `bootstrap` で一括取得し、作成/更新/削除は楽観更新 + API 送信します。
+
+```bash
+cp .env.local.example .env.local
+# .env.local に NEXT_PUBLIC_GAS_URL=https://script.google.com/macros/s/XXXX/exec を設定
+```
+
+GAS バックエンドの構築・デプロイ手順は [`../gas/README.md`](../gas/README.md) を参照してください。
+API クライアントは `src/lib/api.ts`。
 
 ## 開発コマンド
 
