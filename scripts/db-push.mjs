@@ -18,6 +18,19 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// 無料/マネージドMySQL(TiDB Cloud等)はTLS必須。server/db.ts の withSsl と同じロジック
+// (独立スクリプトのためここに複製)。未適用だと drizzle-kit push が平文接続を試みて
+// 「Connections using insecure transport are prohibited」で拒否される。
+function withSsl(url) {
+  const mode = process.env.DATABASE_SSL;
+  if (!mode || mode === "false" || /[?&]ssl=/.test(url)) return url;
+  const ssl = JSON.stringify({ rejectUnauthorized: mode !== "insecure" });
+  return url + (url.includes("?") ? "&" : "?") + "ssl=" + encodeURIComponent(ssl);
+}
+// 生成する drizzle.config.cjs は `process.env.DATABASE_URL` を参照するため、
+// ここで自身のプロセス環境を書き換えておけば execSync で継承される子プロセスにも伝播する。
+process.env.DATABASE_URL = withSsl(process.env.DATABASE_URL);
+
 const dir = mkdtempSync(join(tmpdir(), "lms-dbpush-"));
 const schemaCjs = join(dir, "schema.cjs");
 const configCjs = join(dir, "drizzle.config.cjs");
