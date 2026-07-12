@@ -88,6 +88,13 @@ function normalizeRecord(r) {
   var out = {};
   Object.keys(r).forEach(function (k) {
     var v = r[k];
+    // "2025/04/01" のような日付らしき文字列は、スプレッドシートが自動的に
+    // Date型のセルへ変換してしまう。フロント側は "YYYY/MM/DD" 形式を前提と
+    // しているため、Dateで返ってきた値はここで文字列に戻す。
+    if (v instanceof Date) {
+      out[k] = Utilities.formatDate(v, 'Asia/Tokyo', 'yyyy/MM/dd');
+      return;
+    }
     if (k === 'progress' || k === 'comments' || k === 'meetings' || k === 'docs') {
       out[k] = v === '' || v === null ? 0 : Number(v);
     } else if (k === 'is_archived') {
