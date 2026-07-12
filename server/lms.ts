@@ -1292,6 +1292,12 @@ export async function seedDemoData() {
   await issueMasterKey(company2.id, { maxUses: 50 });
   await issueMasterKey(company3.id, { maxUses: 50 });
 
+  // プロジェクト(案件)を作成し全企業を割当。project_manager / advisor のスコープ確認用。
+  const project = await createProject({ name: "2026年度 リスキリング推進プロジェクト", partnerId: partner.id, status: "active" });
+  await assignCompanyToProject(company.id, project.id);
+  await assignCompanyToProject(company2.id, project.id);
+  await assignCompanyToProject(company3.id, project.id);
+
   const roster: Array<{ c: number; name: string; emp: string; dept: string; watched: number; done: boolean; due: string }> = [
     { c: company.id, name: "田中 亜美", emp: "E1002", dept: "営業部", watched: 4, done: false, due: seedAddDays(12) },
     { c: company.id, name: "佐藤 拓也", emp: "E1003", dept: "企画部", watched: 6, done: true, due: seedAddDays(28) },
@@ -1788,10 +1794,37 @@ export async function countMembers(): Promise<number> {
  *          → メンバー未登録の初期状態(bootstrap)は operator 扱い。
  * DB未接続やメンバー0件でも既存UIが壊れないようにする。
  */
-export async function resolveLmsIdentity(user: { email?: string | null; name?: string | null; role?: string | null } | null | undefined): Promise<LmsIdentity | null> {
+/** ゲスト閲覧モードで切り替え可能なロール(デモseedのid=1系スコープを割当)。 */
+export const PREVIEW_ROLES: LmsRole[] = ["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor", "employee"];
+const PREVIEW_ROLE_LABEL: Record<string, string> = {
+  operator_admin: "運営管理者", project_manager: "プロジェクト管理者", partner_admin: "協業先管理者",
+  company_rep: "代表", instructor: "講師", advisor: "社労士", employee: "会社員",
+};
+function buildPreviewIdentity(role: LmsRole, email: string): LmsIdentity {
+  return {
+    kind: role === "operator_admin" ? "operator" : role === "employee" ? "learner" : "member",
+    role,
+    name: `ゲスト・${PREVIEW_ROLE_LABEL[role] ?? role}`,
+    email,
+    learnerId: role === "employee" ? 1 : undefined,
+    projectId: role === "project_manager" || role === "advisor" ? 1 : null,
+    companyId: role === "company_rep" ? 1 : null,
+    partnerId: role === "partner_admin" ? 1 : null,
+  };
+}
+
+export async function resolveLmsIdentity(
+  user: { email?: string | null; name?: string | null; role?: string | null } | null | undefined,
+  previewRole?: string,
+): Promise<LmsIdentity | null> {
   if (!user) return null;
   const email = user.email ?? "";
   const name = user.name ?? (email || "ユーザー");
+
+  // ゲスト閲覧モードのロール切替(本番でも有効化可・LMS_PREVIEW_MODE=1 のときのみ)
+  if (process.env.LMS_PREVIEW_MODE === "1" && previewRole && (PREVIEW_ROLES as string[]).includes(previewRole)) {
+    return buildPreviewIdentity(previewRole as LmsRole, email);
+  }
 
   // 開発用のロール確認オーバーライド(本番無効)。LMS_DEV_LOGIN=1 かつ LMS_DEV_ROLE 指定時のみ。
   if (process.env.NODE_ENV !== "production" && process.env.LMS_DEV_LOGIN === "1" && process.env.LMS_DEV_ROLE) {

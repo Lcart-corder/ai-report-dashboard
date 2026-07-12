@@ -11,9 +11,18 @@ import * as lms from "./lms";
 // LMS 認証統合: ログイン中ユーザーのロール/スコープを解決する procedure 群
 // ============================================================
 
+/** ゲスト閲覧モードのロール切替: リクエストCookie(lms_preview_role)から希望ロールを取得(本番でも有効化可)。 */
+function previewRoleFromReq(req: { headers?: { cookie?: string } } | undefined): string | undefined {
+  if (process.env.LMS_PREVIEW_MODE !== "1") return undefined;
+  const cookie = req?.headers?.cookie;
+  if (!cookie) return undefined;
+  const m = /(?:^|;\s*)lms_preview_role=([^;]+)/.exec(cookie);
+  return m ? decodeURIComponent(m[1]) : undefined;
+}
+
 /** LMSアクセス権を要求し、ctx.lms に identity(role/scope) を載せる。 */
 const lmsProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const identity = await lms.resolveLmsIdentity(ctx.user);
+  const identity = await lms.resolveLmsIdentity(ctx.user, previewRoleFromReq(ctx.req));
   if (!identity) throw new TRPCError({ code: "FORBIDDEN", message: "LMSへのアクセス権がありません" });
   return next({ ctx: { ...ctx, lms: identity } });
 });
@@ -178,7 +187,7 @@ export const appRouter = router({
   lms: router({
     // --- 現在ユーザーのロール/スコープ (認証統合) ---
     me: protectedProcedure.query(async ({ ctx }) => {
-      return lms.resolveLmsIdentity(ctx.user);
+      return lms.resolveLmsIdentity(ctx.user, previewRoleFromReq(ctx.req));
     }),
 
     // --- 受講者(会社員)の初回登録 (FR-01/FR-02) ---

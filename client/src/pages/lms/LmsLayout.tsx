@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, Building2, BookOpen, Handshake, ClipboardCheck, ScrollText,
   Bell, ShieldCheck, Download, Webhook, FolderKanban, KeyRound, HelpCircle,
-  ChevronLeft, ChevronRight, GraduationCap, Users2,
+  ChevronLeft, ChevronRight, GraduationCap, Users2, UserCog,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ROLE_LABEL, type RoleCode } from "./roles-data";
@@ -33,6 +33,7 @@ export function LmsLayout({ children, title, description, actions }: { children:
   const me = trpc.lms.me.useQuery();
   const role = me.data?.role as RoleCode | undefined;
   const visibleNav = NAV.filter(item => !("roles" in item) || !item.roles || (role && (item.roles as readonly string[]).includes(role)));
+  const isGuest = me.data?.email === "guest@preview.local";
 
   return (
     <div className="flex min-h-screen bg-[#f4f6fa] text-slate-800 dark:bg-slate-950 dark:text-slate-100">
@@ -95,6 +96,7 @@ export function LmsLayout({ children, title, description, actions }: { children:
             {description && <p className="truncate text-xs text-slate-500">{description}</p>}
           </div>
           {actions}
+          {isGuest && <RoleSwitcher current={role} />}
           <button className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="お知らせ">
             <Bell className="h-5 w-5" />
           </button>
@@ -112,13 +114,33 @@ export function LmsLayout({ children, title, description, actions }: { children:
           </div>
         </header>
 
-        {me.data?.email === "guest@preview.local" && (
+        {isGuest && (
           <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-center text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-            これは内容確認用の<strong>閲覧デモ</strong>です。サンプルデータを表示しています（ログイン不要）。
+            これは内容確認用の<strong>閲覧デモ</strong>です（ログイン不要）。右上の<strong>ロール切替</strong>で、各立場から見える画面を確認できます。
           </div>
         )}
         <main className="flex-1 overflow-x-hidden p-6">{children}</main>
       </div>
     </div>
+  );
+}
+
+// ゲスト閲覧モード専用: 見る立場(ロール)を切り替える。Cookieに保存しサーバー側で識別。
+const PREVIEW_ROLE_OPTIONS: RoleCode[] = ["operator_admin", "project_manager", "partner_admin", "company_rep", "instructor", "advisor", "employee"];
+function RoleSwitcher({ current }: { current?: RoleCode }) {
+  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const role = e.target.value;
+    document.cookie = `lms_preview_role=${role}; path=/; max-age=86400`;
+    // 役割によってホームが変わるため、入口(/lms)へ遷移して出し分けを反映
+    window.location.href = "/lms";
+  }
+  return (
+    <label className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300" title="見る立場を切り替える">
+      <UserCog className="h-4 w-4" />
+      <span className="hidden sm:inline">ロール切替</span>
+      <select value={current ?? "operator_admin"} onChange={onChange} className="cursor-pointer bg-transparent pr-1 text-xs font-semibold focus:outline-none">
+        {PREVIEW_ROLE_OPTIONS.map(r => <option key={r} value={r} className="text-slate-800">{ROLE_LABEL[r] ?? r}</option>)}
+      </select>
+    </label>
   );
 }
