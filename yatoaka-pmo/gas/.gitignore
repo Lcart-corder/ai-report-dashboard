@@ -1,0 +1,3 @@
+# clasp のローカル認証・プロジェクト固有情報（各自の環境ごとに異なる）
+.clasp.json
+.deployment-id
