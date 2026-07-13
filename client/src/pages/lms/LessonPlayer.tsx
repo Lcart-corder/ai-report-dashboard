@@ -54,7 +54,11 @@ export function LessonPlayer({
   const [completed, setCompleted] = useState(initial.completed ?? false);
   const [speed, setSpeed] = useState(1);
 
-  const record = trpc.lms.recordProgress.useMutation({ onSuccess: () => onProgress?.() });
+  const record = trpc.lms.recordProgress.useMutation({
+    onSuccess: () => onProgress?.(),
+    // 順番制御でロックされたレッスンはサーバー側でも拒否される(防御的二重チェック)。
+    onError: e => { toast.error(e.message); setPlaying(false); onOpenChange(false); },
+  });
 
   // 視聴ログを保存(閾値到達・強制・一定間隔ごと)。maxWatchedRefは単調増加。
   function persist(cur: number, d: number, force = false) {

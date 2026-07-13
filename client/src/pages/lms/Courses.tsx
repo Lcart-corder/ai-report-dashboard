@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { LmsLayout } from "./LmsLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { BookOpen, Plus, Clock, Download, CheckCircle2, XCircle, Video, FileQuestion } from "lucide-react";
+import { BookOpen, Plus, Clock, Download, CheckCircle2, XCircle, Video, FileQuestion, Paperclip, ChevronDown, ChevronRight, Trash2, ArrowDownAZ } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function downloadCsv(filename: string, csv: string) {
@@ -86,19 +86,34 @@ function CourseDetail({ courseId, courseName, onExport }: { courseId: number; co
   const lessons = trpc.lms.courses.lessons.useQuery({ courseId });
   const duration = trpc.lms.courses.duration.useQuery({ id: courseId });
   const quizzes = trpc.lms.quizzes.byCourse.useQuery({ courseId });
+  const materials = trpc.lms.courses.materials.useQuery({ courseId });
+  const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
 
   const updateCourse = trpc.lms.courses.update.useMutation({
     onSuccess: () => { toast.success("修了条件を更新しました"); utils.lms.courses.getById.invalidate({ id: courseId }); },
     onError: e => toast.error(e.message),
   });
 
-  const [nl, setNl] = useState({ title: "", chapter: "", videoUrl: "", durationMinutes: 100 });
+  const [nl, setNl] = useState({ title: "", chapter: "", videoUrl: "", durationMinutes: 100, requireSequential: false });
   const createLesson = trpc.lms.courses.createLesson.useMutation({
-    onSuccess: () => { toast.success("レッスンを追加しました"); utils.lms.courses.lessons.invalidate({ courseId }); utils.lms.courses.duration.invalidate({ id: courseId }); setNl({ title: "", chapter: "", videoUrl: "", durationMinutes: 100 }); },
+    onSuccess: () => { toast.success("レッスンを追加しました"); utils.lms.courses.lessons.invalidate({ courseId }); utils.lms.courses.duration.invalidate({ id: courseId }); setNl({ title: "", chapter: "", videoUrl: "", durationMinutes: 100, requireSequential: false }); },
     onError: e => toast.error(e.message),
   });
   const deleteLesson = trpc.lms.courses.deleteLesson.useMutation({
     onSuccess: () => { utils.lms.courses.lessons.invalidate({ courseId }); utils.lms.courses.duration.invalidate({ id: courseId }); },
+  });
+  const updateLesson = trpc.lms.courses.updateLesson.useMutation({
+    onSuccess: () => utils.lms.courses.lessons.invalidate({ courseId }),
+    onError: e => toast.error(e.message),
+  });
+
+  const [nm, setNm] = useState({ name: "", fileUrl: "" });
+  const createMaterial = trpc.lms.courses.createMaterial.useMutation({
+    onSuccess: () => { toast.success("教材を追加しました"); utils.lms.courses.materials.invalidate({ courseId }); setNm({ name: "", fileUrl: "" }); },
+    onError: e => toast.error(e.message),
+  });
+  const deleteMaterial = trpc.lms.courses.deleteMaterial.useMutation({
+    onSuccess: () => utils.lms.courses.materials.invalidate({ courseId }),
   });
 
   const createQuiz = trpc.lms.quizzes.create.useMutation({
@@ -155,28 +170,75 @@ function CourseDetail({ courseId, courseName, onExport }: { courseId: number; co
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Video className="h-4 w-4" /> 動画レッスン（{lessons.data?.length ?? 0}）</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_120px_120px_auto]">
+          <div className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_120px_120px_auto_auto]">
             <Input placeholder="レッスン名 *" value={nl.title} onChange={e => setNl({ ...nl, title: e.target.value })} />
             <Input placeholder="章" value={nl.chapter} onChange={e => setNl({ ...nl, chapter: e.target.value })} />
             <Input type="number" placeholder="分" value={nl.durationMinutes} onChange={e => setNl({ ...nl, durationMinutes: Number(e.target.value) })} />
-            <Button onClick={() => createLesson.mutate({ courseId, title: nl.title, chapter: nl.chapter || undefined, videoUrl: nl.videoUrl || undefined, durationMinutes: nl.durationMinutes, sortOrder: (lessons.data?.length ?? 0) + 1 })} disabled={!nl.title || createLesson.isPending}><Plus className="h-4 w-4" /></Button>
+            <label className="flex items-center gap-1.5 whitespace-nowrap px-1 text-xs text-slate-500">
+              <Switch checked={nl.requireSequential} onCheckedChange={v => setNl({ ...nl, requireSequential: v })} /> 順番制御
+            </label>
+            <Button
+              onClick={() => createLesson.mutate({ courseId, title: nl.title, chapter: nl.chapter || undefined, videoUrl: nl.videoUrl || undefined, durationMinutes: nl.durationMinutes, sortOrder: (lessons.data?.length ?? 0) + 1, requireSequential: nl.requireSequential })}
+              disabled={!nl.title || createLesson.isPending}
+            ><Plus className="h-4 w-4" /></Button>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>#</TableHead><TableHead>章</TableHead><TableHead>レッスン名</TableHead><TableHead>時間</TableHead><TableHead>必須</TableHead><TableHead></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>#</TableHead><TableHead>章</TableHead><TableHead>レッスン名</TableHead><TableHead>時間</TableHead><TableHead>必須</TableHead><TableHead>順番制御</TableHead><TableHead></TableHead></TableRow></TableHeader>
             <TableBody>
-              {lessons.data?.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-slate-400">レッスンがありません</TableCell></TableRow>}
-              {lessons.data?.map((l, i) => (
-                <TableRow key={l.id}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell className="text-sm text-slate-500">{l.chapter}</TableCell>
-                  <TableCell className="font-medium">{l.title}</TableCell>
-                  <TableCell>{l.durationMinutes}分</TableCell>
-                  <TableCell>{l.isRequired ? <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">必須</span> : <span className="text-xs text-slate-400">任意</span>}</TableCell>
-                  <TableCell><Button size="sm" variant="ghost" onClick={() => deleteLesson.mutate({ id: l.id })}>削除</Button></TableCell>
-                </TableRow>
-              ))}
+              {lessons.data?.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-slate-400">レッスンがありません</TableCell></TableRow>}
+              {lessons.data?.map((l, i) => {
+                const lessonMaterials = materials.data?.filter(m => m.lessonId === l.id) ?? [];
+                const expanded = expandedLessonId === l.id;
+                return (
+                  <Fragment key={l.id}>
+                    <TableRow>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell className="text-sm text-slate-500">{l.chapter}</TableCell>
+                      <TableCell className="font-medium">{l.title}</TableCell>
+                      <TableCell>{l.durationMinutes}分</TableCell>
+                      <TableCell>{l.isRequired ? <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">必須</span> : <span className="text-xs text-slate-400">任意</span>}</TableCell>
+                      <TableCell>
+                        <label className="flex items-center gap-1.5" title="前のレッスンを視聴完了しないと次に進めません">
+                          <Switch checked={l.requireSequential} onCheckedChange={v => updateLesson.mutate({ id: l.id, requireSequential: v })} disabled={i === 0 || updateLesson.isPending} />
+                          {i === 0 && <span className="text-[10px] text-slate-400">(先頭は対象外)</span>}
+                        </label>
+                      </TableCell>
+                      <TableCell className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => setExpandedLessonId(expanded ? null : l.id)} title="教材を管理">
+                          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          <Paperclip className="ml-1 h-3.5 w-3.5" />{lessonMaterials.length > 0 && <span className="ml-0.5 text-xs">{lessonMaterials.length}</span>}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteLesson.mutate({ id: l.id })}>削除</Button>
+                      </TableCell>
+                    </TableRow>
+                    {expanded && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="bg-slate-50 dark:bg-slate-900/50">
+                          <div className="space-y-2 py-1">
+                            <div className="text-xs font-medium text-slate-500">添付資料（PDF・スライド等）</div>
+                            {lessonMaterials.length === 0 && <p className="text-xs text-slate-400">教材がまだありません。</p>}
+                            {lessonMaterials.map(m => (
+                              <div key={m.id} className="flex items-center gap-2 rounded-md border bg-white px-2.5 py-1.5 text-sm dark:border-slate-800 dark:bg-slate-900">
+                                <Paperclip className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                {m.fileUrl ? <a href={m.fileUrl} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-blue-600 hover:underline">{m.name}</a> : <span className="min-w-0 flex-1 truncate">{m.name}</span>}
+                                <Button size="sm" variant="ghost" className="h-6 px-1.5" onClick={() => deleteMaterial.mutate({ id: m.id })}><Trash2 className="h-3.5 w-3.5" /></Button>
+                              </div>
+                            ))}
+                            <div className="flex gap-2 pt-1">
+                              <Input className="h-8 text-sm" placeholder="資料名 *" value={nm.name} onChange={e => setNm({ ...nm, name: e.target.value })} />
+                              <Input className="h-8 text-sm" placeholder="URL(任意)" value={nm.fileUrl} onChange={e => setNm({ ...nm, fileUrl: e.target.value })} />
+                              <Button size="sm" className="h-8 shrink-0" disabled={!nm.name || createMaterial.isPending} onClick={() => createMaterial.mutate({ lessonId: l.id, name: nm.name, fileUrl: nm.fileUrl || undefined })}><Plus className="h-4 w-4" /></Button>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })}
             </TableBody>
           </Table>
+          <p className="flex items-center gap-1 text-[11px] text-slate-400"><ArrowDownAZ className="h-3 w-3" /> 順番制御を有効にすると、受講者は直前のレッスンを視聴完了するまで次のレッスンを視聴できません。</p>
         </CardContent>
       </Card>
 

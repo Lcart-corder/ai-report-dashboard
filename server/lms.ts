@@ -41,6 +41,7 @@ import {
   lessons,
   lmsMembers,
   masterKeys,
+  materials,
   notificationLogs,
   notifications,
   partnerSales,
@@ -58,6 +59,7 @@ import {
   type InsertLearner,
   type InsertLesson,
   type InsertLmsMember,
+  type InsertMaterial,
   type InsertNotification,
   type InsertPartner,
   type InsertProject,
@@ -459,6 +461,67 @@ export async function deleteLesson(id: number) {
   return { id };
 }
 
+// ============================================================
+// 添付資料(FR-06) — レッスンに紐づくPDF・スライド等
+// ============================================================
+
+export async function getMaterialsByLesson(lessonId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(materials).where(eq(materials.lessonId, lessonId)).orderBy(materials.id);
+}
+
+/** コース内の全レッスンの添付資料をまとめて取得(受講画面で1回のクエリで表示するため)。 */
+export async function getMaterialsByCourse(courseId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const courseLessons = await db.select({ id: lessons.id }).from(lessons).where(eq(lessons.courseId, courseId));
+  const lessonIds = courseLessons.map(l => l.id);
+  if (lessonIds.length === 0) return [];
+  return db.select().from(materials).where(inArray(materials.lessonId, lessonIds)).orderBy(materials.id);
+}
+
+export async function createMaterial(input: InsertMaterial) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  const result = await db.insert(materials).values(input);
+  return { id: insertedId(result) };
+}
+
+export async function deleteMaterial(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.delete(materials).where(eq(materials.id, id));
+  return { id };
+}
+
+/**
+ * 順番制御(FR-06)。対象レッスンが requireSequential のとき、
+ * コース内の直前のレッスン(sortOrder順)を視聴完了していなければ拒否する。
+ * サーバー側で強制することで、APIを直接叩く形での飛び越しも防ぐ。
+ */
+async function assertSequentialUnlocked(enrollmentId: number, lessonId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const lessonRows = await db.select().from(lessons).where(eq(lessons.id, lessonId)).limit(1);
+  const lesson = lessonRows[0];
+  if (!lesson || !lesson.requireSequential) return;
+
+  const courseLessons = await db.select().from(lessons).where(eq(lessons.courseId, lesson.courseId)).orderBy(lessons.sortOrder);
+  const idx = courseLessons.findIndex(l => l.id === lessonId);
+  if (idx <= 0) return;
+  const prevLesson = courseLessons[idx - 1];
+
+  const prevLogs = await db
+    .select()
+    .from(progressLogs)
+    .where(and(eq(progressLogs.enrollmentId, enrollmentId), eq(progressLogs.lessonId, prevLesson.id)))
+    .limit(1);
+  if (!prevLogs[0]?.completedAt) {
+    throw new Error(`「${prevLesson.title}」を先に視聴完了してください`);
+  }
+}
+
 /** コースの合計標準学習時間(分)と10時間判定。 */
 export async function getCourseDuration(courseId: number) {
   const db = await getDb();
@@ -608,6 +671,7 @@ export async function recordProgress(input: {
 }) {
   const db = await getDb();
   if (!db) throw new Error(REQUIRE_DB);
+  await assertSequentialUnlocked(input.enrollmentId, input.lessonId);
   // 視聴完了はサーバー側で厳密判定: 視聴率が閾値未満ならcompletedを無効化(証跡の信頼性担保)
   const completed = input.completed && input.watchRate >= WATCH_COMPLETE_THRESHOLD;
   input = { ...input, completed };
@@ -1274,8 +1338,16 @@ export async function seedDemoData() {
     visibility: "company_limited",
   });
 
+  let firstLessonId = 0;
   for (let i = 1; i <= 6; i++) {
-    await createLesson({ courseId: course.id, title: `第${i}章 AI活用の基礎(${i})`, chapter: `第${i}章`, durationMinutes: 100, sortOrder: i, isRequired: true });
+    // 順番制御デモ: 2章目以降は前章の視聴完了が必要(先頭章のみ対象外)
+    const { id: lessonId } = await createLesson({ courseId: course.id, title: `第${i}章 AI活用の基礎(${i})`, chapter: `第${i}章`, durationMinutes: 100, sortOrder: i, requireSequential: i > 1, isRequired: true });
+    if (i === 1) firstLessonId = lessonId;
+  }
+  // 教材添付デモ
+  if (firstLessonId) {
+    await createMaterial({ lessonId: firstLessonId, name: "第1章 講義スライド.pdf", fileUrl: "https://example.com/materials/chapter1-slides.pdf" });
+    await createMaterial({ lessonId: firstLessonId, name: "演習用ワークシート.pdf", fileUrl: "https://example.com/materials/chapter1-worksheet.pdf" });
   }
 
   const quiz = await createQuiz({ courseId: course.id, title: "確認テスト", passingScore: 80 });
@@ -1335,7 +1407,7 @@ function seedAddDays(n: number): string {
 async function driveDemoProgress(enrollmentId: number, learnerId: number, courseId: number, quizId: number, watchedCount: number, opts: { quiz?: boolean; report?: boolean }) {
   const db = await getDb();
   if (!db) return;
-  const lessonRows = await db.select().from(lessons).where(eq(lessons.courseId, courseId));
+  const lessonRows = await db.select().from(lessons).where(eq(lessons.courseId, courseId)).orderBy(lessons.sortOrder);
   const ids = lessonRows.map(l => l.id);
   for (let i = 0; i < watchedCount && i < ids.length; i++) {
     await recordProgress({ enrollmentId, lessonId: ids[i], watchRate: 100, completed: true, lastPositionSec: 6000, playbackRate: "1.0" });

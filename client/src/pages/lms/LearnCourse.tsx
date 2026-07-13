@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target, ClipboardCheck } from "lucide-react";
+import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target, ClipboardCheck, Lock, Paperclip } from "lucide-react";
 import { Donut } from "./ui";
 import { LessonPlayer } from "./LessonPlayer";
 
@@ -22,6 +22,7 @@ export default function LmsLearnCourse() {
 
   const course = trpc.lms.courses.getById.useQuery({ id: courseId! }, { enabled: !!courseId });
   const lessons = trpc.lms.courses.lessons.useQuery({ courseId: courseId! }, { enabled: !!courseId });
+  const materials = trpc.lms.courses.materials.useQuery({ courseId: courseId! }, { enabled: !!courseId });
   const checks = trpc.lms.enrollments.checks.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const progressLogs = trpc.lms.enrollments.progressLogs.useQuery({ enrollmentId }, { enabled: !!enrollmentId });
   const quizzes = trpc.lms.quizzes.byCourse.useQuery({ courseId: courseId! }, { enabled: !!courseId });
@@ -100,32 +101,50 @@ export default function LmsLearnCourse() {
           <Card className="border-slate-200 dark:border-slate-800">
             <CardHeader className="pb-2"><CardTitle className="text-base">チャプター一覧</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              {allLessons.map(l => {
+              {allLessons.map((l, i) => {
                 const log = logByLesson.get(l.id);
                 const watched = watchedLessonIds.has(l.id);
                 const checked = checkedLessonIds.has(l.id);
                 const wr = log?.watchRate ?? 0;
+                const prevLesson = i > 0 ? allLessons[i - 1] : undefined;
+                const locked = !!l.requireSequential && !!prevLesson && !watchedLessonIds.has(prevLesson.id);
+                const lessonMaterials = materials.data?.filter(m => m.lessonId === l.id) ?? [];
                 return (
-                  <div key={l.id} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <PlayCircle className={`h-5 w-5 shrink-0 ${watched ? "text-blue-600" : wr > 0 ? "text-blue-400" : "text-slate-300"}`} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{l.chapter ? `${l.chapter} ` : ""}{l.title}</div>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <span>{l.durationMinutes}分</span>
-                        {wr > 0 && !watched && <span className="text-blue-500">視聴率 {wr}%</span>}
+                  <div key={l.id} className={`rounded-lg border border-slate-200 p-3 dark:border-slate-800 ${locked ? "opacity-60" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      {locked
+                        ? <Lock className="h-5 w-5 shrink-0 text-slate-300" />
+                        : <PlayCircle className={`h-5 w-5 shrink-0 ${watched ? "text-blue-600" : wr > 0 ? "text-blue-400" : "text-slate-300"}`} />}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium">{l.chapter ? `${l.chapter} ` : ""}{l.title}</div>
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <span>{l.durationMinutes}分</span>
+                          {locked
+                            ? <span className="text-amber-600">「{prevLesson?.title}」の視聴完了が必要です</span>
+                            : wr > 0 && !watched && <span className="text-blue-500">視聴率 {wr}%</span>}
+                        </div>
                       </div>
+                      {checked
+                        ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">視聴済み</span>
+                        : watched
+                          ? <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">視聴中</span>
+                          : <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800">未視聴</span>}
+                      <Button size="sm" variant="ghost" className="h-7 text-blue-600 hover:text-blue-700" disabled={locked} onClick={() => setPlayerLesson(l)}>
+                        <PlayCircle className="mr-1 h-4 w-4" /> {wr > 0 && !watched ? "続きから" : "視聴"}
+                      </Button>
+                      <Button size="sm" className="h-7" variant={checked ? "secondary" : "default"} disabled={locked || !watched || checked || recordCheck.isPending} onClick={() => recordCheck.mutate({ enrollmentId, lessonId: l.id, learnerId })}>
+                        {checked ? "済" : "視聴完了"}
+                      </Button>
                     </div>
-                    {checked
-                      ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">視聴済み</span>
-                      : watched
-                        ? <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">視聴中</span>
-                        : <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800">未視聴</span>}
-                    <Button size="sm" variant="ghost" className="h-7 text-blue-600 hover:text-blue-700" onClick={() => setPlayerLesson(l)}>
-                      <PlayCircle className="mr-1 h-4 w-4" /> {wr > 0 && !watched ? "続きから" : "視聴"}
-                    </Button>
-                    <Button size="sm" className="h-7" variant={checked ? "secondary" : "default"} disabled={!watched || checked || recordCheck.isPending} onClick={() => recordCheck.mutate({ enrollmentId, lessonId: l.id, learnerId })}>
-                      {checked ? "済" : "視聴完了"}
-                    </Button>
+                    {lessonMaterials.length > 0 && (
+                      <div className="ml-8 mt-2 flex flex-wrap gap-1.5">
+                        {lessonMaterials.map(m => (
+                          m.fileUrl
+                            ? <a key={m.id} href={m.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"><Paperclip className="h-3 w-3" /> {m.name}</a>
+                            : <span key={m.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800"><Paperclip className="h-3 w-3" /> {m.name}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}

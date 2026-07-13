@@ -453,9 +453,19 @@ export const appRouter = router({
         videoUrl: z.string().optional(),
         durationMinutes: z.number().int().min(0).optional(),
         sortOrder: z.number().int().optional(),
+        requireSequential: z.boolean().optional(),
         isRequired: z.boolean().optional(),
       })).mutation(async ({ input }) => lms.updateLesson(input.id, input)),
       deleteLesson: contentProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteLesson(input.id)),
+
+      // --- 添付資料(FR-06) ---
+      materials: protectedProcedure.input(z.object({ courseId: z.number() })).query(async ({ input }) => lms.getMaterialsByCourse(input.courseId)),
+      createMaterial: contentProcedure.input(z.object({
+        lessonId: z.number(),
+        name: z.string().min(1),
+        fileUrl: z.string().optional(),
+      })).mutation(async ({ input }) => lms.createMaterial(input)),
+      deleteMaterial: contentProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => lms.deleteMaterial(input.id)),
     }),
 
     // --- 受講割当 / 進捗 (FR-11) ---
