@@ -478,11 +478,11 @@ function kpis(ap){
 
 /* ===== 月次損益グラフ（売上高・粗利・営業利益・累計営業利益） ===== */
 function plChart(ap,s){
-  const W=760,H=260,mL=56,mR=16,mT=14,mB=26,pw=W-mL-mR,ph=H-mT-mB,n=12;
+  const W=800,H=260,mL=92,mR=16,mT=14,mB=26,pw=W-mL-mR,ph=H-mT-mB,n=12;
   const vals=ap.months.flatMap(m=>[m.売上高,m.粗利,m.営業利益,m.累計営業利益]);
   let lo=Math.min(0,...vals),hi=Math.max(0,...vals); const pad=(hi-lo)*0.08||1000; hi+=pad; lo-=pad*0.3;
   const X=i=>mL+pw*i/(n-1),Y=v=>mT+ph*(1-(v-lo)/(hi-lo));
-  let g='';for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
+  let g='';for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${F(v)}</text>`;}
   let xl='';ap.months.forEach((m,i)=>{const on=i===s.対象月;xl+=`<text class="tick" x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${MONTHS[i]}</text>`;});
   const path=(key)=>ap.months.map((m,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(m[key]).toFixed(1)).join(' ');
   const dotcol=i=>i===s.対象月?'var(--accent)':null;
@@ -503,7 +503,7 @@ function donut(id,lgd,segs,center){
   const rad=52,C=2*Math.PI*rad,cx=70,cy=70,sw=22,tot=segs.reduce((a,b)=>a+b.v,0)||1;let off=0;
   const arcs=segs.filter(s=>s.v>0).map(s=>{const f=s.v/tot,len=Math.max(0,f*C-2);
     const c=`<circle cx="${cx}" cy="${cy}" r="${rad}" fill="none" stroke="${s.c}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off*C).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${s.n}: ${F(s.v)} (${(f*100).toFixed(1)}%)</title></circle>`;off+=f;return c;}).join('');
-  document.getElementById(id).innerHTML=`<svg viewBox="0 0 140 140" role="img" style="max-width:190px;margin:2px auto">${arcs}<text x="70" y="65" text-anchor="middle" style="font-size:9px;fill:var(--muted)">${center.t}</text><text x="70" y="81" text-anchor="middle" style="font-size:13px;font-weight:800;fill:var(--ink)">${center.v}</text></svg>`;
+  document.getElementById(id).innerHTML=`<svg viewBox="0 0 140 140" role="img" style="max-width:190px;margin:2px auto">${arcs}<text x="70" y="63" text-anchor="middle" style="font-size:9px;fill:var(--muted)">${center.t}</text><text x="70" y="80" text-anchor="middle" style="font-size:10.5px;font-weight:800;fill:var(--ink)">${center.v}</text><text x="70" y="93" text-anchor="middle" style="font-size:8.5px;fill:var(--muted)">円</text></svg>`;
   const tot2=segs.reduce((a,b)=>a+b.v,0)||1;
   document.getElementById(lgd).innerHTML=segs.filter(s=>s.v>0).map(s=>`<span><i style="background:${s.c}"></i>${s.n} <b>${F(s.v)}</b>（${(s.v/tot2*100).toFixed(0)}%）</span>`).join('');
 }
@@ -519,15 +519,15 @@ function chart3(r,s){
 /* ===== 5年見通し（参考） ===== */
 function midChart(s){
   const yrs=s.成長.map(g=>({y:g[0],r:calc(s,g[1])}));
-  const W=760,H=230,mL=48,mR=14,mT=14,mB=38,pw=W-mL-mR,ph=H-mT-mB,n=yrs.length;
+  const W=800,H=230,mL=84,mR=14,mT=14,mB=38,pw=W-mL-mR,ph=H-mT-mB,n=yrs.length;
   const maxV=Math.max(1,...yrs.map(o=>Math.max(o.r.歳入,o.r.総)))*1.12,Y=v=>mT+ph*(1-v/maxV);
-  let g='';for(let i=0;i<=3;i++){const v=maxV*i/3,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${(v/1e6).toFixed(1)}M</text>`;}
+  let g='';for(let i=0;i<=3;i++){const v=maxV*i/3,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${F(v)}</text>`;}
   const gw=pw/n,bw=Math.min(26,gw*0.3);
   let bars='';yrs.forEach((o,i)=>{const cx=mL+gw*(i+0.5),y1=Y(o.r.歳入),y2=Y(o.r.総),on=i===0;
     bars+=`<rect x="${(cx-bw-2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw}" height="${(mT+ph-y1).toFixed(1)}" rx="3" fill="var(--rev)" opacity="${on?1:.8}"><title>${o.y} 収入計 ${F(o.r.歳入)}</title></rect>`+
       `<rect x="${(cx+2).toFixed(1)}" y="${y2.toFixed(1)}" width="${bw}" height="${(mT+ph-y2).toFixed(1)}" rx="3" fill="var(--exp4)" opacity="${on?1:.8}"><title>${o.y} 支出計 ${F(o.r.総)}</title></rect>`+
       `<text class="tick" x="${cx.toFixed(1)}" y="${H-22}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${o.y}</text>`+
-      `<text class="tick" x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" style="fill:${o.r.返還後>=0?'var(--good)':'var(--bad)'}">返還後${F(o.r.返還後/1000)}k</text>`;});
+      `<text class="tick" x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" style="fill:${o.r.返還後>=0?'var(--good)':'var(--bad)'}">返還後${F(o.r.返還後)}</text>`;});
   document.getElementById('midChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="年度別 収入計と支出計">${g}<line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>${bars}</svg>`;
   document.getElementById('lgdMid').innerHTML=`<span><i style="background:var(--rev)"></i>収入計</span><span><i style="background:var(--exp4)"></i>支出計</span><span>数字＝返還後 収支差額（横ばいに注目）</span>`;
 }
@@ -705,10 +705,10 @@ function render(){
   donut('donutInc','lgdInc',(()=>{
     let kaihi=0,jigyo=0; ap.months.forEach(m=>{kaihi+=(m.newJoin*S.単価.利用会員入会金)+(m===ap.months[0]?(S.会費.正会員入会金+S.会費.賛助個人+S.会費.賛助法人):0);jigyo+=(m.sessions>0?m.cum*S.単価.参加費月額:0)+m.newJoin*(S.単価.保険+S.単価.アプリ);});
     return [{n:'会費収入',v:kaihi,c:'var(--inc1)'},{n:'事業収入(参加費等)',v:jigyo,c:'var(--inc2)'},{n:'市委託料',v:S.委託料,c:'var(--inc3)'},{n:'協賛金',v:S.spon12.reduce((a,b)=>a+b,0),c:'var(--inc4)'},{n:'寄付金',v:S.寄付,c:'var(--inc5)'}];
-  })(),{t:'売上高',v:(ap.売上高/1e6).toFixed(1)+'M'});
+  })(),{t:'売上高',v:F(ap.売上高)});
   donut('donutExp','lgdExp',[
     {n:'売上原価',v:ap.売上原価,c:'var(--exp1)'},{n:'販管費',v:ap.販管費,c:'var(--exp4)'}],
-    {t:'費用計',v:((ap.売上原価+ap.販管費)/1e6).toFixed(1)+'M'});
+    {t:'費用計',v:F(ap.売上原価+ap.販管費)});
 
   const r200=calc(S,200);
   chart3(r200,S);budgetTree(r200,S);midChart(S);tblMid(S);expenseBars(r200,S);tbl01(S);tbl04(S);tbl02(r200,S);tbl13(r200,S);
