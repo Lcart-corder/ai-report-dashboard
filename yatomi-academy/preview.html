@@ -198,6 +198,7 @@
     <button class="pchip" data-k="速い">速い立ち上がり</button>
     <button class="pchip" data-k="遅い">緩やかな立ち上がり</button>
     <button class="pchip" data-k="国庫">国庫申請(A案)</button>
+    <button class="pchip" data-k="委託料ゼロ">委託料ゼロ（県支給なし）</button>
   </div>
   <span class="sp"></span>
   <button class="ib" id="share">🔗 共有</button>
@@ -242,6 +243,8 @@
 
   <main class="side-right">
   <div class="kpis" id="kpis"></div>
+
+  <div class="noteBox" id="noSubsidyBox" style="border-color:var(--bad);background:var(--bad-soft)"></div>
 
   <div class="chart">
     <h3>月次 売上高・粗利・営業利益の推移</h3>
@@ -435,6 +438,14 @@ function annualPL(s){
   const 黒字月=months.findIndex(m=>m.営業利益>=0);
   const 累計黒字月=months.findIndex(m=>m.累計営業利益>=0);
   return {months,売上高:売上計,売上原価:原価計,粗利:粗利計,粗利率:売上計?粗利計/売上計:0,販管費:販管費計,営業利益:営業利益計,営業利益率:売上計?営業利益計/売上計:0,黒字月,累計黒字月,参加者年末:s.ramp[11]};
+}
+
+/* ===== 市委託料（県・市からの補助）がゼロだった場合の比較（現在の設定は変更せず試算） ===== */
+function noSubsidyCompare(s,ap,r200){
+  const clone=Object.assign({},s,{委託料:0});
+  const apNo=annualPL(clone), r200No=calc(clone,200);
+  const share=s.委託料&&r200.歳入?(s.委託料/r200.歳入*100):0;
+  return {apNo,r200No,share};
 }
 
 /* ===== ①月カード ===== */
@@ -712,6 +723,14 @@ function render(){
 
   const r200=calc(S,200);
   chart3(r200,S);budgetTree(r200,S);midChart(S);tblMid(S);expenseBars(r200,S);tbl01(S);tbl04(S);tbl02(r200,S);tbl13(r200,S);
+
+  const ns=noSubsidyCompare(S,ap,r200);
+  document.getElementById('noSubsidyBox').innerHTML=
+    `⚠ <b>市委託料（県・市からの補助）が0円だった場合</b>（試算・現在の入力は変更されません）：`+
+    `市委託料は歳入の約<b>${ns.share.toFixed(1)}%</b>を占めています。これが無くなると——`+
+    `月次ランプアップの年間営業利益は <b>${F(ap.営業利益)}円</b> → <b class="neg">${F(ns.apNo.営業利益)}円</b>、`+
+    `行政提出・正式予算(200人モデル)の当期収支差額は <b>${F(r200.収支)}円</b> → <b class="neg">${F(ns.r200No.収支)}円</b> になります。`+
+    `上部プリセット「委託料ゼロ」で全画面をこの前提に切り替えて確認できます。`;
   saveHash();
 }
 function syncControls(){
@@ -722,7 +741,8 @@ const PRESETS={
   標準:s=>{},
   速い:s=>{s.ramp=[60,110,150,180,195,200,200,200,200,200,200,200];s.sessions12=[3,3,4,4,4,4,3,3,3,3,3,3];},
   遅い:s=>{s.ramp=[8,15,25,40,60,85,110,135,160,180,195,200];s.sessions12=[1,1,1,2,2,3,3,4,4,4,4,3];},
-  国庫:s=>{s.採用='A';s.提出='A';}
+  国庫:s=>{s.採用='A';s.提出='A';},
+  委託料ゼロ:s=>{s.委託料=0;}
 };
 document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('.pchip');if(!b)return;
   [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));S=base();PRESETS[b.dataset.k](S);syncControls();editor();render();});
