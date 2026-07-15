@@ -31,9 +31,11 @@
   .logo{font-weight:800;font-size:14px;color:var(--accent-ink);white-space:nowrap}
   .logo small{color:var(--faint);font-weight:600;margin-left:5px;font-size:11px}
   .presets{display:flex;gap:5px;flex-wrap:wrap}
+  @media(max-width:720px){.presets{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}}
   .pchip{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--muted);font-family:var(--sans);font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
   .pchip:hover{border-color:var(--accent);color:var(--ink)}
   .pchip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .pchip{flex:0 0 auto}
   .bar .sp{margin-left:auto}
   .ib{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap}
   .ib:hover{border-color:var(--accent)}
@@ -54,6 +56,24 @@
     .split{grid-template-columns:1fr;gap:16px}
     .side-left{position:static;max-height:none;overflow-y:visible;padding-right:0}
   }
+
+  /* モバイルで設定を折りたたみ、結果に早く辿り着けるようにする */
+  .foldToggle{display:none}
+  @media(max-width:900px){
+    .foldToggle{display:flex;align-items:center;justify-content:space-between;width:100%;
+      background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;
+      box-shadow:var(--shadow);font-weight:700;font-size:13.5px;color:var(--accent-ink);cursor:pointer;font-family:var(--sans)}
+    .foldToggle .fc{color:var(--muted);font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+    .foldToggle .fchev{transition:transform .15s;color:var(--muted);font-size:12px}
+    .foldToggle[aria-expanded="false"] .fchev{transform:rotate(-90deg)}
+    .foldBody{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+    .foldBody.closed{display:none}
+  }
+
+  /* 横スクロール領域の右端フェード（スクロールできることを示す） */
+  .scrollFade{position:relative}
+  .scrollFade::after{content:"";position:absolute;top:0;right:0;bottom:0;width:26px;
+    background:linear-gradient(to right, transparent, var(--card));pointer-events:none;border-radius:0 var(--r) var(--r) 0}
 
   /* ===== hero ===== */
   .hero{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px 18px;margin:16px 0}
@@ -91,12 +111,15 @@
   .seg button:last-child{border-right:none}.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 
   /* ===== KPI ===== */
-  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 0}
-  @media(max-width:980px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 0}
   @media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
   @media(max-width:460px){.wrap{padding:0 12px 60px}.bar-in{padding:9px 12px}}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);border-top:3px solid var(--line)}
   .kpi.good{border-top-color:var(--good)}.kpi.bad{border-top-color:var(--bad)}
+  .kpi.kpiDual{display:flex;flex-direction:column}
+  .kpiDual .dualRow{display:flex;justify-content:space-between;align-items:baseline;margin-top:5px}
+  .kpiDual .dualLbl{font-size:11px;color:var(--muted);font-weight:700}
+  .kpiDual .dualRow .v{font-size:16px;margin-top:0;font-weight:800;font-variant-numeric:tabular-nums}
   .kpi .l{font-size:11.5px;color:var(--muted);font-weight:700}
   .kpi .v{font-size:20px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
   .kpi .s{font-size:10.5px;color:var(--faint);margin-top:2px}
@@ -186,6 +209,15 @@
   .helpItem .ico{font-size:16px;flex:0 0 auto}
   .noteBox{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7}
   .noteBox b{color:var(--ink)}
+  .nsHead{font-weight:700;color:var(--bad);font-size:13px;margin-bottom:2px}
+  .nsHead .nsShare{font-weight:600;color:var(--muted);font-size:11.5px;margin-left:2px}
+  .nsGrid{display:grid;grid-template-columns:1fr 108px 108px;gap:3px 10px;font-size:12.5px;margin:8px 0 2px;align-items:center}
+  .nsGrid .h{font-size:10px;color:var(--muted);font-weight:700;text-align:right}
+  .nsGrid .lbl{color:var(--ink)}
+  .nsGrid .now{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700}
+  .nsGrid .zero{text-align:right;font-variant-numeric:tabular-nums;color:var(--bad);font-weight:800}
+  .nsFoot{margin-top:8px;font-size:11.5px;color:var(--muted)}
+  @media(max-width:520px){.nsGrid{grid-template-columns:1fr 76px 76px;font-size:11.5px}}
   footer{color:var(--faint);font-size:11.5px;margin-top:24px;text-align:center}
   @media print{.bar,.tabs,.ib,.toggle,.side-left,input[type=range],.seg,.subtoggle{display:none!important}.split{grid-template-columns:1fr!important}.panel[hidden]{display:block!important}.chart,.panel,.kpi{break-inside:avoid}}
 </style>
@@ -216,15 +248,20 @@
 
   <div class="split">
   <aside class="side-left">
+    <button class="foldToggle" id="foldToggle" aria-expanded="true" aria-controls="foldBody">
+      <span>✎ 設定・前提入力を見る</span>
+      <span class="fc"><span id="foldPeek"></span><span class="fchev">▾</span></span>
+    </button>
+    <div class="foldBody" id="foldBody">
     <!-- ===== 左：設定入力欄（月カード＋ランプアップ入力グリッド＋前提編集） ===== -->
     <div class="hero">
       <div class="heroLbl">① 月ごとの「累計参加者数」を個別に入力（初月は少なく、徐々に増える想定）</div>
-      <div class="monthScroll" id="monthCards"></div>
+      <div class="scrollFade"><div class="monthScroll" id="monthCards"></div></div>
       <p class="selMonth" id="selMonth"></p>
 
       <div class="inputGrid">
         <div class="igTitle">② 開催回数・協賛金も月ごとに個別入力できます</div>
-        <div class="igScroll"><table class="igTable" id="igTable"></table></div>
+        <div class="scrollFade"><div class="igScroll"><table class="igTable" id="igTable"></table></div></div>
         <p class="igNote" id="igWarn"></p>
       </div>
 
@@ -239,6 +276,7 @@
       <p class="ch-sub">単価・謝金パラメータ・費目はすべて実勢値に差し替えられます。月次損益・公式予算の両方に反映されます。</p>
       <div id="editor"></div>
       <button class="ib" id="edReset" style="margin-top:10px">↺ 既定（資料値）に戻す</button>
+    </div>
     </div>
   </aside>
 
@@ -482,11 +520,16 @@ function kpis(ap){
   const t=[
     {l:'年間売上高',v:F(ap.売上高),cls:'',s:'ランプアップ後の年間合計'},
     {l:'年間粗利',v:F(ap.粗利),cls:'',s:'粗利率 '+PCT(ap.粗利率)},
-    {l:'年間営業利益',v:(ap.営業利益>=0?'+':'')+F(ap.営業利益),cls:ap.営業利益>=0?'good':'bad',vc:ap.営業利益>=0?'pos':'neg',s:'営業利益率 '+PCT(ap.営業利益率)},
-    {l:'単月で黒字化した月',v:ap.黒字月>=0?MONTHS[ap.黒字月]:'未達',cls:ap.黒字月>=0?'good':'bad',vc:ap.黒字月>=0?'pos':'neg',s:'その月だけ見て黒字'},
-    {l:'累計で黒字化した月',v:ap.累計黒字月>=0?MONTHS[ap.累計黒字月]:'年度内未達',cls:ap.累計黒字月>=0?'good':'bad',vc:ap.累計黒字月>=0?'pos':'neg',s:'資金繰り上の損益分岐点'}
+    {l:'年間営業利益',v:(ap.営業利益>=0?'+':'')+F(ap.営業利益),cls:ap.営業利益>=0?'good':'bad',vc:ap.営業利益>=0?'pos':'neg',s:'営業利益率 '+PCT(ap.営業利益率)}
   ];
-  document.getElementById('kpis').innerHTML=t.map(x=>`<div class="kpi ${x.cls||''}"><div class="l">${x.l}</div><div class="v ${x.vc||''}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
+  let h=t.map(x=>`<div class="kpi ${x.cls||''}"><div class="l">${x.l}</div><div class="v ${x.vc||''}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
+  const mLbl=ap.黒字月>=0?MONTHS[ap.黒字月]:'未達', cLbl=ap.累計黒字月>=0?MONTHS[ap.累計黒字月]:'年度内未達';
+  h+=`<div class="kpi kpiDual ${ap.累計黒字月>=0?'good':'bad'}">
+    <div class="l">黒字化した月</div>
+    <div class="dualRow"><span class="dualLbl">単月</span><span class="v ${ap.黒字月>=0?'pos':'neg'}">${mLbl}</span></div>
+    <div class="dualRow"><span class="dualLbl">累計(資金繰り)</span><span class="v ${ap.累計黒字月>=0?'pos':'neg'}">${cLbl}</span></div>
+  </div>`;
+  document.getElementById('kpis').innerHTML=h;
 }
 
 /* ===== 月次損益グラフ（累計売上高・累計粗利・累計営業利益）
@@ -731,7 +774,7 @@ function render(){
     return [{n:'会費収入',v:kaihi,c:'var(--inc1)'},{n:'事業収入(参加費等)',v:jigyo,c:'var(--inc2)'},{n:'市委託料',v:S.委託料,c:'var(--inc3)'},{n:'協賛金',v:S.spon12.reduce((a,b)=>a+b,0),c:'var(--inc4)'},{n:'寄付金',v:S.寄付,c:'var(--inc5)'}];
   })(),{t:'売上高',v:F(ap.売上高)});
   donut('donutExp','lgdExp',[
-    {n:'売上原価',v:ap.売上原価,c:'var(--exp1)'},{n:'販管費',v:ap.販管費,c:'var(--exp4)'}],
+    {n:'売上原価',v:ap.売上原価,c:'var(--exp3)'},{n:'販管費',v:ap.販管費,c:'var(--exp4)'}],
     {t:'費用計',v:F(ap.売上原価+ap.販管費)});
 
   const r200=calc(S,200);
@@ -739,11 +782,17 @@ function render(){
 
   const ns=noSubsidyCompare(S,ap,r200);
   document.getElementById('noSubsidyBox').innerHTML=
-    `⚠ <b>市委託料（県・市からの補助）が0円だった場合</b>（試算・現在の入力は変更されません）：`+
-    `市委託料は歳入の約<b>${ns.share.toFixed(1)}%</b>を占めています。これが無くなると——`+
-    `月次ランプアップの年間営業利益は <b>${F(ap.営業利益)}円</b> → <b class="neg">${F(ns.apNo.営業利益)}円</b>、`+
-    `行政提出・正式予算(200人モデル)の当期収支差額は <b>${F(r200.収支)}円</b> → <b class="neg">${F(ns.r200No.収支)}円</b> になります。`+
-    `上部プリセット「委託料ゼロ」で全画面をこの前提に切り替えて確認できます。`;
+    `<div class="nsHead">⚠ <b>市委託料（県・市からの補助）が0円だった場合</b><span class="nsShare">（試算・現在の入力は変更されません／歳入の約${ns.share.toFixed(1)}%を占有）</span></div>`+
+    `<div class="nsGrid">`+
+      `<div></div><div class="h">現在</div><div class="h">委託料ゼロ時</div>`+
+      `<div class="lbl">月次ランプアップ 年間営業利益</div><div class="now">${F(ap.営業利益)}円</div><div class="zero">${F(ns.apNo.営業利益)}円</div>`+
+      `<div class="lbl">行政提出・正式予算(200人) 当期収支差額</div><div class="now">${F(r200.収支)}円</div><div class="zero">${F(ns.r200No.収支)}円</div>`+
+    `</div>`+
+    `<p class="nsFoot">上部プリセット「委託料ゼロ（県支給なし）」で全画面をこの前提に切り替えて確認できます。</p>`;
+
+  // モバイル用：折りたたみトグルに現在の選択月の要点を表示
+  const fp=document.getElementById('foldPeek');
+  if(fp){const m=ap.months[S.対象月];fp.textContent=`${MONTHS[S.対象月]}時点 累計${m.cum}人`;}
   saveHash();
 }
 function syncControls(){
@@ -799,6 +848,18 @@ document.getElementById('print').addEventListener('click',()=>window.print());
 document.getElementById('csv').addEventListener('click',()=>csvExport());
 document.getElementById('share').addEventListener('click',e=>{saveHash();const u=location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>toast(e.target,'✓ コピー済'),()=>toast(e.target,'コピー不可'));}else toast(e.target,'URL反映');});
 const root=document.documentElement;document.getElementById('tg').addEventListener('click',()=>{const c=root.getAttribute('data-theme');root.setAttribute('data-theme',c?(c==='dark'?'light':'dark'):(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark'));render();});
+
+/* モバイルの設定折りたたみ：初期状態は狭い画面のみ閉じる。開閉はいつでも可能 */
+const foldToggle=document.getElementById('foldToggle'), foldBody=document.getElementById('foldBody');
+foldToggle.addEventListener('click',()=>{
+  const open=foldToggle.getAttribute('aria-expanded')==='true';
+  foldToggle.setAttribute('aria-expanded',String(!open));
+  foldBody.classList.toggle('closed',open);
+});
+if(window.matchMedia('(max-width:900px)').matches){
+  foldToggle.setAttribute('aria-expanded','false');
+  foldBody.classList.add('closed');
+}
 
 loadHash();editor();syncControls();render();
 </script>
