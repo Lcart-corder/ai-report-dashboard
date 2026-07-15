@@ -91,7 +91,8 @@
   .seg button:last-child{border-right:none}.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 
   /* ===== KPI ===== */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 0}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0 0}
+  @media(max-width:980px){.kpis{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
   @media(max-width:460px){.wrap{padding:0 12px 60px}.bar-in{padding:9px 12px}}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);border-top:3px solid var(--line)}
@@ -247,14 +248,13 @@
   <div class="noteBox" id="noSubsidyBox" style="border-color:var(--bad);background:var(--bad-soft)"></div>
 
   <div class="chart">
-    <h3>月次 売上高・粗利・営業利益の推移</h3>
-    <p class="ch-sub">3本の線で毎月の水準を比較。破線＝営業利益の累計（資金繰りの目安）。ゼロの点線を上回れば黒字です。</p>
+    <h3>累計 売上高・粗利・営業利益の推移</h3>
+    <p class="ch-sub">3本とも4月からの累計値です（単月の値と混在させると累計の値幅に単月の変化が埋もれてしまうため、累計に統一しています）。ゼロの点線を営業利益の線が上回った月が、資金繰り上の損益分岐点です。単月ごとの値は下の「月次損益 明細」タブで確認できます。</p>
     <div id="plChart"></div>
     <div class="lgd">
-      <span><i style="background:var(--rev)"></i>売上高</span>
-      <span><i style="background:var(--gp)"></i>粗利</span>
-      <span><i style="background:var(--op)"></i>営業利益</span>
-      <span><i style="background:var(--cum)"></i>営業利益 累計（破線）</span>
+      <span><i style="background:var(--rev)"></i>累計売上高</span>
+      <span><i style="background:var(--gp)"></i>累計粗利</span>
+      <span><i style="background:var(--op)"></i>累計営業利益</span>
     </div>
   </div>
 
@@ -427,10 +427,11 @@ function monthlyPL(s,i,r0,fixed){
 }
 function annualPL(s){
   const r0=calc(s,0), fixed=costFixedSums(s);
-  const months=[]; let cumProfit=0,売上計=0,原価計=0,販管費計=0;
+  const months=[]; let cumSales=0,cumCost=0,cumGP=0,cumSGA=0,cumProfit=0,売上計=0,原価計=0,販管費計=0;
   for(let i=0;i<12;i++){
     const m=monthlyPL(s,i,r0,fixed);
-    cumProfit+=m.営業利益; m.累計営業利益=cumProfit;
+    cumSales+=m.売上高; cumCost+=m.売上原価; cumGP+=m.粗利; cumSGA+=m.販管費; cumProfit+=m.営業利益;
+    m.累計売上高=cumSales; m.累計原価=cumCost; m.累計粗利=cumGP; m.累計販管費=cumSGA; m.累計営業利益=cumProfit;
     months.push(m);
     売上計+=m.売上高; 原価計+=m.売上原価; 販管費計+=m.販管費;
   }
@@ -482,29 +483,32 @@ function kpis(ap){
     {l:'年間売上高',v:F(ap.売上高),cls:'',s:'ランプアップ後の年間合計'},
     {l:'年間粗利',v:F(ap.粗利),cls:'',s:'粗利率 '+PCT(ap.粗利率)},
     {l:'年間営業利益',v:(ap.営業利益>=0?'+':'')+F(ap.営業利益),cls:ap.営業利益>=0?'good':'bad',vc:ap.営業利益>=0?'pos':'neg',s:'営業利益率 '+PCT(ap.営業利益率)},
-    {l:'黒字化した月',v:ap.黒字月>=0?MONTHS[ap.黒字月]:'未達',cls:ap.黒字月>=0?'good':'bad',vc:ap.黒字月>=0?'pos':'neg',s:'単月営業利益が初めて黒字'}
+    {l:'単月で黒字化した月',v:ap.黒字月>=0?MONTHS[ap.黒字月]:'未達',cls:ap.黒字月>=0?'good':'bad',vc:ap.黒字月>=0?'pos':'neg',s:'その月だけ見て黒字'},
+    {l:'累計で黒字化した月',v:ap.累計黒字月>=0?MONTHS[ap.累計黒字月]:'年度内未達',cls:ap.累計黒字月>=0?'good':'bad',vc:ap.累計黒字月>=0?'pos':'neg',s:'資金繰り上の損益分岐点'}
   ];
   document.getElementById('kpis').innerHTML=t.map(x=>`<div class="kpi ${x.cls||''}"><div class="l">${x.l}</div><div class="v ${x.vc||''}">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
 }
 
-/* ===== 月次損益グラフ（売上高・粗利・営業利益・累計営業利益） ===== */
+/* ===== 月次損益グラフ（累計売上高・累計粗利・累計営業利益）
+   ※月次の単月値と累計値を同じ軸に混ぜると、累計の値幅が単月を圧倒して
+   単月の線が潰れて見えるため、3本とも累計で統一する。単月の値は
+   「月次損益 明細」タブの表で確認できる。 ===== */
 function plChart(ap,s){
   const W=800,H=260,mL=92,mR=16,mT=14,mB=26,pw=W-mL-mR,ph=H-mT-mB,n=12;
-  const vals=ap.months.flatMap(m=>[m.売上高,m.粗利,m.営業利益,m.累計営業利益]);
-  let lo=Math.min(0,...vals),hi=Math.max(0,...vals); const pad=(hi-lo)*0.08||1000; hi+=pad; lo-=pad*0.3;
+  const vals=ap.months.flatMap(m=>[m.累計売上高,m.累計粗利,m.累計営業利益]);
+  let lo=Math.min(0,...vals),hi=Math.max(0,...vals); const pad=(hi-lo)*0.08||1000; hi+=pad; lo-=pad*0.08;
   const X=i=>mL+pw*i/(n-1),Y=v=>mT+ph*(1-(v-lo)/(hi-lo));
   let g='';for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);g+=`<line class="grid" x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}"/><text class="tick" x="${mL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${F(v)}</text>`;}
   let xl='';ap.months.forEach((m,i)=>{const on=i===s.対象月;xl+=`<text class="tick" x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" ${on?'style="fill:var(--accent);font-weight:700"':''}>${MONTHS[i]}</text>`;});
   const path=(key)=>ap.months.map((m,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(m[key]).toFixed(1)).join(' ');
   const dotcol=i=>i===s.対象月?'var(--accent)':null;
-  const dots=(key,color)=>ap.months.map((m,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(m[key]).toFixed(1)}" r="${i===s.対象月?4.5:3}" fill="${dotcol(i)||color}"><title>${MONTHS[i]} ${key}: ${F(m[key])}円</title></circle>`).join('');
-  document.getElementById('plChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="月次売上・粗利・営業利益の推移">${g}
+  const dots=(key,color)=>ap.months.map((m,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(m['累計'+key]).toFixed(1)}" r="${i===s.対象月?4.5:3}" fill="${dotcol(i)||color}"><title>${MONTHS[i]} 累計${key}: ${F(m['累計'+key])}円</title></circle>`).join('');
+  document.getElementById('plChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="累計売上高・累計粗利・累計営業利益の推移">${g}
     <line class="zero" x1="${mL}" y1="${Y(0).toFixed(1)}" x2="${W-mR}" y2="${Y(0).toFixed(1)}"/>${xl}
     <line class="ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+ph}"/>
-    <path d="${path('累計営業利益')}" fill="none" stroke="var(--cum)" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>
-    <path d="${path('売上高')}" fill="none" stroke="var(--rev)" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="${path('粗利')}" fill="none" stroke="var(--gp)" stroke-width="2.5" stroke-linejoin="round"/>
-    <path d="${path('営業利益')}" fill="none" stroke="var(--op)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${path('累計売上高')}" fill="none" stroke="var(--rev)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${path('累計粗利')}" fill="none" stroke="var(--gp)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${path('累計営業利益')}" fill="none" stroke="var(--op)" stroke-width="2.5" stroke-linejoin="round"/>
     ${dots('売上高','var(--rev)')}${dots('粗利','var(--gp)')}${dots('営業利益','var(--op)')}
   </svg>`;
 }
