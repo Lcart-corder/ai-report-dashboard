@@ -65,6 +65,21 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 
+  // スリープ防止(無料プラン対策)。Renderは公開URLを RENDER_EXTERNAL_URL に注入する。
+  // 起動中は自分の /healthz を定期的に叩いて「インバウンド通信あり」とみなさせ、
+  // アイドルによる自動スリープ(次回アクセス時の「起動中」画面)を防ぐ。
+  // 外部サービス不要・無料枠内(常時起動でも月744h < 750h)。ローカルでは env 未設定のため無効。
+  const keepWarmUrl = process.env.RENDER_EXTERNAL_URL || process.env.KEEP_WARM_URL;
+  if (keepWarmUrl && process.env.NODE_ENV === "production") {
+    const target = `${keepWarmUrl.replace(/\/$/, "")}/healthz`;
+    const intervalMs = 10 * 60 * 1000; // 10分(Renderのアイドル判定=15分より短く)
+    const timer = setInterval(() => {
+      fetch(target).catch(() => { /* 一時的な失敗は無視(次回で回復) */ });
+    }, intervalMs);
+    timer.unref?.(); // プロセス終了を妨げない
+    console.log(`[keep-warm] ${target} を${intervalMs / 60000}分間隔でping(スリープ防止)`);
+  }
+
   // ゲスト閲覧モードでは、デモが空なら初回だけデモデータを自動投入(ベストエフォート)
   if (process.env.LMS_PREVIEW_MODE === "1") {
     import("../lms")
