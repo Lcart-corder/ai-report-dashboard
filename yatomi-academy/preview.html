@@ -678,8 +678,17 @@ function tbl13(r,s){
 }
 
 /* ===== 前提を編集 ===== */
+function fmtNum(v){
+  if(v===''||v==null||isNaN(v))return '';
+  const neg=v<0; v=Math.abs(v);
+  const parts=String(v).split('.');
+  parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (neg?'-':'')+parts.join('.');
+}
+function getPath(o,path){const k=path.split('.');let x=o;for(let i=0;i<k.length;i++)x=x[k[i]];return x;}
+
 function editor(){
-  const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="number" step="any" min="0" inputmode="decimal" data-p="${path}" value="${val}"></div>`;
+  const ef=(label,path,val)=>`<div class="ef"><label>${label}</label><input type="text" inputmode="decimal" data-p="${path}" value="${fmtNum(val)}"></div>`;
   let h=`<div class="ed-grp"><h4>収入単価・会費・委託料（公式モデル用）</h4><div class="ed-grid">`+
     ef('参加費 月額','単価.参加費月額',S.単価.参加費月額)+ef('公式モデルの参加月数','月数',S.月数)+ef('利用会員入会金','単価.利用会員入会金',S.単価.利用会員入会金)+
     ef('スポーツ安全保険','単価.保険',S.単価.保険)+ef('アプリ使用料','単価.アプリ',S.単価.アプリ)+ef('正会員入会金(計)','会費.正会員入会金',S.会費.正会員入会金)+
@@ -758,9 +767,13 @@ document.getElementById('igTable').addEventListener('input',e=>{const el=e.targe
   const i=+el.dataset.i,k=el.dataset.mk;let v=parseFloat(el.value);if(isNaN(v)||v<0)v=0;S[k][i]=v;render();
   setTimeout(()=>{const n=document.querySelector(`#igTable input[data-mk="${k}"][data-i="${i}"]`);if(n)n.focus();},0);});
 
-document.getElementById('editor').addEventListener('input',e=>{const el=e.target.closest('input[data-p]');if(!el)return;let v=parseFloat(el.value);if(isNaN(v))v=0;
+document.getElementById('editor').addEventListener('input',e=>{const el=e.target.closest('input[data-p]');if(!el)return;
+  let v=parseFloat(el.value.replace(/,/g,''));if(isNaN(v))v=0;
   if(el.dataset.p==='成長.1.1'){const base200=S.成長[0][1];S.成長=S.成長.map((g,i)=>[g[0],base200+v*i]);}
   else setPath(S,el.dataset.p,v);render();});
+document.getElementById('editor').addEventListener('focusout',e=>{const el=e.target.closest('input[data-p]');if(!el)return;
+  const v=el.dataset.p==='成長.1.1'?(S.成長[1][1]-S.成長[0][1]):getPath(S,el.dataset.p);
+  el.value=fmtNum(v);});
 document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();[...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
 
 document.getElementById('btree').addEventListener('input',e=>{const el=e.target.closest('input.btreeEdit');if(!el)return;
