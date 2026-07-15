@@ -340,8 +340,8 @@
     <h2>使い方</h2>
     <div class="helpList">
       <div class="helpItem"><span class="ico">1️⃣</span><span>上の<b>月カード</b>と<b>入力グリッド</b>で、月ごとの累計参加者数・開催回数・協賛金を個別に入力します。初期値は「初月からマックスではない」緩やかな立ち上がりです。</span></div>
-      <div class="helpItem"><span class="ico">2️⃣</span><span><b>月次損益グラフ</b>で売上高・粗利・営業利益の推移をひと目で確認。破線は累計営業利益（資金繰りの目安）です。</span></div>
-      <div class="helpItem"><span class="ico">3️⃣</span><span>KPIの「黒字化した月」は、単月の営業利益が初めてプラスになる月です。</span></div>
+      <div class="helpItem"><span class="ico">2️⃣</span><span><b>累計グラフ</b>で売上高・粗利・営業利益の年間の積み上がり方をひと目で確認できます（単月の値は「月次損益 明細」タブの表で確認）。ゼロの点線を営業利益の線が上回った月が、資金繰り上の損益分岐点です。</span></div>
+      <div class="helpItem"><span class="ico">3️⃣</span><span>KPIの「単月で黒字化した月」はその月だけ見て営業利益がプラスになった最初の月、「累計で黒字化した月」はそれまでの累計が初めてプラスに転じた月（資金繰り上の損益分岐点）です。</span></div>
       <div class="helpItem"><span class="ico">4️⃣</span><span>「行政提出・正式予算」タブは資料①〜④に基づく<b>公式の200人モデル</b>で、月次ランプアップとは独立して常に一定です。行政・理事会向けにはこちらを使ってください。</span></div>
       <div class="helpItem"><span class="ico">5️⃣</span><span>「支出・収入の詳細」「指導員・行政提出」「謝金3案」はすべて公式モデルに基づく参考情報です。</span></div>
       <div class="helpItem"><span class="ico">6️⃣</span><span>左側の「✎ 前提を編集」で単価・謝金・費目を変更すると、月次損益・公式予算の両方に反映されます。</span></div>
@@ -591,7 +591,7 @@ function budgetTree(r,s){
     const vcls=row.val<0?'neg':(row.cls==='total'||row.cls==='bal'?'pos':'');
     const indentCls=row.indent?' i1':'';
     const valHtml=row.editKey
-      ? `<div class="val editval"><input type="number" min="0" step="1000" class="btreeEdit" data-p="${row.editKey}" value="${row.val}"></div>`
+      ? `<div class="val editval"><input type="text" inputmode="decimal" class="btreeEdit" data-p="${row.editKey}" value="${fmtNum(row.val)}"></div>`
       : `<div class="val ${vcls}">${F(row.val)}</div>`;
     return `<div class="row ${row.cls}${indentCls}"><div>${row.label}</div>`+
       `<div class="track"><div class="fill" style="width:${pct.toFixed(1)}%"></div></div>`+
@@ -777,7 +777,7 @@ document.getElementById('editor').addEventListener('focusout',e=>{const el=e.tar
 document.getElementById('edReset').addEventListener('click',()=>{S=base();syncControls();editor();render();[...document.getElementById('presets').children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));});
 
 document.getElementById('btree').addEventListener('input',e=>{const el=e.target.closest('input.btreeEdit');if(!el)return;
-  let v=parseFloat(el.value);if(isNaN(v)||v<0)v=0;setPath(S,el.dataset.p,v);editor();render();
+  let v=parseFloat(el.value.replace(/,/g,''));if(isNaN(v)||v<0)v=0;setPath(S,el.dataset.p,v);editor();render();
   setTimeout(()=>{const n=document.querySelector(`#btree input.btreeEdit[data-p="${el.dataset.p}"]`);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}},0);});
 
 /* 上位タブ */
