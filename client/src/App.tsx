@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { LayoutProvider } from "./contexts/layout-context";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppSidebar } from "./components/app-sidebar";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load all pages for code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -159,9 +160,11 @@ function App() {
   const [location] = useLocation();
   if (location.startsWith("/lms")) {
     return (
-      <AuthProvider>
-        <LmsApp />
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <LmsApp />
+        </AuthProvider>
+      </ErrorBoundary>
     );
   }
   return (
