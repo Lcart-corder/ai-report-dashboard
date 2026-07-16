@@ -265,6 +265,10 @@ function QuizEditor({ quizId, title, passingScore }: { quizId: number; title: st
     onSuccess: () => { toast.success("設問を追加しました"); utils.lms.quizzes.getWithQuestions.invalidate({ quizId }); setQ({ questionText: "", options: "選択肢A\n選択肢B\n選択肢C", correctIndex: 0 }); },
     onError: e => toast.error(e.message),
   });
+  const updateQuiz = trpc.lms.quizzes.update.useMutation({
+    onSuccess: () => { toast.success("テスト設定を更新しました"); utils.lms.quizzes.getWithQuestions.invalidate({ quizId }); },
+    onError: e => toast.error(e.message),
+  });
 
   return (
     <div className="rounded-lg border p-3">
@@ -272,6 +276,29 @@ function QuizEditor({ quizId, title, passingScore }: { quizId: number; title: st
         <span className="font-medium">{title}</span>
         <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">合格 {passingScore}%</span>
         <span className="text-xs text-slate-400">設問 {quiz.data?.questions.length ?? 0}</span>
+      </div>
+      {/* 受験ルール(FR-09): 再受験上限・制限時間・シャッフル */}
+      <div className="mb-3 grid gap-2 rounded-md border border-slate-200 p-2 text-sm sm:grid-cols-3 dark:border-slate-800">
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-xs text-slate-500">再受験上限(回)</span>
+          <Input
+            type="number" min={1} className="h-8 w-20 text-sm" placeholder="無制限"
+            defaultValue={quiz.data?.maxAttempts ?? ""}
+            onBlur={e => { const v = e.target.value === "" ? null : Math.max(1, Number(e.target.value)); if (v !== (quiz.data?.maxAttempts ?? null)) updateQuiz.mutate({ id: quizId, maxAttempts: v }); }}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-xs text-slate-500">制限時間(分)</span>
+          <Input
+            type="number" min={1} className="h-8 w-20 text-sm" placeholder="なし"
+            defaultValue={quiz.data?.timeLimitMinutes ?? ""}
+            onBlur={e => { const v = e.target.value === "" ? null : Math.max(1, Number(e.target.value)); if (v !== (quiz.data?.timeLimitMinutes ?? null)) updateQuiz.mutate({ id: quizId, timeLimitMinutes: v }); }}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-2">
+          <span className="text-xs text-slate-500">設問シャッフル</span>
+          <Switch checked={quiz.data?.shuffleQuestions ?? false} onCheckedChange={v => updateQuiz.mutate({ id: quizId, shuffleQuestions: v })} disabled={updateQuiz.isPending} />
+        </label>
       </div>
       <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
         {quiz.data?.questions.map(qq => <li key={qq.id}>{qq.questionText} <span className="text-xs text-slate-400">（{qq.questionType === "single" ? "単一選択" : qq.questionType === "multiple" ? "複数選択" : "記述"} / {qq.points}点）</span></li>)}

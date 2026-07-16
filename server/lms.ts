@@ -767,6 +767,15 @@ export async function createQuiz(input: InsertQuiz) {
   return { id: insertedId(result) };
 }
 
+/** テスト設定の更新(合格点・再受験上限・制限時間・シャッフル)。管理者操作として監査ログに残す。 */
+export async function updateQuiz(id: number, input: Partial<InsertQuiz>) {
+  const db = await getDb();
+  if (!db) throw new Error(REQUIRE_DB);
+  await db.update(quizzes).set(input).where(eq(quizzes.id, id));
+  await writeAuditLog({ category: "admin", action: "quiz.update", targetType: "quiz", targetId: id, detail: input });
+  return { id };
+}
+
 export async function createQuizQuestion(input: InsertQuizQuestion) {
   const db = await getDb();
   if (!db) throw new Error(REQUIRE_DB);

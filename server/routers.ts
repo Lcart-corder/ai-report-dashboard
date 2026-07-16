@@ -518,6 +518,14 @@ export const appRouter = router({
         timeLimitMinutes: z.number().int().positive().nullable().optional(),
         shuffleQuestions: z.boolean().default(false),
       })).mutation(async ({ input }) => lms.createQuiz(input)),
+      update: contentProcedure.input(z.object({
+        id: z.number(),
+        title: z.string().min(1).optional(),
+        passingScore: z.number().int().min(0).max(100).optional(),
+        maxAttempts: z.number().int().positive().nullable().optional(),
+        timeLimitMinutes: z.number().int().positive().nullable().optional(),
+        shuffleQuestions: z.boolean().optional(),
+      })).mutation(async ({ input }) => lms.updateQuiz(input.id, input)),
       addQuestion: contentProcedure.input(z.object({
         quizId: z.number(),
         questionText: z.string().min(1),

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -276,32 +276,104 @@ function parseOptions(raw: unknown): string[] {
   return [];
 }
 
+// 設問シャッフル(FR-09): Fisher-Yates。受験開始のたびに並び替える。
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number; enrollmentId: number; learnerId: number; onDone: () => void }) {
   const quiz = trpc.lms.quizzes.getWithQuestions.useQuery({ quizId });
   const results = trpc.lms.quizzes.results.useQuery({ enrollmentId });
   const [answers, setAnswers] = useState<Record<string, number[]>>({});
+  // 表示順(シャッフル対応)。開始時に確定する。
+  const [order, setOrder] = useState<number[] | null>(null);
+  // 制限時間(FR-09): 残り秒。nullの間は未開始。
+  const [remainSec, setRemainSec] = useState<number | null>(null);
+  const [started, setStarted] = useState(false);
   const utils = trpc.useUtils();
 
   const submit = trpc.lms.quizzes.submit.useMutation({
     onSuccess: r => {
       toast[r.passed ? "success" : "error"](`採点結果: ${r.score}点（${r.passed ? "合格" : "不合格"}）`);
       utils.lms.quizzes.results.invalidate({ enrollmentId });
+      setStarted(false); setRemainSec(null); setAnswers({});
       onDone();
     },
-    onError: e => toast.error(e.message),
+    onError: e => { toast.error(e.message); setStarted(false); setRemainSec(null); },
   });
 
   const passed = results.data?.some(r => r.quizId === quizId && r.passed);
   const attempts = results.data?.filter(r => r.quizId === quizId).length ?? 0;
+  const maxAttempts = quiz.data?.maxAttempts ?? null;
+  const attemptsExhausted = !passed && maxAttempts != null && attempts >= maxAttempts;
+  const timeLimitMin = quiz.data?.timeLimitMinutes ?? null;
+  // 制限時間かシャッフルがあるテストは「開始」操作を挟む(証跡・公平性の担保)
+  const needsStart = (timeLimitMin != null || !!quiz.data?.shuffleQuestions) && !passed;
+  const showQuestions = !needsStart || started;
+
+  function begin() {
+    const qs = quiz.data?.questions ?? [];
+    setOrder(quiz.data?.shuffleQuestions ? shuffled(qs.map(q => q.id)) : qs.map(q => q.id));
+    setAnswers({});
+    setStarted(true);
+    if (timeLimitMin != null) setRemainSec(timeLimitMin * 60);
+  }
+
+  // カウントダウン。0で自動提出(時間切れの回答も証跡として保存される)。
+  useEffect(() => {
+    if (!started || remainSec == null) return;
+    if (remainSec <= 0) {
+      toast.warning("制限時間になりました。自動的に提出します。");
+      submit.mutate({ quizId, enrollmentId, learnerId, answers });
+      return;
+    }
+    const t = setTimeout(() => setRemainSec(s => (s == null ? null : s - 1)), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, remainSec]);
+
+  const questionList = (() => {
+    const qs = quiz.data?.questions ?? [];
+    if (!order) return qs;
+    const byId = new Map(qs.map(q => [q.id, q]));
+    return order.map(id => byId.get(id)!).filter(Boolean);
+  })();
 
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> {quiz.data?.title ?? "確認テスト"}</CardTitle>
-        {passed ? <Badge className="bg-emerald-600">合格</Badge> : <Badge variant="secondary">合格点 {quiz.data?.passingScore ?? 80}%</Badge>}
+        <div className="flex items-center gap-2">
+          {started && remainSec != null && (
+            <Badge variant="outline" className={remainSec <= 60 ? "border-rose-300 text-rose-600" : "text-slate-600"}>
+              残り {Math.floor(remainSec / 60)}:{String(remainSec % 60).padStart(2, "0")}
+            </Badge>
+          )}
+          {passed ? <Badge className="bg-emerald-600">合格</Badge> : <Badge variant="secondary">合格点 {quiz.data?.passingScore ?? 80}%</Badge>}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {quiz.data?.questions.map((qq, qi) => {
+        {attemptsExhausted && (
+          <div className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+            再受験回数の上限（{maxAttempts}回）に達しました。管理者にお問い合わせください。
+          </div>
+        )}
+        {!attemptsExhausted && needsStart && !started && !passed && (
+          <div className="flex flex-col items-start gap-2 rounded-md border border-dashed p-4 text-sm text-slate-600 dark:text-slate-300">
+            <div>
+              {timeLimitMin != null && <>制限時間は<strong>{timeLimitMin}分</strong>です。</>}
+              {quiz.data?.shuffleQuestions && <>設問は開始時にシャッフルされます。</>}
+              準備ができたら開始してください。
+            </div>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={begin}>テストを開始する</Button>
+          </div>
+        )}
+        {showQuestions && questionList.map((qq, qi) => {
           const opts = parseOptions(qq.options);
           return (
             <div key={qq.id}>
@@ -315,6 +387,7 @@ function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number
                         type="radio"
                         name={`q${qq.id}`}
                         checked={!!selected}
+                        disabled={passed || attemptsExhausted}
                         onChange={() => setAnswers({ ...answers, [String(qq.id)]: [oi] })}
                       />
                       {opt}
@@ -328,9 +401,9 @@ function QuizTaker({ quizId, enrollmentId, learnerId, onDone }: { quizId: number
         <div className="flex items-center gap-3">
           <Button
             onClick={() => submit.mutate({ quizId, enrollmentId, learnerId, answers })}
-            disabled={submit.isPending || passed}
+            disabled={submit.isPending || passed || attemptsExhausted || (needsStart && !started)}
           >採点する</Button>
-          <span className="text-xs text-slate-400">受験回数: {attempts}{quiz.data?.maxAttempts != null ? ` / ${quiz.data.maxAttempts}` : ""}</span>
+          <span className="text-xs text-slate-400">受験回数: {attempts}{maxAttempts != null ? ` / ${maxAttempts}` : ""}</span>
         </div>
       </CardContent>
     </Card>
