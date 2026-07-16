@@ -17,10 +17,25 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // キャッシュ戦略(白画面対策の要):
+  //  - /assets/* はファイル名にハッシュが入るため immutable で長期キャッシュ(高速化)
+  //  - index.html は必ず再検証(no-cache)。ヘッダー無しだとSafari等が独自にキャッシュし、
+  //    デプロイ後に「古いindex.html → 消えた旧JSを参照 → 404 → 白画面」が起きる。
+  app.use(
+    express.static(distPath, {
+      setHeaders(res, filePath) {
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        } else {
+          res.setHeader("Cache-Control", "no-cache, must-revalidate");
+        }
+      },
+    })
+  );
 
-  // fall through to index.html if the file doesn't exist
+  // fall through to index.html if the file doesn't exist (SPAルーティング)
   app.use("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, must-revalidate");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

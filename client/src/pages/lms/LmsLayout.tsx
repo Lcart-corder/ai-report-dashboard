@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import {
   LayoutDashboard, Building2, BookOpen, Handshake, ClipboardCheck, ScrollText,
   Bell, ShieldCheck, Download, Webhook, FolderKanban, KeyRound, HelpCircle,
-  ChevronLeft, ChevronRight, GraduationCap, Users2,
+  ChevronLeft, ChevronRight, GraduationCap, Users2, Menu, X,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ROLE_LABEL, type RoleCode } from "./roles-data";
@@ -31,6 +31,7 @@ const NAV = [
 export function LmsLayout({ children, title, description, actions }: { children: ReactNode; title: string; description?: string; actions?: ReactNode }) {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false); // スマホ用ドロワー
   const me = trpc.lms.me.useQuery();
   const role = me.data?.role as RoleCode | undefined;
   const visibleNav = NAV.filter(item => !("roles" in item) || !item.roles || (role && (item.roles as readonly string[]).includes(role)));
@@ -38,8 +39,17 @@ export function LmsLayout({ children, title, description, actions }: { children:
 
   return (
     <div className="flex min-h-screen bg-[#f4f6fa] text-slate-800 dark:bg-slate-950 dark:text-slate-100">
-      {/* サイドバー(濃紺) */}
-      <aside className={cn("sticky top-0 flex h-screen shrink-0 flex-col bg-[#0f2547] text-slate-200 transition-all", collapsed ? "w-[68px]" : "w-64")}>
+      {/* スマホ: ドロワー背景(タップで閉じる) */}
+      {mobileOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />}
+
+      {/* サイドバー(濃紺)。スマホでは隠してドロワー表示、PCでは常時表示 */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col bg-[#0f2547] text-slate-200 transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-all",
+          collapsed ? "lg:w-[68px] w-64" : "w-64",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         <div className="flex items-center gap-2.5 border-b border-white/10 px-4 py-4">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
             <GraduationCap className="h-5 w-5" />
@@ -50,6 +60,10 @@ export function LmsLayout({ children, title, description, actions }: { children:
               <div className="truncate text-[10px] text-slate-400">助成金対応リスキリング</div>
             </div>
           )}
+          {/* スマホ: ドロワーを閉じる */}
+          <button onClick={() => setMobileOpen(false)} className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white lg:hidden">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
@@ -60,6 +74,7 @@ export function LmsLayout({ children, title, description, actions }: { children:
               <Link key={item.href} href={item.href}>
                 <a
                   title={item.label}
+                  onClick={() => setMobileOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active ? "bg-blue-600 text-white shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white",
@@ -82,7 +97,7 @@ export function LmsLayout({ children, title, description, actions }: { children:
               <div className="mt-0.5 inline-block rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-200">{ROLE_LABEL[role] ?? role}</div>
             </div>
           )}
-          <button onClick={() => setCollapsed(c => !c)} className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-white/10 hover:text-white", collapsed && "justify-center px-0")}>
+          <button onClick={() => setCollapsed(c => !c)} className={cn("hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-white/10 hover:text-white lg:flex", collapsed && "justify-center px-0")}>
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <><ChevronLeft className="h-4 w-4" /> メニューを閉じる</>}
           </button>
         </div>
@@ -91,7 +106,11 @@ export function LmsLayout({ children, title, description, actions }: { children:
       {/* メイン */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* トップバー */}
-        <header className="sticky top-0 z-10 flex items-center gap-3 border-b bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+          {/* スマホ: メニューを開く */}
+          <button onClick={() => setMobileOpen(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-800" title="メニュー">
+            <Menu className="h-5 w-5" />
+          </button>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h1>
             {description && <p className="truncate text-xs text-slate-500">{description}</p>}
