@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { GraduationCap, PlayCircle, CheckCircle2, Circle, FileText, Award, ArrowLeft, ListChecks, Target, ClipboardCheck, Lock, Paperclip } from "lucide-react";
 import { Donut } from "./ui";
 import { LessonPlayer } from "./LessonPlayer";
+import { RoleSwitcher } from "./RoleSwitcher";
 
 export default function LmsLearnCourse() {
   const params = useParams();
@@ -77,7 +78,10 @@ export default function LmsLearnCourse() {
             <div className="truncate text-sm font-bold">{course.data?.name ?? "コース"}</div>
             <div className="text-xs text-slate-500">L cart 学習ポータル ・ 合格点 {course.data?.passingScore ?? 80}%</div>
           </div>
-          {e?.status === "completed" && <Badge className="ml-auto bg-emerald-600">修了</Badge>}
+          <div className="ml-auto flex items-center gap-2">
+            {e?.status === "completed" && <Badge className="bg-emerald-600">修了</Badge>}
+            <RoleSwitcher />
+          </div>
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { GraduationCap, BookOpen, TrendingUp, CheckCircle2, AlertTriangle, ChevronRight } from "lucide-react";
 import { KpiCard, StatusPill, Donut } from "./ui";
+import { RoleSwitcher } from "./RoleSwitcher";
 import { cn } from "@/lib/utils";
 
 // 受講期限までの残り日数ラベル(緊急度つき)。
@@ -40,11 +41,14 @@ export default function LmsLearnHome() {
             <div className="text-sm font-bold text-slate-900 dark:text-slate-100">L cart 学習ポータル</div>
             <div className="text-xs text-slate-500">{learner.data?.name ?? ""} さん</div>
           </div>
-          {dueSoon > 0 && (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-              <AlertTriangle className="h-3.5 w-3.5" /> 期限が近いコースが{dueSoon}件
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {dueSoon > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                <AlertTriangle className="h-3.5 w-3.5" /> 期限が近いコースが{dueSoon}件
+              </span>
+            )}
+            <RoleSwitcher />
+          </div>
         </div>
       </header>
 
