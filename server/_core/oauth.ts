@@ -36,6 +36,19 @@ export function registerOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
+      // ログイン履歴(FR-01): ユーザー・日時・IP・端末を監査ログに保存(ベストエフォート)
+      import("../lms")
+        .then(lms =>
+          lms.writeAuditLog({
+            category: "login",
+            action: "login.success",
+            actor: userInfo.email ?? userInfo.openId,
+            ipAddress: (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.ip,
+            userAgent: req.headers["user-agent"] ?? null,
+          }),
+        )
+        .catch(() => {});
+
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",
         expiresInMs: ONE_YEAR_MS,

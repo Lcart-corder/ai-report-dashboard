@@ -1,8 +1,9 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { lazy, Suspense } from "react";
 import { LayoutProvider } from "./contexts/layout-context";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppSidebar } from "./components/app-sidebar";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load all pages for code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -39,6 +40,27 @@ const LearningCenterPage = lazy(() => import("@/pages/learning/LearningCenter"))
 const VideoDetailPage = lazy(() => import("@/pages/learning/VideoDetail"));
 const ShopBuilderPage = lazy(() => import("@/pages/shop-builder/ShopBuilder"));
 const UnifiedPageManagerPage = lazy(() => import("@/pages/admin/pages/UnifiedPageManager"));
+
+// 助成金対応リスキリングLMS
+const LmsHome = lazy(() => import("@/pages/lms/LmsHome"));
+const LmsAdminDashboard = lazy(() => import("@/pages/lms/AdminDashboard"));
+const LmsCompanies = lazy(() => import("@/pages/lms/Companies"));
+const LmsUsers = lazy(() => import("@/pages/lms/Users"));
+const LmsCourses = lazy(() => import("@/pages/lms/Courses"));
+const LmsPartners = lazy(() => import("@/pages/lms/Partners"));
+const LmsChecklist = lazy(() => import("@/pages/lms/Checklist"));
+const LmsAuditLog = lazy(() => import("@/pages/lms/AuditLog"));
+const LmsNotifications = lazy(() => import("@/pages/lms/Notifications"));
+const LmsAdvisor = lazy(() => import("@/pages/lms/Advisor"));
+const LmsIntegrations = lazy(() => import("@/pages/lms/Integrations"));
+const LmsRoles = lazy(() => import("@/pages/lms/Roles"));
+const LmsProjects = lazy(() => import("@/pages/lms/Projects"));
+const LmsExports = lazy(() => import("@/pages/lms/Exports"));
+const LmsCertificate = lazy(() => import("@/pages/lms/Certificate"));
+const LmsRegister = lazy(() => import("@/pages/lms/Register"));
+const LmsLearnEntry = lazy(() => import("@/pages/lms/LearnEntry"));
+const LmsLearnHome = lazy(() => import("@/pages/lms/LearnHome"));
+const LmsLearnCourse = lazy(() => import("@/pages/lms/LearnCourse"));
 
 // Forms
 const FormManagerPage = lazy(() => import("./pages/forms/FormManager"));
@@ -106,7 +128,45 @@ function PageLoader() {
   );
 }
 
+// 助成金対応リスキリングLMS は独立モジュール(LINEツールのサイドバー無しで全画面表示)
+function LmsApp() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/lms" component={LmsHome} />
+        <Route path="/lms/roles" component={LmsRoles} />
+        <Route path="/lms/projects" component={LmsProjects} />
+        <Route path="/lms/companies" component={LmsCompanies} />
+        <Route path="/lms/users" component={LmsUsers} />
+        <Route path="/lms/courses" component={LmsCourses} />
+        <Route path="/lms/notifications" component={LmsNotifications} />
+        <Route path="/lms/partners" component={LmsPartners} />
+        <Route path="/lms/checklist" component={LmsChecklist} />
+        <Route path="/lms/advisor" component={LmsAdvisor} />
+        <Route path="/lms/integrations" component={LmsIntegrations} />
+        <Route path="/lms/exports" component={LmsExports} />
+        <Route path="/lms/audit" component={LmsAuditLog} />
+        <Route path="/lms/certificate/:enrollmentId" component={LmsCertificate} />
+        <Route path="/lms/register" component={LmsRegister} />
+        <Route path="/lms/learn" component={LmsLearnEntry} />
+        <Route path="/lms/learn/enrollment/:enrollmentId" component={LmsLearnCourse} />
+        <Route path="/lms/learn/:learnerId" component={LmsLearnHome} />
+      </Switch>
+    </Suspense>
+  );
+}
+
 function App() {
+  const [location] = useLocation();
+  if (location.startsWith("/lms")) {
+    return (
+      <ErrorBoundary>
+        <AuthProvider>
+          <LmsApp />
+        </AuthProvider>
+      </ErrorBoundary>
+    );
+  }
   return (
     <AuthProvider>
       <LayoutProvider>
@@ -229,6 +289,26 @@ function App() {
             <Route path="/admin/static-pages" component={StaticPageListPage} />
             <Route path="/admin/static-pages/new" component={StaticPageEditPage} />
             <Route path="/admin/static-pages/:id" component={StaticPageEditPage} />
+
+            {/* 助成金対応リスキリングLMS */}
+            <Route path="/lms" component={LmsHome} />
+            <Route path="/lms/roles" component={LmsRoles} />
+            <Route path="/lms/projects" component={LmsProjects} />
+            <Route path="/lms/companies" component={LmsCompanies} />
+        <Route path="/lms/users" component={LmsUsers} />
+            <Route path="/lms/courses" component={LmsCourses} />
+            <Route path="/lms/notifications" component={LmsNotifications} />
+            <Route path="/lms/partners" component={LmsPartners} />
+            <Route path="/lms/checklist" component={LmsChecklist} />
+            <Route path="/lms/advisor" component={LmsAdvisor} />
+            <Route path="/lms/integrations" component={LmsIntegrations} />
+            <Route path="/lms/exports" component={LmsExports} />
+            <Route path="/lms/audit" component={LmsAuditLog} />
+            <Route path="/lms/certificate/:enrollmentId" component={LmsCertificate} />
+            <Route path="/lms/register" component={LmsRegister} />
+            <Route path="/lms/learn" component={LmsLearnEntry} />
+            <Route path="/lms/learn/enrollment/:enrollmentId" component={LmsLearnCourse} />
+            <Route path="/lms/learn/:learnerId" component={LmsLearnHome} />
 
             {/* Public Pages */}
             <Route path="/s/:slug" component={PublicPageViewer} />

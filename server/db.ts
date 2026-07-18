@@ -29,13 +29,23 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(withSsl(process.env.DATABASE_URL));
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
   }
   return _db;
+}
+
+// 無料/マネージドMySQL(TiDB Cloud・Aiven・Clever等)はTLS必須のことが多い。
+// DATABASE_SSL=true/require で接続URLにTLS設定を付与する(未設定=従来どおりTLSなし)。
+function withSsl(url: string): string {
+  const mode = process.env.DATABASE_SSL;
+  if (!mode || mode === "false" || /[?&]ssl=/.test(url)) return url;
+  // insecure = 証明書検証を省略(自己署名の検証用途)。それ以外は検証あり。
+  const ssl = JSON.stringify({ rejectUnauthorized: mode !== "insecure" });
+  return url + (url.includes("?") ? "&" : "?") + "ssl=" + encodeURIComponent(ssl);
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {

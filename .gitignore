@@ -105,3 +105,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# ローカルのデモ/検証用一時ファイル(コミット対象外)
+scratchpad/
