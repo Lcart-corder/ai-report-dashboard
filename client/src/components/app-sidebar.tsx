@@ -2,6 +2,7 @@ import { useLayout } from "@/contexts/layout-context"
 import { Link, useLocation } from "wouter"
 import {
   LayoutDashboard,
+  Calculator,
   Users,
   MessageSquare,
   Calendar,
@@ -82,13 +83,19 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
   }
 
   const navItems = [
-    { 
-      icon: LayoutDashboard, 
-      label: "概要", 
+    {
+      icon: LayoutDashboard,
+      label: "概要",
       href: "/",
       subItems: []
     },
-    { 
+    {
+      icon: Calculator,
+      label: "営業シミュレーター",
+      href: "/simulator",
+      subItems: []
+    },
+    {
       icon: Users, 
       label: "友だち管理", 
       href: "/friends",

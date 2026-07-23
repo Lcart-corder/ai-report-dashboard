@@ -9,6 +9,9 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AIReportDetailPage = lazy(() => import("./pages/AIReportDetail"));
 const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
 
+// 営業マン収益シミュレーター
+const SimulatorLayout = lazy(() => import("./pages/simulator/SimulatorLayout"));
+
 // Friends
 const FriendListPage = lazy(() => import("./pages/friends/FriendList"));
 const FriendInfoListPage = lazy(() => import("./pages/friends/FriendInfoList"));
@@ -233,6 +236,10 @@ function App() {
             {/* Public Pages */}
             <Route path="/s/:slug" component={PublicPageViewer} />
             <Route path="/pages/:handle" component={StaticPageViewer} />
+
+            {/* 営業マン収益シミュレーター */}
+            <Route path="/simulator" component={SimulatorLayout} />
+            <Route path="/simulator/:rest*" component={SimulatorLayout} />
 
             {/* Fallback */}
             <Route component={PlaceholderPage} />
